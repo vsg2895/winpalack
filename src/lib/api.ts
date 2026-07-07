@@ -4,9 +4,10 @@ import type { Category } from '@shared/types/category'
 import type { CmsPage } from '@shared/types/cmsPage'
 import type { SpecialOffer } from '@shared/types/specialOffer'
 import type { SocialLink } from '@shared/types/socialLink'
+import { API_URL } from './config'
 
 const SITE = process.env.NEXT_PUBLIC_SITE_SLUG
-const API = process.env.API_URL
+const API = API_URL
 const KEY = process.env.API_SITE_KEY
 
 if (!KEY) {

@@ -6,8 +6,8 @@ import type {
   WithContext,
 } from 'schema-dts'
 import type { CasinoWithAttachment } from '@shared/types/casino'
+import { SITE_URL } from './config'
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? ''
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
 
 export function buildOrganizationSchema(): WithContext<Organization> {

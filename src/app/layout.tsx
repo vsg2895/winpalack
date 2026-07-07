@@ -8,6 +8,7 @@ import CookieSettingsButton from '@/components/CookieSettingsButton'
 import Logo from '@/components/Logo'
 import { getSocialLinks } from '@/lib/api'
 import { buildOrganizationSchema } from '@/lib/seo'
+import { SITE_URL } from '@/lib/config'
 import { COPY } from '@/constants/copy'
 import { LEGAL_PAGES } from '@/constants/legalPages'
 import type { SocialLink } from '@shared/types/socialLink'
@@ -18,7 +19,6 @@ const fraunces = Fraunces({ variable: '--font-fraunces', subsets: ['latin'], sty
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] })
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? 'Winpalack'
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? ''
 
 export const metadata: Metadata = {
   title: {
