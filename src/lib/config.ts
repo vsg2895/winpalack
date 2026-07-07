@@ -19,7 +19,7 @@ const SITE_DOMAINS: Record<string, string> = {
 }
 const SITE_DEV_PORTS: Record<string, string> = {
   idevaffiliation: '3000',
-  winpalack: '3002',
+  winpalack: '3001',
 }
 
 export const API_URL: string = process.env.API_URL ?? `${API_ORIGIN}/api/v1/public`
