@@ -27,3 +27,37 @@ body {
 .font-display {
   font-family: var(--font-fraunces), Georgia, serif;
 }
+
+/* ── Responsive safety net (all phones / tablets / laptops / large screens) ── */
+html {
+  -webkit-text-size-adjust: 100%; /* no iOS text auto-inflation on rotate */
+}
+body {
+  overflow-x: clip; /* never scroll the page sideways; safe with the sticky header */
+}
+
+/* Hide the scrollbar on horizontally-scrollable rows (e.g. the mobile nav). */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Scraped HTML content (casino / offer descriptions) must stay in its column
+   on small screens: wrap long words, cap media width, scroll wide tables. */
+.prose {
+  overflow-wrap: break-word;
+}
+.prose :where(img, video, iframe) {
+  max-width: 100%;
+  height: auto;
+}
+.prose :where(table) {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+}
+.prose :where(pre) {
+  overflow-x: auto;
+}

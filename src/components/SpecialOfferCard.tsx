@@ -5,12 +5,13 @@ import type { SpecialOffer } from '@shared/types/specialOffer'
 
 // Idev Affiliation design: light glass offer card with emerald accents.
 export default function SpecialOfferCard({ offer }: { offer: SpecialOffer }) {
-  const banner = resolveImageUrl(offer.banner_image ?? offer.image_path)
+  // Preview uses the offer's Image (not the wide banner); contained + centered.
+  const preview = resolveImageUrl(offer.image_path ?? offer.banner_image)
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-2xl border border-white/70 bg-white/80 shadow-[0_8px_30px_-12px_rgba(79,70,229,0.25)] backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-12px_rgba(79,70,229,0.35)]">
-      <Link href={`/special-offers/${offer.slug}`} className="relative block aspect-video bg-slate-100">
-        {banner && <Image src={banner} alt={offer.title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" sizes="(max-width: 768px) 100vw, 400px" />}
+      <Link href={`/special-offers/${offer.slug}`} className="relative block aspect-video overflow-hidden bg-slate-100">
+        {preview && <Image src={preview} alt={offer.title} fill className="object-contain object-center p-2 transition-transform duration-300 group-hover:scale-105" sizes="(max-width: 768px) 100vw, 400px" />}
       </Link>
       <div className="flex flex-1 flex-col gap-2 p-5">
         <h3 className="font-display text-lg font-semibold leading-tight text-slate-900">{offer.title}</h3>

@@ -74,11 +74,11 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <header className="sticky top-0 z-40 border-b border-white/60 bg-white/70 backdrop-blur-xl">
           <div className="container mx-auto max-w-6xl px-4 h-16 flex items-center justify-between gap-4">
             <Logo />
-            <nav aria-label="Main navigation">
-              <ul className="flex items-center gap-1" role="list">
+            <nav aria-label="Main navigation" className="no-scrollbar -mr-4 min-w-0 overflow-x-auto pr-4">
+              <ul className="flex items-center gap-0.5 sm:gap-1" role="list">
                 {NAV_LINKS.map(({ href, label }) => (
                   <li key={href}>
-                    <Link href={href} className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-emerald-50 hover:text-emerald-700">
+                    <Link href={href} className="block whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-emerald-50 hover:text-emerald-700 sm:px-4">
                       {label}
                     </Link>
                   </li>

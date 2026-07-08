@@ -106,7 +106,7 @@ export default async function CasinoDetailPage({ params }: Props) {
                   const thumb = resolveImageUrl(offer.image_path ?? offer.banner_image)
                   return (
                     <Link key={offer.id} href={`/special-offers/${offer.slug}`} className="group flex gap-4 rounded-xl border border-zinc-200 bg-white p-4 transition-colors hover:border-emerald-300 hover:bg-emerald-50/40">
-                      {thumb && <Image src={thumb} alt={offer.title} width={64} height={64} className="h-16 w-16 shrink-0 rounded-lg object-cover" />}
+                      {thumb && <Image src={thumb} alt={offer.title} width={112} height={64} className="h-16 w-28 shrink-0 rounded-lg bg-slate-50 object-contain object-center p-1" />}
                       <span className="min-w-0">
                         <span className="block truncate font-semibold text-zinc-900 group-hover:text-emerald-700">{offer.title}</span>
                         {offer.bonuses && <span className="mt-1 block line-clamp-2 text-sm text-zinc-500">{offer.bonuses}</span>}
