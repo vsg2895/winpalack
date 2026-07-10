@@ -25,6 +25,16 @@ const ICON_PATHS: Partial<Record<SocialPlatform, string>> = {
     'M24 11.779c0-1.459-1.192-2.645-2.657-2.645-.715 0-1.363.286-1.84.746-1.81-1.191-4.259-1.949-6.971-2.046l1.483-4.669 4.016.941-.006.058c0 1.193.975 2.163 2.174 2.163 1.198 0 2.172-.97 2.172-2.163s-.975-2.164-2.172-2.164c-.92 0-1.704.574-2.021 1.379l-4.329-1.015c-.189-.046-.381.063-.44.249l-1.654 5.207c-2.838.034-5.409.798-7.3 2.025-.474-.438-1.103-.712-1.799-.712-1.465 0-2.657 1.187-2.657 2.646 0 .97.533 1.811 1.317 2.271-.052.282-.086.567-.086.857 0 3.911 4.808 7.093 10.719 7.093s10.719-3.182 10.719-7.093c0-.288-.033-.571-.084-.852.802-.453 1.342-1.31 1.342-2.276zm-17.954 1.156c0-.834.679-1.513 1.513-1.513.834 0 1.513.679 1.513 1.513 0 .833-.679 1.512-1.513 1.512-.834.001-1.513-.679-1.513-1.512zm9.108 4.181c-.832.832-2.65 1.182-4.155 1.182-1.504 0-3.321-.349-4.154-1.182a.408.408 0 01.578-.578c.523.522 1.802.901 3.576.901 1.775 0 3.054-.379 3.577-.901a.408.408 0 11.578.578zm-.273-2.669c-.834 0-1.513-.679-1.513-1.512 0-.834.679-1.513 1.513-1.513.833 0 1.512.679 1.512 1.513 0 .833-.679 1.512-1.512 1.512z',
 }
 
+/**
+ * Ensure the stored URL is absolute so it always opens the external profile in
+ * a new tab. A bare "facebook.com/…" (no scheme) would otherwise resolve as an
+ * internal, same-origin path — navigating within our own site instead.
+ */
+function toExternalUrl(url: string): string {
+  const trimmed = url.trim()
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed.replace(/^\/+/, '')}`
+}
+
 /** Idev Affiliation — light glass social pills with emerald hover. */
 export default function SocialIcons({ links }: { links: SocialLink[] }) {
   if (links.length === 0) return null
@@ -37,7 +47,7 @@ export default function SocialIcons({ links }: { links: SocialLink[] }) {
         return (
           <li key={link.id}>
             <a
-              href={link.url}
+              href={toExternalUrl(link.url)}
               target="_blank"
               rel="noopener noreferrer"
               aria-label={name}
