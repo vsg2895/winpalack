@@ -12,9 +12,12 @@ export async function POST(req: NextRequest) {
   }
 
   let email: string
+  let fullName: string
   try {
     const body = await req.json()
     email = String(body.email ?? '')
+    // Optional — only some forms (e.g. the subscribe modal) collect a name.
+    fullName = String(body.full_name ?? '').trim()
   } catch {
     return NextResponse.json({ ok: false }, { status: 400 })
   }
@@ -26,7 +29,7 @@ export async function POST(req: NextRequest) {
       'Content-Type': 'application/json',
       Accept: 'application/json',
     },
-    body: JSON.stringify({ email }),
+    body: JSON.stringify(fullName ? { email, full_name: fullName } : { email }),
   })
 
   // Forward the upstream status + body so the client can surface validation

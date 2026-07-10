@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Fraunces, Inter, Geist_Mono } from 'next/font/google'
 import Link from 'next/link'
 import NewsletterForm from '@/components/NewsletterForm'
+import SubscribeModal from '@/components/SubscribeModal'
 import SocialIcons from '@/components/SocialIcons'
 import CookieConsent from '@/components/CookieConsent'
 import CookieSettingsButton from '@/components/CookieSettingsButton'
@@ -88,17 +89,15 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           </div>
         </header>
 
-        {/* Newsletter strip — directly under the header */}
-        <section className="border-b border-slate-200/70 bg-white/50 backdrop-blur-xl">
-          <div className="container mx-auto max-w-6xl px-4 py-5">
-            <NewsletterForm />
-          </div>
-        </section>
-
         <div className="flex-1">{children}</div>
 
         <footer className="mt-auto border-t border-slate-200/70 bg-white/60 backdrop-blur-xl">
           <div className="container mx-auto max-w-6xl px-4 py-12">
+            {/* Newsletter — moved from the header strip into the footer */}
+            <div className="mb-10 rounded-2xl border border-slate-200/70 bg-white/60 p-6 shadow-sm">
+              <NewsletterForm />
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
               <div>
                 <div className="flex items-center gap-3">
@@ -150,6 +149,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         </footer>
 
         <CookieConsent />
+        <SubscribeModal />
       </body>
     </html>
   )

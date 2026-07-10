@@ -45,7 +45,12 @@ export default function NewsletterForm() {
 
       <div className="w-full sm:w-auto">
         {status === 'success' ? (
-          <p className="text-sm font-medium text-emerald-600">{COPY.newsletter.success}</p>
+          <div className="sm:text-right">
+            <p className="text-sm font-medium text-emerald-600">{COPY.newsletter.success}</p>
+            <p className="mt-1 text-xs text-slate-500">
+              Check your inbox (and spam folder) for the verification link to activate your offers.
+            </p>
+          </div>
         ) : (
           <form onSubmit={onSubmit} className="flex gap-2">
             <input

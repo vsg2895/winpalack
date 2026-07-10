@@ -99,6 +99,20 @@ export const unsubscribe = async (token: string): Promise<boolean> => {
   return res.ok
 }
 
+// ── Newsletter double opt-in verify (token-based) ─────────────────────────────
+// Server-side only; never cached. Keyless like unsubscribe — the opaque token is
+// the credential, so it works from any site. Marks the subscriber verified; the
+// backend is idempotent (unknown/already-verified tokens still resolve ok).
+export const verifyEmail = async (token: string): Promise<boolean> => {
+  const base = API.replace(/\/public\/?$/, '')
+  const res = await fetch(`${base}/verify/${encodeURIComponent(token)}`, {
+    method: 'POST',
+    headers: { Accept: 'application/json' },
+    cache: 'no-store',
+  })
+  return res.ok
+}
+
 // ── CMS / Legal pages (site-scoped, published only) ──────────────────
 export const getPage = async (slug: string): Promise<CmsPage | null> => {
   const res = await fetch(`${API}/sites/${SITE}/pages/${slug}`, {
