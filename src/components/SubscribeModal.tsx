@@ -1,16 +1,47 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { COPY } from '@/constants/copy'
 
-// Shown once per browser session so returning visitors aren't nagged.
-const SEEN_KEY = 'winpalack_subscribe_modal_seen'
+// Browser-level throttling (no login, so we persist in cookies):
+//  - After the modal is shown, we snooze it for 2 hours so a reload / new tab
+//    doesn't re-open it — but it does come back on the next visit past 2h.
+//  - If the visitor ticks "I already subscribed", we set a long-lived opt-out
+//    cookie so the modal never opens again in this browser.
+const SNOOZE_COOKIE = 'winpalack_sub_snooze'
+const OPTOUT_COOKIE = 'winpalack_sub_optout'
+const SNOOZE_SECONDS = 2 * 60 * 60 // 2 hours
+const OPTOUT_SECONDS = 400 * 24 * 60 * 60 // ~400 days (browser max cookie lifetime)
+
+// Routes where a "please subscribe" prompt makes no sense — the visitor is
+// already acting on their subscription (confirming or opting out).
+const EXCLUDED_PREFIXES = ['/verify', '/unsubscribe']
+
+function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null
+  const escaped = name.replace(/([.*+?^${}()|[\]\\])/g, '\\$1')
+  const match = document.cookie.match(new RegExp('(?:^|; )' + escaped + '=([^;]*)'))
+  return match ? decodeURIComponent(match[1]) : null
+}
+
+function setCookie(name: string, value: string, maxAgeSeconds: number): void {
+  if (typeof document === 'undefined') return
+  document.cookie = `${name}=${encodeURIComponent(value)}; max-age=${maxAgeSeconds}; path=/; SameSite=Lax`
+}
+
+function deleteCookie(name: string): void {
+  setCookie(name, '', 0)
+}
 
 /**
  * Compact welcome modal that opens shortly after a page loads, inviting the
  * visitor to subscribe. Winpalack uses double opt-in, so it makes the verify
  * step explicit and reminds visitors to check their spam folder. Submits through
  * the same server route as the footer form (keeps API_SITE_KEY server-side).
+ *
+ * Open cadence is browser-based (see cookie constants above): once, then not for
+ * 2 hours, and never again if the visitor says they already subscribed.
  */
 export default function SubscribeModal() {
   const [open, setOpen] = useState(false)
@@ -18,20 +49,36 @@ export default function SubscribeModal() {
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
+  const [alreadySubscribed, setAlreadySubscribed] = useState(false)
+  const pathname = usePathname()
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    if (sessionStorage.getItem(SEEN_KEY)) return
-    const timer = window.setTimeout(() => setOpen(true), 900)
-    return () => window.clearTimeout(timer)
-  }, [])
+    // Don't prompt to subscribe on the verify / unsubscribe confirmation pages.
+    if (EXCLUDED_PREFIXES.some((prefix) => pathname?.startsWith(prefix))) return
+    if (getCookie(OPTOUT_COOKIE)) return // visitor opted out — never show again
+    if (getCookie(SNOOZE_COOKIE)) return // shown within the last 2 hours
 
-  function close() {
+    const timer = window.setTimeout(() => {
+      setOpen(true)
+      // Start the 2-hour snooze the moment it's shown, so a reload won't re-open it.
+      setCookie(SNOOZE_COOKIE, '1', SNOOZE_SECONDS)
+    }, 900)
+    return () => window.clearTimeout(timer)
+  }, [pathname])
+
+  function close(): void {
     setOpen(false)
-    try {
-      sessionStorage.setItem(SEEN_KEY, '1')
-    } catch {
-      /* private mode — best effort */
+    // Defensive: ensure the snooze is set even if closed before the timer wrote it.
+    setCookie(SNOOZE_COOKIE, '1', SNOOZE_SECONDS)
+  }
+
+  function onAlreadySubscribed(checked: boolean): void {
+    setAlreadySubscribed(checked)
+    if (checked) {
+      setCookie(OPTOUT_COOKIE, '1', OPTOUT_SECONDS) // never show again in this browser
+    } else {
+      deleteCookie(OPTOUT_COOKIE)
     }
   }
 
@@ -58,6 +105,8 @@ export default function SubscribeModal() {
       setStatus('success')
       setEmail('')
       setFullName('')
+      // They just subscribed here — don't prompt them again in this browser.
+      setCookie(OPTOUT_COOKIE, '1', OPTOUT_SECONDS)
     } catch {
       setStatus('error')
     }
@@ -158,6 +207,16 @@ export default function SubscribeModal() {
               <p className="mt-3 text-xs text-slate-400">
                 📩 After subscribing, check your inbox (and spam folder) for the verification link.
               </p>
+
+              <label className="mt-4 flex cursor-pointer items-center gap-2 border-t border-slate-100 pt-3 text-xs text-slate-500">
+                <input
+                  type="checkbox"
+                  checked={alreadySubscribed}
+                  onChange={(e) => onAlreadySubscribed(e.target.checked)}
+                  className="h-3.5 w-3.5 rounded border-slate-300 accent-emerald-600"
+                />
+                I already subscribed — don’t show this again
+              </label>
             </>
           )}
         </div>
