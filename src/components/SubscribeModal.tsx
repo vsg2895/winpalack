@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { COPY } from '@/constants/copy'
+import { showToast } from '@/lib/toast'
 
 // Browser-level throttling (no login, so we persist in cookies):
 //  - After the modal is shown, we snooze it for 2 hours so a reload / new tab
@@ -102,11 +103,13 @@ export default function SubscribeModal() {
         setStatus('error')
         return
       }
-      setStatus('success')
       setEmail('')
       setFullName('')
       // They just subscribed here — don't prompt them again in this browser.
       setCookie(OPTOUT_COOKIE, '1', OPTOUT_SECONDS)
+      // Close the modal and confirm via a top-corner toast (form isn't hidden).
+      setOpen(false)
+      showToast(COPY.newsletter.success, 'success')
     } catch {
       setStatus('error')
     }
@@ -152,26 +155,7 @@ export default function SubscribeModal() {
         </div>
 
         <div className="px-6 py-6">
-          {status === 'success' ? (
-            <div className="text-center">
-              <p className="text-base font-semibold text-emerald-600">Almost there!</p>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                We’ve sent a verification link to your inbox. Click it to confirm your email and start
-                receiving our special offers.
-              </p>
-              <p className="mt-3 text-xs text-slate-400">
-                Can’t find it? Please check your spam or promotions folder.
-              </p>
-              <button
-                type="button"
-                onClick={close}
-                className="mt-5 inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 px-5 py-2 text-sm font-semibold text-white shadow-md shadow-emerald-500/30"
-              >
-                Got it
-              </button>
-            </div>
-          ) : (
-            <>
+          <>
               <p className="text-sm leading-relaxed text-slate-600">
                 Subscribe and <span className="font-semibold text-slate-900">verify your email</span> to
                 receive our latest special offers and exclusive bonuses.
@@ -217,8 +201,7 @@ export default function SubscribeModal() {
                 />
                 I already subscribed — don’t show this again
               </label>
-            </>
-          )}
+          </>
         </div>
       </div>
     </div>

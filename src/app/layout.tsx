@@ -3,6 +3,7 @@ import { Fraunces, Inter, Geist_Mono } from 'next/font/google'
 import Link from 'next/link'
 import NewsletterForm from '@/components/NewsletterForm'
 import SubscribeModal from '@/components/SubscribeModal'
+import Toaster from '@/components/Toaster'
 import SocialIcons from '@/components/SocialIcons'
 import CookieConsent from '@/components/CookieConsent'
 import CookieSettingsButton from '@/components/CookieSettingsButton'
@@ -21,13 +22,34 @@ const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin']
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? 'Winpalack'
 
+const SITE_TITLE = `${SITE_NAME} — Trusted Casino Reviews & Exclusive Bonuses`
+const SITE_DESCRIPTION = `${SITE_NAME} — independent, expert reviews of the best online casinos plus exclusive bonuses and special offers, with responsible play at heart.`
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL || 'https://winpalack.com'),
   title: {
-    default: SITE_NAME,
+    // Home & inner pages set their own; this is the SEO-friendly fallback title.
+    default: SITE_TITLE,
     template: `%s | ${SITE_NAME}`,
   },
-  description: `Expert casino reviews, special offers and guides at ${SITE_NAME}.`,
-  metadataBase: new URL(SITE_URL || 'http://localhost:3000'),
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  keywords: ['online casino reviews', 'casino bonuses', 'special offers', 'responsible gambling', 'best online casinos', SITE_NAME],
+  // Explicit per-site favicon so the browser tab always shows this site's mark.
+  icons: {
+    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
+    shortcut: ['/icon.svg'],
+    apple: [{ url: '/icon.svg' }],
+  },
+  openGraph: {
+    type: 'website',
+    siteName: SITE_NAME,
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    url: SITE_URL || 'https://winpalack.com',
+  },
+  twitter: { card: 'summary_large_image', title: SITE_TITLE, description: SITE_DESCRIPTION },
+  robots: { index: true, follow: true },
 }
 
 const NAV_LINKS = [
@@ -150,6 +172,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 
         <CookieConsent />
         <SubscribeModal />
+        <Toaster />
       </body>
     </html>
   )

@@ -2,17 +2,16 @@
 
 import { useState } from 'react'
 import { COPY } from '@/constants/copy'
+import { showToast } from '@/lib/toast'
 
 export default function NewsletterForm() {
   const [email, setEmail] = useState('')
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
-  const [errorMsg, setErrorMsg] = useState('')
+  const [loading, setLoading] = useState(false)
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!email.trim()) return
-    setStatus('loading')
-    setErrorMsg('')
+    if (!email.trim() || loading) return
+    setLoading(true)
     try {
       const res = await fetch('/api/newsletter', {
         method: 'POST',
@@ -25,14 +24,16 @@ export default function NewsletterForm() {
           message?: string
           errors?: { email?: string[] }
         }
-        setErrorMsg(data.errors?.email?.[0] ?? data.message ?? COPY.newsletter.error)
-        setStatus('error')
+        showToast(data.errors?.email?.[0] ?? data.message ?? COPY.newsletter.error, 'error')
         return
       }
-      setStatus('success')
+      // Keep the form in place; confirm via a top-corner toast.
+      showToast(COPY.newsletter.success, 'success')
       setEmail('')
     } catch {
-      setStatus('error')
+      showToast(COPY.newsletter.error, 'error')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -44,33 +45,23 @@ export default function NewsletterForm() {
       </div>
 
       <div className="w-full sm:w-auto">
-        {status === 'success' ? (
-          <div className="sm:text-right">
-            <p className="text-sm font-medium text-emerald-600">{COPY.newsletter.success}</p>
-            <p className="mt-1 text-xs text-slate-500">
-              Check your inbox (and spam folder) for the verification link to activate your offers.
-            </p>
-          </div>
-        ) : (
-          <form onSubmit={onSubmit} className="flex gap-2">
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={COPY.newsletter.placeholder}
-              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 sm:w-72"
-            />
-            <button
-              type="submit"
-              disabled={status === 'loading'}
-              className="shrink-0 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-emerald-500/30 transition-transform hover:scale-[1.03] disabled:opacity-60"
-            >
-              {COPY.newsletter.button}
-            </button>
-          </form>
-        )}
-        {status === 'error' && <p className="mt-2 text-xs text-red-600">{errorMsg || COPY.newsletter.error}</p>}
+        <form onSubmit={onSubmit} className="flex gap-2">
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder={COPY.newsletter.placeholder}
+            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 sm:w-72"
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            className="shrink-0 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-emerald-500/30 transition-transform hover:scale-[1.03] disabled:opacity-60"
+          >
+            {COPY.newsletter.button}
+          </button>
+        </form>
       </div>
     </div>
   )

@@ -34,7 +34,7 @@ export const COPY = {
     subtitle: 'Subscribe for exclusive bonuses and casino news.',
     placeholder: 'Enter your email',
     button: 'Subscribe',
-    success: 'Thanks for subscribing!',
+    success: 'Thanks! Check your inbox to verify your email and activate your subscription.',
     error: 'Something went wrong. Please try again.',
   },
   footer: {
