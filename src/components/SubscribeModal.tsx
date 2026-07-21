@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { COPY } from '@/constants/copy'
-import { showToast } from '@/lib/toast'
+import { useToast } from '@/components/ToastProvider'
+import { isValidEmail } from '@/lib/email'
 
 // Browser-level throttling (no login, so we persist in cookies):
 //  - After the modal is shown, we snooze it for 2 hours so a reload / new tab
@@ -45,6 +46,7 @@ function deleteCookie(name: string): void {
  * 2 hours, and never again if the visitor says they already subscribed.
  */
 export default function SubscribeModal() {
+  const toast = useToast()
   const [open, setOpen] = useState(false)
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
@@ -85,7 +87,11 @@ export default function SubscribeModal() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!email.trim()) return
+    if (!isValidEmail(email)) {
+      setStatus('error')
+      setErrorMsg('Please enter a valid email address.')
+      return
+    }
     setStatus('loading')
     setErrorMsg('')
     try {
@@ -109,7 +115,7 @@ export default function SubscribeModal() {
       setCookie(OPTOUT_COOKIE, '1', OPTOUT_SECONDS)
       // Close the modal and confirm via a top-corner toast (form isn't hidden).
       setOpen(false)
-      showToast(COPY.newsletter.success, 'success')
+      toast(COPY.newsletter.success, 'success')
     } catch {
       setStatus('error')
     }

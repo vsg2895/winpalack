@@ -2,15 +2,21 @@
 
 import { useState } from 'react'
 import { COPY } from '@/constants/copy'
-import { showToast } from '@/lib/toast'
+import { useToast } from '@/components/ToastProvider'
+import { isValidEmail } from '@/lib/email'
 
 export default function NewsletterForm() {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
+  const toast = useToast()
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!email.trim() || loading) return
+    if (loading) return
+    if (!isValidEmail(email)) {
+      toast('Please enter a valid email address.', 'error')
+      return
+    }
     setLoading(true)
     try {
       const res = await fetch('/api/newsletter', {
@@ -24,14 +30,14 @@ export default function NewsletterForm() {
           message?: string
           errors?: { email?: string[] }
         }
-        showToast(data.errors?.email?.[0] ?? data.message ?? COPY.newsletter.error, 'error')
+        toast(data.errors?.email?.[0] ?? data.message ?? COPY.newsletter.error, 'error')
         return
       }
       // Keep the form in place; confirm via a top-corner toast.
-      showToast(COPY.newsletter.success, 'success')
+      toast(COPY.newsletter.success, 'success')
       setEmail('')
     } catch {
-      showToast(COPY.newsletter.error, 'error')
+      toast(COPY.newsletter.error, 'error')
     } finally {
       setLoading(false)
     }

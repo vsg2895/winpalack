@@ -3,7 +3,7 @@ import { Fraunces, Inter, Geist_Mono } from 'next/font/google'
 import Link from 'next/link'
 import NewsletterForm from '@/components/NewsletterForm'
 import SubscribeModal from '@/components/SubscribeModal'
-import Toaster from '@/components/Toaster'
+import ToastProvider from '@/components/ToastProvider'
 import SocialIcons from '@/components/SocialIcons'
 import CookieConsent from '@/components/CookieConsent'
 import CookieSettingsButton from '@/components/CookieSettingsButton'
@@ -88,6 +88,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html lang="en" className={`${inter.variable} ${fraunces.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col text-slate-900">
+        <ToastProvider>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -172,7 +173,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 
         <CookieConsent />
         <SubscribeModal />
-        <Toaster />
+        </ToastProvider>
       </body>
     </html>
   )
