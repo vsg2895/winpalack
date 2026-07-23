@@ -29,7 +29,7 @@ export default async function SpecialOffersPage() {
         {offers.length === 0 ? (
           <p className="text-zinc-500">{COPY.specialOffers.noResults}</p>
         ) : (
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3">
             {offers.map((offer) => <SpecialOfferCard key={offer.id} offer={offer} />)}
           </div>
         )}

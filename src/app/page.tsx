@@ -87,7 +87,7 @@ export default async function HomePage({ searchParams }: Props) {
 
         {/* Casinos by category */}
         <section className="px-4 pb-20" aria-labelledby="top-casinos-heading">
-          <div className="container mx-auto max-w-5xl">
+          <div className="container mx-auto max-w-6xl">
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <h2 id="top-casinos-heading" className="font-display text-3xl font-semibold text-slate-900">Top Online Casinos</h2>
@@ -123,12 +123,12 @@ export default async function HomePage({ searchParams }: Props) {
         {/* Special offers */}
         {topOffers.length > 0 && (
           <section className="border-t border-slate-200/70 bg-white/40 px-4 py-20" aria-labelledby="offers-heading">
-            <div className="container mx-auto max-w-5xl">
+            <div className="container mx-auto max-w-6xl">
               <div className="mb-10 flex items-end justify-between gap-4">
                 <h2 id="offers-heading" className="font-display text-3xl font-semibold text-slate-900">{COPY.home.specialOffers}</h2>
                 <Link href="/special-offers" className="hidden text-sm font-semibold text-emerald-600 hover:text-emerald-700 sm:block whitespace-nowrap">{COPY.home.viewAll} →</Link>
               </div>
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3">
                 {topOffers.map((offer) => <SpecialOfferCard key={offer.id} offer={offer} />)}
               </div>
             </div>

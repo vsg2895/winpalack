@@ -18,8 +18,9 @@ function Stars({ rating }: { rating: number }) {
 // logo, then only the three things that matter (name · rating · bonus) and a
 // clear primary CTA. No rank chip, no category clutter.
 export default function CasinoCard({ casino, rank }: { casino: CasinoWithAttachment; rank?: number }) {
-  // Prefer the wide banner image, shown filled (like the special-offer cards).
-  const banner = resolveImageUrl(casino.banner_image ?? casino.image_path)
+  // Card shows the casino's "Image" (logo), NOT the wide "Banner Image" (that's
+  // used big on the single casino page). Falls back to the banner if no Image.
+  const image = resolveImageUrl(casino.image_path ?? casino.banner_image)
 
   return (
     <li className="group flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-[0_2px_18px_-10px_rgba(15,23,42,0.2)] transition-all hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-18px_rgba(5,150,105,0.45)] sm:h-36 sm:flex-row sm:items-center sm:gap-6 sm:p-5">
@@ -34,16 +35,15 @@ export default function CasinoCard({ casino, rank }: { casino: CasinoWithAttachm
           </span>
         )}
         <div className="flex-shrink-0">
-          {banner ? (
-            // Directly-sized image (NO `fill`) → renders at exactly 160×96 and
-            // fills it via object-cover, regardless of the source dimensions.
-            // Standard h-24/w-40 classes + explicit width/height = no 0-height trap.
+          {image ? (
+            // Directly-sized image (NO `fill`) → renders at exactly 160×96.
             <Image
-              src={banner}
+              src={image}
               alt={casino.name}
               width={320}
               height={192}
-              className="h-24 w-40 rounded-xl object-cover ring-1 ring-slate-100"
+              className="h-24 w-40 rounded-xl ring-1 ring-slate-100"
+              style={{ objectFit: 'initial' }}
             />
           ) : (
             <span className="grid h-24 w-40 place-items-center rounded-xl bg-gradient-to-br from-emerald-100 to-teal-100 text-2xl font-bold text-emerald-700" aria-label={casino.name}>
