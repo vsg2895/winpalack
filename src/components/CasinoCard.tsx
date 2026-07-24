@@ -43,7 +43,7 @@ export default function CasinoCard({ casino, rank }: { casino: CasinoWithAttachm
               width={320}
               height={192}
               className="h-24 w-40 rounded-xl ring-1 ring-slate-100"
-              style={{ objectFit: 'initial' }}
+              style={{ objectFit: 'contain' }}
             />
           ) : (
             <span className="grid h-24 w-40 place-items-center rounded-xl bg-gradient-to-br from-emerald-100 to-teal-100 text-2xl font-bold text-emerald-700" aria-label={casino.name}>
