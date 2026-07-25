@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation'
 import { getCasinos, getCasino } from '@/lib/api'
 import { buildCasinoReviewSchema, buildBreadcrumbSchema } from '@/lib/seo'
 import { resolveImageUrl } from '@/lib/images'
+import CasinoSpecialOffers from '@/components/CasinoSpecialOffers'
 import { COPY } from '@/constants/copy'
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
@@ -66,7 +67,7 @@ export default async function CasinoDetailPage({ params }: Props) {
 
           {banner && (
             <div className="relative mb-6 aspect-[16/5] overflow-hidden rounded-2xl bg-zinc-100">
-              <Image src={banner} alt={`${casino.name} banner`} fill className="object-cover" sizes="(max-width: 768px) 100vw, 768px" priority />
+              <Image src={banner} alt={`${casino.name} banner`} fill className="object-contain" sizes="(max-width: 768px) 100vw, 768px" priority />
             </div>
           )}
 
@@ -98,26 +99,7 @@ export default async function CasinoDetailPage({ params }: Props) {
             </div>
           )}
 
-          {casino.special_offers && casino.special_offers.length > 0 && (
-            <section className="mt-10">
-              <h2 className="mb-4 text-xl font-bold text-zinc-900">Special Offers</h2>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {casino.special_offers.map((offer) => {
-                  const thumb = resolveImageUrl(offer.image_path ?? offer.banner_image)
-                  return (
-                    <Link key={offer.id} href={`/special-offers/${offer.slug}`} className="group flex gap-4 rounded-xl border border-zinc-200 bg-white p-4 transition-colors hover:border-emerald-300 hover:bg-emerald-50/40">
-                      {thumb && <Image src={thumb} alt={offer.title} width={112} height={64} className="h-16 w-28 shrink-0 rounded-lg bg-slate-50 object-contain object-center p-1" />}
-                      <span className="min-w-0">
-                        <span className="block truncate font-semibold text-zinc-900 group-hover:text-emerald-700">{offer.title}</span>
-                        {offer.bonuses && <span className="mt-1 block line-clamp-2 text-sm text-zinc-500">{offer.bonuses}</span>}
-                        <span className="mt-2 inline-block text-xs font-semibold text-emerald-600">View offer →</span>
-                      </span>
-                    </Link>
-                  )
-                })}
-              </div>
-            </section>
-          )}
+          <CasinoSpecialOffers offers={casino.special_offers ?? []} />
         </div>
       </main>
     </>
