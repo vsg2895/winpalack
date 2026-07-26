@@ -16,12 +16,15 @@ const PER_PAGE = 4
 export default function CasinoSpecialOffers({ offers }: { offers: SpecialOffer[] }) {
   const [page, setPage] = useState(0)
 
-  const total = offers.length
+  // The API may serialize an empty relation as {} rather than []; guard for it
+  // so a casino with no offers doesn't crash (offers.slice is not a function).
+  const list = Array.isArray(offers) ? offers : []
+  const total = list.length
   if (total === 0) return null
 
   const pageCount = Math.ceil(total / PER_PAGE)
   const start = page * PER_PAGE
-  const visible = offers.slice(start, start + PER_PAGE)
+  const visible = list.slice(start, start + PER_PAGE)
 
   return (
     <section className="mt-10">
