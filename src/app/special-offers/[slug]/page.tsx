@@ -28,6 +28,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       alternates: { canonical: `${SITE_URL}/special-offers/${slug}` },
       openGraph: { type: 'article', url: `${SITE_URL}/special-offers/${slug}`, siteName: SITE_NAME, title, description },
+      // A hidden offer stays reachable by direct link so it can be reviewed,
+      // but it must never enter the index. It is already absent from every
+      // listing and from the sitemap; this stops a crawler that finds the URL
+      // some other way (a shared link, a referrer) from indexing it.
+      ...(offer.active ? {} : { robots: { index: false, follow: false } }),
     }
   } catch {
     return { title: COPY.errors.notFound }
