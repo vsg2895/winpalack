@@ -112,8 +112,8 @@ export default async function HomePage({ searchParams }: Props) {
 
             {activeCategory && casinos.length > 0 && (
               <div className="mt-8 text-center">
-                <Link href={`/casinos?category=${selected}`} className="inline-flex rounded-full border border-slate-300 bg-white/70 px-6 py-3 text-sm font-semibold text-slate-700 backdrop-blur transition-colors hover:border-emerald-300 hover:text-emerald-700">
-                  See all {activeCategory.name} casinos →
+                <Link href={`/casinos?category=${selected}`} aria-label={`See all ${activeCategory.name} casinos`} className="inline-flex rounded-full border border-slate-300 bg-white/70 px-6 py-3 text-sm font-semibold text-slate-700 backdrop-blur transition-colors hover:border-emerald-300 hover:text-emerald-700">
+                  See More →
                 </Link>
               </div>
             )}
@@ -130,6 +130,12 @@ export default async function HomePage({ searchParams }: Props) {
               </div>
               <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3">
                 {topOffers.map((offer) => <SpecialOfferCard key={offer.id} offer={offer} />)}
+              </div>
+
+              <div className="mt-8 text-center">
+                <Link href="/special-offers" aria-label="See all special offers" className="inline-flex rounded-full border border-slate-300 bg-white/70 px-6 py-3 text-sm font-semibold text-slate-700 backdrop-blur transition-colors hover:border-emerald-300 hover:text-emerald-700">
+                  See More →
+                </Link>
               </div>
             </div>
           </section>

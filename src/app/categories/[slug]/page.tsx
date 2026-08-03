@@ -73,6 +73,14 @@ export default async function CategoryDetailPage({ params }: Props) {
               {casinos.map((casino, i) => <CasinoCard key={casino.id} casino={casino} rank={i + 1} />)}
             </ol>
           )}
+
+          {casinos.length > 0 && (
+            <div className="mt-8 text-center">
+              <Link href={`/casinos?category=${slug}`} aria-label={`See all ${category.name} casinos`} className="inline-flex rounded-full border border-slate-300 bg-white/70 px-6 py-3 text-sm font-semibold text-slate-700 backdrop-blur transition-colors hover:border-emerald-300 hover:text-emerald-700">
+                See More →
+              </Link>
+            </div>
+          )}
         </div>
       </main>
     </>
