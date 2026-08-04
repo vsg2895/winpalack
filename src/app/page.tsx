@@ -49,6 +49,10 @@ export default async function HomePage({ searchParams }: Props) {
     categoryRes.status === 'fulfilled' && categoryRes.value ? categoryRes.value.data : null
   const casinos: CasinoWithAttachment[] = catData?.casinos ?? []
   const activeCategory = catData?.category ?? null
+  // "See More" is only an affordance when there is actually more: compare the
+  // category's full count against the rows this page received, rather than
+  // hard-coding the page size on both sides where the two could drift apart.
+  const hasMoreCasinos = (catData?.meta?.total ?? 0) > casinos.length
   // Offers are already scoped to the selected category and capped by the backend (?category=&limit=).
   const topOffers: SpecialOffer[] = offersRes.status === 'fulfilled' ? offersRes.value.data : []
 
@@ -110,7 +114,7 @@ export default async function HomePage({ searchParams }: Props) {
               </ol>
             )}
 
-            {activeCategory && casinos.length > 0 && (
+            {activeCategory && hasMoreCasinos && (
               <div className="mt-8 text-center">
                 <Link href={`/casinos?category=${selected}`} aria-label={`See all ${activeCategory.name} casinos`} className="inline-flex rounded-full border border-slate-300 bg-white/70 px-6 py-3 text-sm font-semibold text-slate-700 backdrop-blur transition-colors hover:border-emerald-300 hover:text-emerald-700">
                   See More →

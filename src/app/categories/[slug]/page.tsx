@@ -43,7 +43,10 @@ export default async function CategoryDetailPage({ params }: Props) {
     notFound()
   }
 
-  const { category, casinos } = payload
+  const { category, casinos, meta } = payload
+  // Only offer "See More" when the category holds more casinos than this page
+  // shows — otherwise the link leads to the same list the visitor is reading.
+  const hasMoreCasinos = (meta?.total ?? 0) > casinos.length
   const listSchema = buildItemListSchema(
     `${category.name} Casinos`,
     `${SITE_URL}/categories/${slug}`,
@@ -74,7 +77,7 @@ export default async function CategoryDetailPage({ params }: Props) {
             </ol>
           )}
 
-          {casinos.length > 0 && (
+          {hasMoreCasinos && (
             <div className="mt-8 text-center">
               <Link href={`/casinos?category=${slug}`} aria-label={`See all ${category.name} casinos`} className="inline-flex rounded-full border border-slate-300 bg-white/70 px-6 py-3 text-sm font-semibold text-slate-700 backdrop-blur transition-colors hover:border-emerald-300 hover:text-emerald-700">
                 See More →
