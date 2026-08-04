@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { getCasinos, getCategories, getSpecialOffers } from '@/lib/api'
+import { LEGAL_PAGES } from '@/constants/legalPages'
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? ''
 
@@ -53,5 +54,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/categories`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
   ]
 
-  return [...staticUrls, ...casinoUrls, ...categoryUrls, ...offerUrls]
+  // The legal / informational pages are linked from every footer but were absent
+  // from the sitemap, leaving 11 indexable URLs per site discoverable only by
+  // crawling. They change rarely, so a low priority and a monthly frequency.
+  const legalUrls: MetadataRoute.Sitemap = LEGAL_PAGES.map(({ slug }) => ({
+    url: `${BASE_URL}/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly',
+    priority: 0.3,
+  }))
+
+  return [...staticUrls, ...casinoUrls, ...categoryUrls, ...offerUrls, ...legalUrls]
 }

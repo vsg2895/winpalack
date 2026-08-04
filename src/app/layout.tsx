@@ -9,7 +9,7 @@ import CookieConsent from '@/components/CookieConsent'
 import CookieSettingsButton from '@/components/CookieSettingsButton'
 import Logo from '@/components/Logo'
 import { getSocialLinks } from '@/lib/api'
-import { buildOrganizationSchema } from '@/lib/seo'
+import { buildOrganizationSchema, buildWebSiteSchema } from '@/lib/seo'
 import { SITE_URL } from '@/lib/config'
 import { COPY } from '@/constants/copy'
 import { LEGAL_PAGES } from '@/constants/legalPages'
@@ -78,12 +78,16 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     socialLinks = []
   }
 
-  // Site-wide Organization structured data. Rendered once here in the root
-  // layout so every page carries it. Next.js manages the document <head> (manual
-  // <head> tags in a root layout are discouraged), so per the framework's JSON-LD
-  // guide the <script> is rendered in the layout body — crawlers read JSON-LD
-  // from anywhere in the document. The `<` escaping keeps the payload XSS-safe.
-  const organizationSchema = buildOrganizationSchema()
+  // Site-wide structured data, rendered once here so every page carries it.
+  // Next.js manages the document <head> (manual <head> tags in a root layout are
+  // discouraged), so per the framework's JSON-LD guide the <script> is rendered
+  // in the layout body — crawlers read JSON-LD from anywhere in the document.
+  // The `<` escaping keeps the payload XSS-safe.
+  //
+  // Two nodes, cross-referenced by @id: the publisher (Organization) and the
+  // site (WebSite). socialLinks is already fetched above for the footer, so
+  // `sameAs` costs no extra request.
+  const siteGraph = [buildOrganizationSchema(socialLinks), buildWebSiteSchema()]
 
   return (
     <html lang="en" className={`${inter.variable} ${fraunces.variable} ${geistMono.variable} h-full antialiased`}>
@@ -92,7 +96,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(organizationSchema).replace(/</g, '\\u003c'),
+            __html: JSON.stringify(siteGraph).replace(/</g, '\\u003c'),
           }}
         />
         <header className="sticky top-0 z-40 border-b border-white/60 bg-white/70 backdrop-blur-xl">

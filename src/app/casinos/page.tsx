@@ -16,18 +16,44 @@ async function resolve(searchParams: Props['searchParams']) {
   const sp = await searchParams
   const page = Math.max(1, Number(sp.page) || 1)
   const categories = (await getCategories()).data
-  const selected = sp.category && categories.some((c) => c.slug === sp.category) ? sp.category : categories[0]?.slug
-  return { categories, selected, page }
+  // `requested` is the category the URL actually asked for; `selected` falls back
+  // to the first category so the page always renders something. The two must stay
+  // distinct: the canonical may only reflect what was requested, or the clean
+  // /casinos URL would declare itself a duplicate of /casinos?category=<first>.
+  const requested =
+    sp.category && categories.some((c) => c.slug === sp.category) ? sp.category : undefined
+  const selected = requested ?? categories[0]?.slug
+  return { categories, requested, selected, page }
+}
+
+/**
+ * The canonical URL for a listing view, carrying only the parameters that
+ * genuinely change the content.
+ */
+function canonicalFor(requested: string | undefined, page: number): string {
+  const params = new URLSearchParams()
+  if (requested) params.set('category', requested)
+  if (page > 1) params.set('page', String(page))
+  const qs = params.toString()
+
+  return `${SITE_URL}/casinos${qs ? `?${qs}` : ''}`
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
-  const { selected } = await resolve(searchParams)
-  const title = COPY.casinos.pageTitle
+  const { requested, page } = await resolve(searchParams)
+  // Page 2+ gets its own title so paginated views are not reported as duplicate
+  // titles, and so a searcher landing on one knows where they are.
+  const title = page > 1 ? `${COPY.casinos.pageTitle} — Page ${page}` : COPY.casinos.pageTitle
+  const canonical = canonicalFor(requested, page)
+
   return {
     title,
     description: COPY.casinos.pageDescription,
-    alternates: { canonical: selected ? `${SITE_URL}/casinos?category=${selected}` : `${SITE_URL}/casinos` },
-    openGraph: { type: 'website', url: `${SITE_URL}/casinos`, siteName: SITE_NAME, title, description: COPY.casinos.pageDescription },
+    // Self-referencing canonical. Pointing page 3 back at page 1 (the previous
+    // behaviour) tells Google the deeper pages are duplicates of the first, so
+    // the casinos listed only on those pages never get indexed.
+    alternates: { canonical },
+    openGraph: { type: 'website', url: canonical, siteName: SITE_NAME, title, description: COPY.casinos.pageDescription },
   }
 }
 
