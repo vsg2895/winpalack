@@ -3,7 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getCasinos, getCasino } from '@/lib/api'
-import { buildCasinoReviewSchema, buildBreadcrumbSchema } from '@/lib/seo'
+import { buildCasinoReviewSchema, buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor } from '@/lib/seo'
 import { resolveImageUrl } from '@/lib/images'
 import CasinoSpecialOffers from '@/components/CasinoSpecialOffers'
 import { COPY } from '@/constants/copy'
@@ -47,17 +47,33 @@ export default async function CasinoDetailPage({ params }: Props) {
 
   const banner = resolveImageUrl(casino.banner_image)
   const logo = resolveImageUrl(casino.image_path)
+  const pageUrl = `${SITE_URL}/casinos/${slug}`
   const reviewSchema = buildCasinoReviewSchema(casino)
-  const breadcrumb = buildBreadcrumbSchema([
-    { name: 'Home', url: SITE_URL },
-    { name: 'Casinos', url: `${SITE_URL}/casinos` },
-    { name: casino.name, url: `${SITE_URL}/casinos/${slug}` },
-  ])
+  const breadcrumb = buildBreadcrumbSchema(
+    [
+      { name: 'Home', url: SITE_URL },
+      { name: 'Casinos', url: `${SITE_URL}/casinos` },
+      { name: casino.name, url: pageUrl },
+    ],
+    pageUrl,
+  )
+  // One graph per page: the WebPage node anchors this URL into the site graph
+  // and points at its own breadcrumb, so the review and the trail are read as
+  // parts of one page rather than three unrelated blocks.
+  const graph = [
+    buildWebPageSchema({
+      name: `${casino.name} Review`,
+      url: pageUrl,
+      description: casino.meta_description ?? undefined,
+      breadcrumbId: breadcrumbIdFor(pageUrl),
+    }),
+    breadcrumb,
+    reviewSchema,
+  ]
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(reviewSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(graph) }} />
 
       <main className="py-12 px-4">
         <div className="container mx-auto max-w-3xl">

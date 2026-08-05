@@ -21,7 +21,10 @@ export default function CategoryNav({
         return (
           <Link
             key={c.id}
-            href={`${basePath}?category=${c.slug}`}
+            // On the home page the nav is an in-page filter (basePath="/"), so it
+            // keeps the query form. Anywhere else it links straight at the
+            // canonical category route — never through the 301.
+            href={basePath === '/' ? `/?category=${c.slug}` : `/categories/${c.slug}`}
             aria-current={active ? 'page' : undefined}
             className={`rounded-full px-5 py-2.5 text-sm font-semibold transition-all ${
               active

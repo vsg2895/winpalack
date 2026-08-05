@@ -16,10 +16,12 @@ const SLUG = process.env.NEXT_PUBLIC_SITE_SLUG ?? 'idevaffiliation'
 const SITE_DOMAINS: Record<string, string> = {
   idevaffiliation: 'https://idevaffiliation.com',
   winpalack: 'https://winpalack.com',
+  roulettingo: 'https://roulettingo.com',
 }
 const SITE_DEV_PORTS: Record<string, string> = {
   idevaffiliation: '3000',
   winpalack: '3001',
+  roulettingo: '3003',
 }
 
 export const API_URL: string = process.env.API_URL ?? `${API_ORIGIN}/api/v1/public`

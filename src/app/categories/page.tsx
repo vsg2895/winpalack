@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getCategories } from '@/lib/api'
+import { buildWebPageSchema } from '@/lib/seo'
 import { COPY } from '@/constants/copy'
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
@@ -19,8 +20,18 @@ export default async function CategoriesPage() {
   const res = await getCategories()
   const categories = res.data
 
+  // These listing pages carried no structured data at all. A WebPage node
+  // anchors them into the site graph so they are not read as orphans.
+  const webPage = buildWebPageSchema({
+    name: COPY.categories.pageTitle,
+    url: `${SITE_URL}/categories`,
+    description: COPY.categories.pageDescription,
+  })
+
   return (
-    <main className="py-12 px-4">
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPage) }} />
+      <main className="py-12 px-4">
       <div className="container mx-auto max-w-5xl">
         <header className="mb-8">
           <h1 className="text-3xl font-bold text-zinc-900">{COPY.categories.pageTitle}</h1>
@@ -40,6 +51,7 @@ export default async function CategoriesPage() {
           </ul>
         )}
       </div>
-    </main>
+      </main>
+    </>
   )
 }

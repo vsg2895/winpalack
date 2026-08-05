@@ -2,66 +2,95 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getCategories, getCategory } from '@/lib/api'
-import { buildItemListSchema, buildBreadcrumbSchema } from '@/lib/seo'
+import { buildItemListSchema, buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor } from '@/lib/seo'
 import { COPY } from '@/constants/copy'
 import CasinoCard from '@/components/CasinoCard'
+import Pagination from '@/components/Pagination'
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? ''
 
-type Props = { params: Promise<{ slug: string }> }
+type Props = {
+  params: Promise<{ slug: string }>
+  searchParams: Promise<{ page?: string }>
+}
+
+/** Canonical URL for a category view — page number only when past the first. */
+function canonicalFor(slug: string, page: number): string {
+  return `${SITE_URL}/categories/${slug}${page > 1 ? `?page=${page}` : ''}`
+}
 
 export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
   const res = await getCategories()
   return res.data.map((c) => ({ slug: c.slug }))
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const { slug } = await params
+  const page = Math.max(1, Number((await searchParams).page) || 1)
   try {
-    const { data } = await getCategory(slug)
-    const title = `${data.category.name} Casinos`
+    const { data } = await getCategory(slug, page)
+    // Distinct title per page so paginated views are never reported as duplicates.
+    const title = page > 1 ? `${data.category.name} Casinos — Page ${page}` : `${data.category.name} Casinos`
     const description = `Best ${data.category.name} casinos reviewed by ${SITE_NAME}.`
+    const canonical = canonicalFor(slug, page)
+
     return {
       title,
       description,
-      alternates: { canonical: `${SITE_URL}/categories/${slug}` },
-      openGraph: { type: 'website', url: `${SITE_URL}/categories/${slug}`, siteName: SITE_NAME, title, description },
+      // Self-referencing canonical: this route is now the canonical home of a
+      // category, and /casinos?category=<slug> 301s here (see next.config).
+      alternates: { canonical },
+      openGraph: { type: 'website', url: canonical, siteName: SITE_NAME, title, description },
     }
   } catch {
     return { title: COPY.errors.notFound }
   }
 }
 
-export default async function CategoryDetailPage({ params }: Props) {
+export default async function CategoryDetailPage({ params, searchParams }: Props) {
   const { slug } = await params
+  const page = Math.max(1, Number((await searchParams).page) || 1)
 
   let payload
   try {
-    payload = (await getCategory(slug)).data
+    payload = (await getCategory(slug, page)).data
   } catch {
     notFound()
   }
 
   const { category, casinos, meta } = payload
-  // Only offer "See More" when the category holds more casinos than this page
-  // shows — otherwise the link leads to the same list the visitor is reading.
-  const hasMoreCasinos = (meta?.total ?? 0) > casinos.length
+  // Position continues across pages so the ItemList reflects the real ranking
+  // rather than restarting at 1 on every page.
+  const offset = ((meta?.current_page ?? page) - 1) * (meta?.per_page ?? casinos.length)
   const listSchema = buildItemListSchema(
     `${category.name} Casinos`,
-    `${SITE_URL}/categories/${slug}`,
-    casinos.map((c, i) => ({ position: i + 1, name: c.name, url: `${SITE_URL}/casinos/${c.slug}` })),
+    canonicalFor(slug, page),
+    casinos.map((c, i) => ({ position: offset + i + 1, name: c.name, url: `${SITE_URL}/casinos/${c.slug}` })),
   )
-  const breadcrumb = buildBreadcrumbSchema([
-    { name: 'Home', url: SITE_URL },
-    { name: 'Categories', url: `${SITE_URL}/categories` },
-    { name: category.name, url: `${SITE_URL}/categories/${slug}` },
-  ])
+  const pageUrl = canonicalFor(slug, page)
+  const breadcrumb = buildBreadcrumbSchema(
+    [
+      { name: 'Home', url: SITE_URL },
+      { name: 'Categories', url: `${SITE_URL}/categories` },
+      { name: category.name, url: `${SITE_URL}/categories/${slug}` },
+    ],
+    pageUrl,
+  )
+  const graph = [
+    buildWebPageSchema({
+      name: `${category.name} Casinos`,
+      url: pageUrl,
+      description: `Best ${category.name} casinos reviewed by ${SITE_NAME}.`,
+      breadcrumbId: breadcrumbIdFor(pageUrl),
+    }),
+    breadcrumb,
+    listSchema,
+  ]
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(listSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(graph) }} />
 
       <main className="py-12 px-4">
         <div className="container mx-auto max-w-5xl">
@@ -73,17 +102,10 @@ export default async function CategoryDetailPage({ params }: Props) {
             <p className="mt-6 text-zinc-500">{COPY.casinos.noResults}</p>
           ) : (
             <ol className="mt-8 flex flex-col gap-4">
-              {casinos.map((casino, i) => <CasinoCard key={casino.id} casino={casino} rank={i + 1} />)}
+              {casinos.map((casino, i) => <CasinoCard key={casino.id} casino={casino} rank={offset + i + 1} />)}
             </ol>
           )}
-
-          {hasMoreCasinos && (
-            <div className="mt-8 text-center">
-              <Link href={`/casinos?category=${slug}`} aria-label={`See all ${category.name} casinos`} className="inline-flex rounded-full border border-slate-300 bg-white/70 px-6 py-3 text-sm font-semibold text-slate-700 backdrop-blur transition-colors hover:border-emerald-300 hover:text-emerald-700">
-                See More →
-              </Link>
-            </div>
-          )}
+          <Pagination basePath={`/categories/${slug}`} current={meta?.current_page ?? 1} last={meta?.last_page ?? 1} />
         </div>
       </main>
     </>

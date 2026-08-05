@@ -141,12 +141,22 @@ export function buildItemListSchema(
   }
 }
 
+/** Stable @id for a page's breadcrumb node, so WebPage can reference it. */
+export function breadcrumbIdFor(pageUrl: string): string {
+  return `${pageUrl}#breadcrumb`
+}
+
 export function buildBreadcrumbSchema(
   crumbs: Array<{ name: string; url: string }>,
+  pageUrl?: string,
 ): WithContext<BreadcrumbList> {
   return {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
+    // Given a page URL the node becomes addressable, which is what lets the
+    // page's WebPage node point at it instead of the two sitting side by side
+    // as unrelated blocks.
+    ...(pageUrl ? { '@id': breadcrumbIdFor(pageUrl) } : {}),
     itemListElement: crumbs.map((crumb, index) => ({
       '@type': 'ListItem',
       position: index + 1,

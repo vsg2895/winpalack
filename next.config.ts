@@ -5,6 +5,21 @@ import { fileURLToPath } from "node:url";
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
+  // Option B URL consolidation: /categories/<slug> is the canonical home of a
+  // category. The old query-parameter form is 301'd there so the two stop
+  // competing as duplicates and the clean path keeps the ranking signal.
+  // Unmatched query params (page=) are forwarded by Next automatically, so
+  // /casinos?category=slots&page=3 lands on /categories/slots?page=3.
+  async redirects() {
+    return [
+      {
+        source: "/casinos",
+        has: [{ type: "query" as const, key: "category", value: "(?<category>[^&]+)" }],
+        destination: "/categories/:category",
+        permanent: true,
+      },
+    ];
+  },
   // Emit a self-contained server at .next/standalone (minimal server.js + only
   // the traced node_modules) so the Docker runner image stays small and doesn't
   // need `next start` or a full install. See the Dockerfile.

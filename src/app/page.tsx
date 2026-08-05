@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getCategories, getCategory, getSpecialOffers } from '@/lib/api'
-import { buildItemListSchema } from '@/lib/seo'
+import { buildItemListSchema, buildWebPageSchema } from '@/lib/seo'
 import { COPY } from '@/constants/copy'
 import CasinoCard from '@/components/CasinoCard'
 import CategoryNav from '@/components/CategoryNav'
@@ -64,9 +64,18 @@ export default async function HomePage({ searchParams }: Props) {
     casinos.map((c, i) => ({ position: i + 1, name: c.name, url: `${SITE_URL}/casinos/${c.slug}` })),
   )
 
+  const graph = [
+    buildWebPageSchema({
+      name: `Best Online Casinos ${YEAR}`,
+      url: SITE_URL,
+      description: `Top-rated online casinos for ${YEAR}, reviewed by ${SITE_NAME}.`,
+    }),
+    listSchema,
+  ]
+
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(listSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(graph) }} />
 
       <main>
         {/* Hero */}
@@ -98,7 +107,7 @@ export default async function HomePage({ searchParams }: Props) {
                 <p className="mt-1 text-slate-500">Browse our highest-rated picks by category.</p>
               </div>
               {selected && (
-                <Link href={`/casinos?category=${selected}`} className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 whitespace-nowrap">{COPY.home.viewAll} →</Link>
+                <Link href={`/categories/${selected}`} className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 whitespace-nowrap">{COPY.home.viewAll} →</Link>
               )}
             </div>
 
@@ -116,7 +125,7 @@ export default async function HomePage({ searchParams }: Props) {
 
             {activeCategory && hasMoreCasinos && (
               <div className="mt-8 text-center">
-                <Link href={`/casinos?category=${selected}`} aria-label={`See all ${activeCategory.name} casinos`} className="inline-flex rounded-full border border-slate-300 bg-white/70 px-6 py-3 text-sm font-semibold text-slate-700 backdrop-blur transition-colors hover:border-emerald-300 hover:text-emerald-700">
+                <Link href={`/categories/${selected}`} aria-label={`See all ${activeCategory.name} casinos`} className="inline-flex rounded-full border border-slate-300 bg-white/70 px-6 py-3 text-sm font-semibold text-slate-700 backdrop-blur transition-colors hover:border-emerald-300 hover:text-emerald-700">
                   See More →
                 </Link>
               </div>

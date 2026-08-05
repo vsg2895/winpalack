@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Fraunces, Inter, Geist_Mono } from 'next/font/google'
 import Link from 'next/link'
 import NewsletterForm from '@/components/NewsletterForm'
@@ -36,10 +36,13 @@ export const metadata: Metadata = {
   applicationName: SITE_NAME,
   keywords: ['online casino reviews', 'casino bonuses', 'special offers', 'responsible gambling', 'best online casinos', SITE_NAME],
   // Explicit per-site favicon so the browser tab always shows this site's mark.
+  // `apple` is deliberately NOT listed: an explicit icons object overrides the
+  // file-based convention, and app/apple-icon.tsx generates a real 180x180 PNG.
+  // Pointing apple at the SVG would both override that and hand iOS a format it
+  // does not support.
   icons: {
     icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
     shortcut: ['/icon.svg'],
-    apple: [{ url: '/icon.svg' }],
   },
   openGraph: {
     type: 'website',
@@ -50,6 +53,38 @@ export const metadata: Metadata = {
   },
   twitter: { card: 'summary_large_image', title: SITE_TITLE, description: SITE_DESCRIPTION },
   robots: { index: true, follow: true },
+  manifest: '/manifest.webmanifest',
+  authors: [{ name: SITE_NAME, url: SITE_URL }],
+  creator: SITE_NAME,
+  publisher: SITE_NAME,
+  // Search-engine ownership verification, supplied per environment. Absent env
+  // vars simply produce no tag, so nothing has to be committed to the repo.
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+    yandex: process.env.NEXT_PUBLIC_YANDEX_VERIFICATION,
+    other: {
+      ...(process.env.NEXT_PUBLIC_BING_VERIFICATION
+        ? { 'msvalidate.01': process.env.NEXT_PUBLIC_BING_VERIFICATION }
+        : {}),
+      ...(process.env.NEXT_PUBLIC_PINTEREST_VERIFICATION
+        ? { 'p:domain_verify': process.env.NEXT_PUBLIC_PINTEREST_VERIFICATION }
+        : {}),
+    },
+  },
+}
+
+/**
+ * Viewport + theme colour.
+ *
+ * Next 14 moved these out of `metadata` into their own export; leaving
+ * themeColor in `metadata` is silently ignored, which is why the sites had no
+ * theme-color at all. `viewport-fit=cover` is deliberately omitted — nothing
+ * here draws into the notch area.
+ */
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#059669',
 }
 
 const NAV_LINKS = [

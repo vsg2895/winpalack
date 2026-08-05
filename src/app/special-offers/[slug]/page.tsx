@@ -3,7 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getSpecialOffers, getSpecialOffer } from '@/lib/api'
-import { buildBreadcrumbSchema } from '@/lib/seo'
+import { buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor } from '@/lib/seo'
 import { resolveImageUrl } from '@/lib/images'
 import { COPY } from '@/constants/copy'
 
@@ -50,15 +50,28 @@ export default async function SpecialOfferDetailPage({ params }: Props) {
   }
 
   const banner = resolveImageUrl(offer.banner_image ?? offer.image_path)
-  const breadcrumb = buildBreadcrumbSchema([
-    { name: 'Home', url: SITE_URL },
-    { name: 'Special Offers', url: `${SITE_URL}/special-offers` },
-    { name: offer.title, url: `${SITE_URL}/special-offers/${slug}` },
-  ])
+  const pageUrl = `${SITE_URL}/special-offers/${slug}`
+  const breadcrumb = buildBreadcrumbSchema(
+    [
+      { name: 'Home', url: SITE_URL },
+      { name: 'Special Offers', url: `${SITE_URL}/special-offers` },
+      { name: offer.title, url: pageUrl },
+    ],
+    pageUrl,
+  )
+  const graph = [
+    buildWebPageSchema({
+      name: offer.title,
+      url: pageUrl,
+      description: offer.bonuses ?? undefined,
+      breadcrumbId: breadcrumbIdFor(pageUrl),
+    }),
+    breadcrumb,
+  ]
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(graph) }} />
 
       <main className="py-12 px-4">
         <div className="container mx-auto max-w-3xl">

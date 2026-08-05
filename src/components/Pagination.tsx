@@ -5,7 +5,9 @@ export default function Pagination({ basePath, current, last }: { basePath: stri
   if (last <= 1) return null
 
   const pages = Array.from({ length: last }, (_, i) => i + 1)
-  const link = (p: number) => `${basePath}&page=${p}`
+  // basePath may or may not already carry a query string (/categories/slots vs
+  // /casinos?category=slots), so pick the right separator instead of assuming one.
+  const link = (p: number) => `${basePath}${basePath.includes('?') ? '&' : '?'}page=${p}`
   const base = 'inline-flex h-10 min-w-10 items-center justify-center rounded-xl px-3 text-sm font-semibold transition-colors'
 
   return (

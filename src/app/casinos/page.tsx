@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { getCategories, getCategory } from '@/lib/api'
-import { buildItemListSchema } from '@/lib/seo'
+import { buildItemListSchema, buildWebPageSchema } from '@/lib/seo'
 import { COPY } from '@/constants/copy'
 import CasinoCard from '@/components/CasinoCard'
 import CategoryNav from '@/components/CategoryNav'
@@ -30,21 +30,25 @@ async function resolve(searchParams: Props['searchParams']) {
  * The canonical URL for a listing view, carrying only the parameters that
  * genuinely change the content.
  */
-function canonicalFor(requested: string | undefined, page: number): string {
-  const params = new URLSearchParams()
-  if (requested) params.set('category', requested)
-  if (page > 1) params.set('page', String(page))
-  const qs = params.toString()
+function canonicalFor(selected: string | undefined, page: number): string {
+  // Under the Option B consolidation /categories/<slug> is the canonical home of
+  // a category, and /casinos?category=<slug> 301s there (see next.config). What
+  // reaches this page is therefore only the bare /casinos, which renders the
+  // default category — so it points at that category's canonical URL rather
+  // than competing with it as a second copy of the same list.
+  if (!selected) {
+    return `${SITE_URL}/casinos`
+  }
 
-  return `${SITE_URL}/casinos${qs ? `?${qs}` : ''}`
+  return `${SITE_URL}/categories/${selected}${page > 1 ? `?page=${page}` : ''}`
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
-  const { requested, page } = await resolve(searchParams)
+  const { selected, page } = await resolve(searchParams)
   // Page 2+ gets its own title so paginated views are not reported as duplicate
   // titles, and so a searcher landing on one knows where they are.
   const title = page > 1 ? `${COPY.casinos.pageTitle} — Page ${page}` : COPY.casinos.pageTitle
-  const canonical = canonicalFor(requested, page)
+  const canonical = canonicalFor(selected, page)
 
   return {
     title,
@@ -72,7 +76,8 @@ export default async function CasinosPage({ searchParams }: Props) {
   }
 
   const { category, casinos, meta } = (await getCategory(selected, page)).data
-  const basePath = `/casinos?category=${selected}`
+  // Paginate on the canonical route so no internal link goes through the 301.
+  const basePath = `/categories/${selected}`
   const cats = categories as Category[]
 
   const listSchema = buildItemListSchema(
@@ -81,9 +86,18 @@ export default async function CasinosPage({ searchParams }: Props) {
     casinos.map((c, i) => ({ position: (meta.current_page - 1) * meta.per_page + i + 1, name: c.name, url: `${SITE_URL}/casinos/${c.slug}` })),
   )
 
+  const graph = [
+    buildWebPageSchema({
+      name: COPY.casinos.pageTitle,
+      url: canonicalFor(selected, page),
+      description: COPY.casinos.pageDescription,
+    }),
+    listSchema,
+  ]
+
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(listSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(graph) }} />
       <main className="px-4 py-16">
         <div className="container mx-auto max-w-5xl">
           <header className="mb-8">

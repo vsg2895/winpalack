@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getPage } from '@/lib/api'
 import { LEGAL_PAGES } from '@/constants/legalPages'
-import { buildBreadcrumbSchema } from '@/lib/seo'
+import { buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor } from '@/lib/seo'
 
 // The known legal slugs are pre-rendered; any OTHER published CMS page renders
 // on demand (and unknown/unpublished slugs 404 via notFound()). Static segments
@@ -40,14 +40,27 @@ export default async function LegalPage({ params }: Props) {
   if (!page) notFound()
 
   const label = LEGAL_PAGES.find((p) => p.slug === slug)?.label ?? page.title
-  const breadcrumb = buildBreadcrumbSchema([
-    { name: 'Home', url: SITE_URL },
-    { name: label, url: `${SITE_URL}/${slug}` },
-  ])
+  const pageUrl = `${SITE_URL}/${slug}`
+  const breadcrumb = buildBreadcrumbSchema(
+    [
+      { name: 'Home', url: SITE_URL },
+      { name: label, url: pageUrl },
+    ],
+    pageUrl,
+  )
+  const graph = [
+    buildWebPageSchema({
+      name: page.title,
+      url: pageUrl,
+      description: page.meta_description ?? undefined,
+      breadcrumbId: breadcrumbIdFor(pageUrl),
+    }),
+    breadcrumb,
+  ]
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(graph) }} />
 
       <main className="py-12 px-4">
         <div className="container mx-auto max-w-3xl">

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { getSpecialOffers } from '@/lib/api'
+import { buildWebPageSchema } from '@/lib/seo'
 import { COPY } from '@/constants/copy'
 import SpecialOfferCard from '@/components/SpecialOfferCard'
 
@@ -19,8 +20,18 @@ export default async function SpecialOffersPage() {
   const res = await getSpecialOffers()
   const offers = res.data
 
+  // These listing pages carried no structured data at all. A WebPage node
+  // anchors them into the site graph so they are not read as orphans.
+  const webPage = buildWebPageSchema({
+    name: COPY.specialOffers.pageTitle,
+    url: `${SITE_URL}/special-offers`,
+    description: COPY.specialOffers.pageDescription,
+  })
+
   return (
-    <main className="py-12 px-4">
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPage) }} />
+      <main className="py-12 px-4">
       <div className="container mx-auto max-w-5xl">
         <header className="mb-8">
           <h1 className="text-3xl font-bold text-zinc-900">{COPY.specialOffers.pageTitle}</h1>
@@ -34,6 +45,7 @@ export default async function SpecialOffersPage() {
           </div>
         )}
       </div>
-    </main>
+      </main>
+    </>
   )
 }
