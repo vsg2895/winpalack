@@ -22,7 +22,7 @@ const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin']
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? 'Winpalack'
 
-const SITE_TITLE = `${SITE_NAME} — Trusted Casino Reviews & Exclusive Bonuses`
+const SITE_TITLE = `${SITE_NAME} — Verified Casinos, Fair Bonuses & Safer Play`
 const SITE_DESCRIPTION = `${SITE_NAME} — independent, expert reviews of the best online casinos plus exclusive bonuses and special offers, with responsible play at heart.`
 
 export const metadata: Metadata = {
