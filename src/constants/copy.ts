@@ -33,6 +33,8 @@ export const COPY = {
     featuredCasinos: 'See Verified Casinos',
     specialOffers: 'Offers With Fair Terms',
     viewAll: 'View All',
+    // Leads the home <title>; the year and brand are appended in page.tsx.
+    homeTitle: 'Verified Casinos & Safer Play',
     metaDescription:
       'Online casinos checked for licensing, fair withdrawal limits and responsible-play tools before we recommend them to anyone.',
   },
@@ -67,6 +69,9 @@ export const COPY = {
     error: 'That did not go through. Please try again.',
   },
   footer: {
+    // Short brand blurb in the footer, above the legal links.
+    tagline:
+      'An independent guide to casinos that treat players fairly. Check the terms, set a limit — 18+.',
     disclaimer:
       'Gambling should stay entertainment, never a way to make money. Strictly 18+. Set a limit before you play and walk away when you reach it. Some links on this site earn us a commission, which never influences a safety score.',
   },

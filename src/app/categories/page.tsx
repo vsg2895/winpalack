@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getCategories } from '@/lib/api'
-import { buildWebPageSchema } from '@/lib/seo'
+import { buildWebPageSchema, jsonLdScript } from '@/lib/seo'
 import { COPY } from '@/constants/copy'
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
@@ -30,7 +30,7 @@ export default async function CategoriesPage() {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPage) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(webPage) }} />
       <main className="py-12 px-4">
       <div className="container mx-auto max-w-5xl">
         <header className="mb-8">

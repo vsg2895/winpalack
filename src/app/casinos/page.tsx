@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { getCategories, getCategory } from '@/lib/api'
-import { buildItemListSchema, buildWebPageSchema } from '@/lib/seo'
+import { buildItemListSchema, buildWebPageSchema, jsonLdScript } from '@/lib/seo'
 import { COPY } from '@/constants/copy'
 import CasinoCard from '@/components/CasinoCard'
 import CategoryNav from '@/components/CategoryNav'
@@ -97,7 +97,7 @@ export default async function CasinosPage({ searchParams }: Props) {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(graph) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(graph) }} />
       <main className="px-4 py-16">
         <div className="container mx-auto max-w-5xl">
           <header className="mb-8">

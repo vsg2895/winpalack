@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getCategories, getCategory, getSpecialOffers } from '@/lib/api'
-import { buildItemListSchema, buildWebPageSchema } from '@/lib/seo'
+import { buildItemListSchema, buildWebPageSchema, jsonLdScript } from '@/lib/seo'
 import { COPY } from '@/constants/copy'
 import CasinoCard from '@/components/CasinoCard'
 import CategoryNav from '@/components/CategoryNav'
@@ -26,8 +26,8 @@ async function resolveCategory(searchParams: Props['searchParams']) {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const title = `Best Online Casinos ${YEAR} | ${SITE_NAME}`
-  const description = `Discover the top-rated online casinos for ${YEAR}, reviewed by ${SITE_NAME} for bonuses, safety and game selection.`
+  const title = `${COPY.home.homeTitle} ${YEAR} | ${SITE_NAME}`
+  const description = COPY.home.metaDescription
   return {
     title,
     description,
@@ -75,7 +75,7 @@ export default async function HomePage({ searchParams }: Props) {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(graph) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(graph) }} />
 
       <main>
         {/* Hero */}
@@ -85,12 +85,12 @@ export default async function HomePage({ searchParams }: Props) {
               {COPY.home.heroEyebrow}
             </p>
             <h1 className="font-display text-4xl font-semibold leading-[1.1] tracking-tight text-slate-900 sm:text-6xl">
-              The internet&rsquo;s most refined{' '}
-              <span className="bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text italic text-transparent">casino guide</span>
+              {COPY.home.heroHeadline}{' '}
+              <span className="bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text italic text-transparent">{COPY.home.heroHighlight}</span>
             </h1>
-            {/*<p className="mx-auto mt-6 max-w-2xl text-lg text-slate-500">*/}
-            {/*  Expert-reviewed, independently rated. Play only at the sites we trust for {YEAR}.*/}
-            {/*</p>*/}
+            <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-500">
+              {COPY.home.heroSubtitle}
+            </p>
             <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
               <Link href="/casinos" className="rounded-full bg-gradient-to-r from-emerald-600 to-teal-500 px-8 py-4 font-semibold text-white shadow-lg shadow-emerald-500/30 transition-transform hover:scale-105">{COPY.home.featuredCasinos}</Link>
               <Link href="/special-offers" className="rounded-full border border-slate-300 bg-white/70 px-8 py-4 font-semibold text-slate-700 backdrop-blur transition-colors hover:border-emerald-300 hover:text-emerald-700">{COPY.home.specialOffers}</Link>

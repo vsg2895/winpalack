@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getCategories, getCategory } from '@/lib/api'
-import { buildItemListSchema, buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor } from '@/lib/seo'
+import { buildItemListSchema, buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript } from '@/lib/seo'
 import { COPY } from '@/constants/copy'
 import CasinoCard from '@/components/CasinoCard'
 import Pagination from '@/components/Pagination'
@@ -90,7 +90,7 @@ export default async function CategoryDetailPage({ params, searchParams }: Props
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(graph) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(graph) }} />
 
       <main className="py-12 px-4">
         <div className="container mx-auto max-w-5xl">

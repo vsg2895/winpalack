@@ -165,3 +165,35 @@ export function buildBreadcrumbSchema(
     })),
   }
 }
+
+/**
+ * Serialise schema nodes as ONE JSON-LD document, in the canonical `@graph` form.
+ *
+ * Why not just JSON.stringify an array of nodes (what this used to do): a
+ * top-level array has no `@context` of its own, so any consumer that reads
+ * `parsed["@context"]` — schema validators, SEO browser extensions, some
+ * crawlers — gets `undefined` and throws. That surfaced as a real runtime error
+ * in the browser: `undefined is not an object (evaluating 'r["@context"].toLowerCase')`.
+ *
+ * `{ "@context": ..., "@graph": [...] }` is the documented way to put several
+ * linked entities in one script tag: the context is declared once at the top and
+ * each node keeps its `@id`, so the entity graph is unchanged for Google while
+ * naive consumers stop breaking.
+ *
+ * Also escapes `<` so a stray "</script>" inside any string can never break out
+ * of the tag — previously done in the layout but not on the page emitters.
+ */
+export function jsonLdScript(nodes: unknown): string {
+  const list = (Array.isArray(nodes) ? nodes : [nodes]).filter(
+    (node): node is Record<string, unknown> => typeof node === 'object' && node !== null,
+  )
+
+  const graph = list.map((node) => {
+    // `@context` belongs on the document, not on each node inside `@graph`.
+    const copy: Record<string, unknown> = { ...node }
+    delete copy['@context']
+    return copy
+  })
+
+  return JSON.stringify({ '@context': 'https://schema.org', '@graph': graph }).replace(/</g, '\\u003c')
+}

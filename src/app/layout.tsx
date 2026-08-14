@@ -9,7 +9,7 @@ import CookieConsent from '@/components/CookieConsent'
 import CookieSettingsButton from '@/components/CookieSettingsButton'
 import Logo from '@/components/Logo'
 import { getSocialLinks } from '@/lib/api'
-import { buildOrganizationSchema, buildWebSiteSchema } from '@/lib/seo'
+import { buildOrganizationSchema, buildWebSiteSchema, jsonLdScript } from '@/lib/seo'
 import { SITE_URL } from '@/lib/config'
 import { COPY } from '@/constants/copy'
 import { LEGAL_PAGES } from '@/constants/legalPages'
@@ -131,7 +131,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(siteGraph).replace(/</g, '\\u003c'),
+            __html: jsonLdScript(siteGraph),
           }}
         />
         <header className="sticky top-0 z-40 border-b border-white/60 bg-white/70 backdrop-blur-xl">

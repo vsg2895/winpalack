@@ -17,6 +17,7 @@ const SITE_DOMAINS: Record<string, string> = {
   idevaffiliation: 'https://idevaffiliation.com',
   winpalack: 'https://winpalack.com',
   roulettingo: 'https://roulettingo.com',
+  viglinksi: 'https://viglinksi.com',
 }
 // Ports each site's dev server actually runs on. Kept in step with the
 // revalidation URLs registered against each site in the admin — if these drift,
@@ -25,6 +26,7 @@ const SITE_DEV_PORTS: Record<string, string> = {
   idevaffiliation: '3001',
   winpalack: '3002',
   roulettingo: '3003',
+  viglinksi: '3004',
 }
 
 export const API_URL: string = process.env.API_URL ?? `${API_ORIGIN}/api/v1/public`

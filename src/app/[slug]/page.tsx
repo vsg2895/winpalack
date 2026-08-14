@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getPage } from '@/lib/api'
 import { LEGAL_PAGES } from '@/constants/legalPages'
-import { buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor } from '@/lib/seo'
+import { buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript } from '@/lib/seo'
 
 // The known legal slugs are pre-rendered; any OTHER published CMS page renders
 // on demand (and unknown/unpublished slugs 404 via notFound()). Static segments
@@ -24,12 +24,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const page = await getPage(slug)
   if (!page) return { title: 'Page not found' }
 
-  const title = page.meta_title ?? page.title
+  // `meta_title` is authored in the admin as a COMPLETE title and normally
+  // already carries the brand ("Responsible Gambling — Viglinksi"). The root
+  // layout's `title.template` would then append it a SECOND time, which is how
+  // these pages ended up as "… — Brand | Brand".
+  //
+  // So compose the final value here and mark it `absolute` to opt out of the
+  // template — appending the brand only when the authored title genuinely lacks
+  // it, so an admin can write the title either way and still get exactly one.
+  const headline = page.meta_title ?? page.title
+  const title = headline.includes(SITE_NAME) ? headline : `${headline} | ${SITE_NAME}`
+
   return {
-    title,
+    title: { absolute: title },
     description: page.meta_description ?? undefined,
     alternates: { canonical: `${SITE_URL}/${slug}` },
-    openGraph: { type: 'article', url: `${SITE_URL}/${slug}`, siteName: SITE_NAME, title, description: page.meta_description ?? undefined },
+    openGraph: { type: 'article', url: `${SITE_URL}/${slug}`, siteName: SITE_NAME, title: headline, description: page.meta_description ?? undefined },
     robots: { index: true, follow: true },
   }
 }
@@ -60,7 +70,7 @@ export default async function LegalPage({ params }: Props) {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(graph) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(graph) }} />
 
       <main className="py-12 px-4">
         <div className="container mx-auto max-w-3xl">
