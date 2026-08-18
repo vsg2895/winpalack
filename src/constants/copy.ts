@@ -79,7 +79,7 @@ export const COPY = {
     title: 'Stay on the safe side',
     subtitle: 'Occasional updates on verified casinos and offers with terms worth reading.',
     placeholder: 'Your email address',
-    button: 'Sign Up',
+    button: 'Subscribe',
     success: 'Thanks! Check your inbox to confirm your address and finish signing up.',
     error: 'That did not go through. Please try again.',
   },
