@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getCategories, getCategory, getSpecialOffers } from '@/lib/api'
-import { buildItemListSchema, buildWebPageSchema, jsonLdScript } from '@/lib/seo'
+import { buildItemListSchema, buildWebPageSchema, jsonLdScript, buildFaqSchema } from '@/lib/seo'
 import { COPY } from '@/constants/copy'
+import { FAQ_ITEMS } from '@/constants/faq'
 import CasinoCard from '@/components/CasinoCard'
 import CategoryNav from '@/components/CategoryNav'
 import SpecialOfferCard from '@/components/SpecialOfferCard'
@@ -40,9 +41,13 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function HomePage({ searchParams }: Props) {
   const { categories, selected } = await resolveCategory(searchParams)
 
-  const [categoryRes, offersRes] = await Promise.allSettled([
+  const [categoryRes, offersRes, anyOffersRes] = await Promise.allSettled([
     selected ? getCategory(selected) : Promise.resolve(null),
     getSpecialOffers(selected, 6),
+    // Site-wide, unfiltered, limit 1 — just "does a visible offer exist at all?".
+    // Runs alongside the others, so it costs no extra round-trip of latency, and
+    // the public endpoint already excludes offers whose visibility is off.
+    getSpecialOffers(undefined, 1),
   ])
 
   const catData =
@@ -55,6 +60,13 @@ export default async function HomePage({ searchParams }: Props) {
   const hasMoreCasinos = (catData?.meta?.total ?? 0) > casinos.length
   // Offers are already scoped to the selected category and capped by the backend (?category=&limit=).
   const topOffers: SpecialOffer[] = offersRes.status === 'fulfilled' ? offersRes.value.data : []
+
+  // Whether ANY special offer is visible on this site. Drives the hero CTA:
+  // a button leading to an empty page is worse than no button. On a failed
+  // request this stays false, so the CTA hides rather than promising content
+  // that may not be there.
+  const anyOffersVisible: boolean =
+    anyOffersRes.status === 'fulfilled' && anyOffersRes.value.data.length > 0
 
   // Organization schema is emitted site-wide from the root layout; the home
   // page only adds its page-specific ItemList of top casinos.
@@ -71,6 +83,8 @@ export default async function HomePage({ searchParams }: Props) {
       description: COPY.home.metaDescription,
     }),
     listSchema,
+    // Same array the section below renders — markup-only FAQ is a violation.
+    buildFaqSchema(SITE_URL, FAQ_ITEMS),
   ]
 
   return (
@@ -93,7 +107,9 @@ export default async function HomePage({ searchParams }: Props) {
             </p>
             <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
               <Link href="/casinos" className="rounded-full bg-gradient-to-r from-emerald-600 to-teal-500 px-8 py-4 font-semibold text-white shadow-lg shadow-emerald-500/30 transition-transform hover:scale-105">{COPY.home.featuredCasinos}</Link>
-              <Link href="/special-offers" className="rounded-full border border-slate-300 bg-white/70 px-8 py-4 font-semibold text-slate-700 backdrop-blur transition-colors hover:border-emerald-300 hover:text-emerald-700">{COPY.home.specialOffers}</Link>
+              {anyOffersVisible && (
+                <Link href="/special-offers" className="rounded-full border border-slate-300 bg-white/70 px-8 py-4 font-semibold text-slate-700 backdrop-blur transition-colors hover:border-emerald-300 hover:text-emerald-700">{COPY.home.specialOffers}</Link>
+              )}
             </div>
           </div>
         </section>
@@ -153,6 +169,20 @@ export default async function HomePage({ searchParams }: Props) {
             </div>
           </section>
         )}
+        {/* FAQ — rendered visibly because FAQPage structured data requires it. */}
+        <section className="border-t border-slate-200/70 px-4 py-20" aria-labelledby="faq-heading">
+          <div className="container mx-auto max-w-3xl">
+            <h2 id="faq-heading" className="font-display text-3xl font-semibold text-slate-900">{COPY.home.faqTitle}</h2>
+            <dl className="mt-8 space-y-6">
+              {FAQ_ITEMS.map((item) => (
+                <div key={item.question} className="border-b border-slate-200/70 pb-6">
+                  <dt className="font-semibold text-slate-900">{item.question}</dt>
+                  <dd className="mt-2 text-slate-600">{item.answer}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </section>
       </main>
     </>
   )

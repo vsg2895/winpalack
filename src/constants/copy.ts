@@ -35,6 +35,7 @@ export const COPY = {
     viewAll: 'View All',
     // Leads the home <title>; the year and brand are appended in page.tsx.
     homeTitle: 'Verified Casinos & Safer Play',
+    faqTitle: 'Questions about safer play',
     metaDescription:
       'Online casinos checked for licensing, fair withdrawal limits and responsible-play tools before we recommend them to anyone.',
   },
@@ -42,6 +43,14 @@ export const COPY = {
     pageTitle: 'Verified Casino Reviews',
     pageDescription:
       'Licensed casinos assessed for withdrawal limits, complaint history and the safer-play tools they give players.',
+    // Meta-description fallback for a casino review page. Casino records are
+    // GLOBAL master data shared by every site, so without a per-site line here
+    // all four domains would ship the identical description for the same casino.
+    // Short per-site tail appended to an ADMIN-ENTERED casino meta description.
+    // Casino records are shared by every site, so without this the same
+    // description would ship on all four domains the moment the field is filled.
+    reviewSignature: 'Licence and payout limits verified.',
+    reviewSummary: 'checked for licensing, withdrawal limits and the safer-play tools it gives players.',
     visitCasino: 'Go to Casino',
     readReview: 'Read Safety Review',
     rating: 'Safety Score',
@@ -51,6 +60,9 @@ export const COPY = {
     pageTitle: 'Verified Casino Offers',
     pageDescription:
       'Bonuses with their wagering requirements and withdrawal caps stated up front, so nothing catches you out after you deposit.',
+    // Appended to an offer's (shared) bonus text so the four sites do not ship
+    // an identical meta description for the same offer.
+    offerMetaSuffix: 'Wagering requirements and withdrawal caps stated up front, so nothing surprises you later.',
     claim: 'Claim Safely',
     noResults: 'No verified offers are running right now.',
   },
@@ -58,6 +70,9 @@ export const COPY = {
     pageTitle: 'Browse by Category',
     pageDescription:
       'Compare licensed casinos grouped by payout speed, game type and the player-protection features they offer.',
+    // Meta-description tail for a single category page. Category records are
+    // shared master data, so this is what keeps the four sites distinct there.
+    categoryMetaSuffix: 'each one checked for licensing, withdrawal limits and responsible-play tools before listing.',
     noResults: 'No categories to show yet.',
   },
   newsletter: {

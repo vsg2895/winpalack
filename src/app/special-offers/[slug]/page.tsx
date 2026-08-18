@@ -22,7 +22,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     const { data: offer } = await getSpecialOffer(slug)
     const title = offer.title
-    const description = offer.bonuses ?? `${offer.title} — exclusive offer at ${SITE_NAME}.`
+    // `bonuses` is shared master data, identical on every site — so the site's
+    // own line is appended to keep the factual bonus lead while making the
+    // description unique per domain.
+    const description = offer.bonuses
+      ? `${offer.bonuses} — ${COPY.specialOffers.offerMetaSuffix}`
+      : `${offer.title} — ${COPY.specialOffers.offerMetaSuffix}`
     return {
       title,
       description,
@@ -65,6 +70,7 @@ export default async function SpecialOfferDetailPage({ params }: Props) {
       url: pageUrl,
       description: offer.bonuses ?? undefined,
       breadcrumbId: breadcrumbIdFor(pageUrl),
+      dateModified: offer.updated_at,
     }),
     breadcrumb,
   ]

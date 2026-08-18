@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { API_URL } from '@/lib/config'
 
 // Wraps the upstream newsletter subscribe endpoint so API_SITE_KEY stays
 // server-side only. Called by the client NewsletterForm component.
 const SITE = process.env.NEXT_PUBLIC_SITE_SLUG
-const API = process.env.API_URL
+// Resolved through the same helper lib/api.ts uses. Reading process.env.API_URL
+// directly made this route the ONLY thing in the app that hard-required that
+// variable: config.ts treats it as an optional override with a real fallback, so
+// an environment without it served every page fine and 500'd on every subscribe.
+const API = API_URL
 const KEY = process.env.API_SITE_KEY
 
 export async function POST(req: NextRequest) {

@@ -5,8 +5,7 @@ import type {
   ItemList,
   WebPage,
   WebSite,
-  WithContext,
-} from 'schema-dts'
+  WithContext, FAQPage } from 'schema-dts'
 import type { CasinoWithAttachment } from '@shared/types/casino'
 import type { SocialLink } from '@shared/types/socialLink'
 import { SITE_URL } from './config'
@@ -86,6 +85,8 @@ export function buildWebPageSchema(params: {
   url: string
   description?: string
   breadcrumbId?: string
+  /** ISO-8601. Freshness is a strong citation signal for answer engines. */
+  dateModified?: string
 }): WithContext<WebPage> {
   return {
     '@context': 'https://schema.org',
@@ -95,6 +96,7 @@ export function buildWebPageSchema(params: {
     url: params.url,
     ...(params.description ? { description: params.description } : {}),
     inLanguage: 'en',
+    ...(params.dateModified ? { dateModified: params.dateModified } : {}),
     isPartOf: { '@id': WEBSITE_ID },
     ...(params.breadcrumbId ? { breadcrumb: { '@id': params.breadcrumbId } } : {}),
   }
@@ -105,11 +107,24 @@ export function buildCasinoReviewSchema(casino: CasinoWithAttachment): WithConte
     '@context': 'https://schema.org',
     '@type': 'Review',
     name: `${casino.name} Review`,
+    // When the editorial verdict was last revised. Answer engines weight recency
+    // heavily when choosing which source to quote.
+    ...(casino.updated_at ? { dateModified: casino.updated_at } : {}),
     reviewBody: casino.description ?? undefined,
     itemReviewed: {
       '@type': 'Organization',
       name: casino.name,
       url: casino.attachment.affiliate_url,
+      // ratingCount is 1 because this IS one editorial score — the same value the
+      // Review carries. Inflating it to imply crowd-sourced ratings we do not have
+      // would be structured-data spam and risks a manual action.
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: casino.rating,
+        bestRating: 5,
+        worstRating: 0,
+        ratingCount: 1,
+      },
     },
     reviewRating: {
       '@type': 'Rating',
@@ -196,4 +211,28 @@ export function jsonLdScript(nodes: unknown): string {
   })
 
   return JSON.stringify({ '@context': 'https://schema.org', '@graph': graph }).replace(/</g, '\\u003c')
+}
+
+/**
+ * FAQPage — the highest-leverage schema for answer engines, which lift explicit
+ * question/answer pairs far more readily than prose.
+ *
+ * Google requires the same Q&A to be VISIBLE on the page; emitting it in markup
+ * only is a guidelines violation. The caller therefore renders `FAQ_ITEMS` and
+ * passes the same array here, so the two can never drift apart.
+ */
+export function buildFaqSchema(
+  url: string,
+  items: ReadonlyArray<{ question: string; answer: string }>,
+): WithContext<FAQPage> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    '@id': `${url}#faq`,
+    mainEntity: items.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: { '@type': 'Answer', text: item.answer },
+    })),
+  }
 }

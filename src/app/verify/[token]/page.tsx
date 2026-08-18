@@ -11,8 +11,14 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
-// Accent matches this site's identity (and its unsubscribe page).
-const ACCENT = '#4f46e5'
+/**
+ * Accent panel for this page — THIS site's brand colour, not a shared default.
+ * emerald-800 — the brand green, darkened so the white/80 subtitle
+ * still clears AA (emerald-600 gave only 2.95:1 there). white 7.68:1, white/80 5.55:1.
+ * Both figures matter: the heading is large text, but the `text-white/80`
+ * subtitle is small and needs the full 4.5:1.
+ */
+const ACCENT = '#065f46'
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? 'our newsletter'
 
 type Props = { params: Promise<{ token: string }> }

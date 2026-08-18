@@ -32,7 +32,10 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     const { data } = await getCategory(slug, page)
     // Distinct title per page so paginated views are never reported as duplicates.
     const title = page > 1 ? `${data.category.name} Casinos — Page ${page}` : `${data.category.name} Casinos`
-    const description = `Best ${data.category.name} casinos reviewed by ${SITE_NAME}.`
+    // Was `Best <name> casinos reviewed by <brand>.` — only ~50 characters and
+    // formulaic. Composing the category name with this site's own line gives a
+    // description long enough for a real snippet, and distinct per domain.
+    const description = `${data.category.name} casinos — ${COPY.categories.categoryMetaSuffix}`
     const canonical = canonicalFor(slug, page)
 
     return {

@@ -23,7 +23,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     const { data: casino } = await getCasino(slug)
     const title = casino.meta_title ?? `${casino.name} Review`
-    const description = casino.meta_description ?? `Read our review of ${casino.name}.`
+    // A casino record is shared by every site, so the fallback must carry THIS
+    // site's voice — otherwise all four domains ship the same description for
+    // the same casino. An admin-set meta_description still wins, and is shared
+    // by design; per-site overrides would need columns on the casino_site pivot.
+    // An admin-entered meta_description is shared master data, so this site's
+    // short signature is appended rather than the value being used verbatim —
+    // otherwise filling the field in the admin would put the identical
+    // description back on all four domains. No value set: fall back to the
+    // site's own full line.
+    const description = casino.meta_description
+      ? `${casino.meta_description} ${COPY.casinos.reviewSignature}`
+      : `${casino.name} — ${COPY.casinos.reviewSummary}`
     return {
       title,
       description,
@@ -66,6 +77,7 @@ export default async function CasinoDetailPage({ params }: Props) {
       url: pageUrl,
       description: casino.meta_description ?? undefined,
       breadcrumbId: breadcrumbIdFor(pageUrl),
+      dateModified: casino.updated_at,
     }),
     breadcrumb,
     reviewSchema,

@@ -64,6 +64,7 @@ export default async function LegalPage({ params }: Props) {
       url: pageUrl,
       description: page.meta_description ?? undefined,
       breadcrumbId: breadcrumbIdFor(pageUrl),
+      dateModified: page.updated_at,
     }),
     breadcrumb,
   ]
