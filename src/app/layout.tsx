@@ -35,14 +35,21 @@ export const metadata: Metadata = {
   description: SITE_DESCRIPTION,
   applicationName: SITE_NAME,
   keywords: ['online casino reviews', 'casino bonuses', 'special offers', 'responsible gambling', 'best online casinos', SITE_NAME],
-  // Explicit per-site favicon so the browser tab always shows this site's mark.
-  // `apple` is deliberately NOT listed: an explicit icons object overrides the
-  // file-based convention, and app/apple-icon.tsx generates a real 180x180 PNG.
-  // Pointing apple at the SVG would both override that and hand iOS a format it
-  // does not support.
+  // Tab icon.
+  //
+  // This used to offer ONLY icon.svg. Browsers that do not take an SVG favicon
+  // — Safari most visibly — then had nothing to fall back to, because
+  // /favicon.ico 404'd, so they showed a placeholder or a stale cached icon
+  // instead of this site's own mark. app/favicon.ico now holds 16/32/48 rasters
+  // cut from that same artwork, and Next links it automatically from the file
+  // convention, so it is deliberately NOT repeated here.
+  //
+  // `apple` DOES have to be listed: an explicit icons object suppresses the
+  // apple-icon file convention, so app/apple-icon.tsx was generating a 180x180
+  // PNG at /apple-icon that no page ever linked to.
   icons: {
     icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
-    shortcut: ['/icon.svg'],
+    apple: [{ url: '/apple-icon', sizes: '180x180', type: 'image/png' }],
   },
   openGraph: {
     type: 'website',
