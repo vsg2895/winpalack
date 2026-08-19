@@ -8,7 +8,7 @@ import SocialIcons from '@/components/SocialIcons'
 import CookieConsent from '@/components/CookieConsent'
 import CookieSettingsButton from '@/components/CookieSettingsButton'
 import Logo from '@/components/Logo'
-import { getSocialLinks } from '@/lib/api'
+import { getSocialLinks, hasSpecialOffers } from '@/lib/api'
 import { buildOrganizationSchema, buildWebSiteSchema, jsonLdScript } from '@/lib/seo'
 import { SITE_URL } from '@/lib/config'
 import { COPY } from '@/constants/copy'
@@ -113,6 +113,12 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     socialLinks = []
   }
 
+  // "Special Offers" only earns its slot in the nav when this site actually has
+  // a visible offer to show; with none, the link would lead to an empty page,
+  // so both the header and the footer drop it.
+  const showSpecialOffers = await hasSpecialOffers()
+  const navLinks = NAV_LINKS.filter(({ href }) => href !== '/special-offers' || showSpecialOffers)
+
   // Site-wide structured data, rendered once here so every page carries it.
   // Next.js manages the document <head> (manual <head> tags in a root layout are
   // discouraged), so per the framework's JSON-LD guide the <script> is rendered
@@ -139,7 +145,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             <Logo />
             <nav aria-label="Main navigation" className="no-scrollbar -mr-4 min-w-0 overflow-x-auto pr-4">
               <ul className="flex items-center gap-0.5 sm:gap-1" role="list">
-                {NAV_LINKS.map(({ href, label }) => (
+                {navLinks.map(({ href, label }) => (
                   <li key={href}>
                     <Link href={href} className="block whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-emerald-50 hover:text-emerald-700 sm:px-4">
                       {label}
@@ -180,7 +186,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               <div className="sm:text-right">
                 <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-500">Explore</p>
                 <ul className="flex flex-col gap-2">
-                  {NAV_LINKS.map(({ href, label }) => (
+                  {navLinks.map(({ href, label }) => (
                     <li key={href}>
                       <Link href={href} className="text-sm text-slate-500 transition-colors hover:text-emerald-700">{label}</Link>
                     </li>

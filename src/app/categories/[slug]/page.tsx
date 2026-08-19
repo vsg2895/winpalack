@@ -84,7 +84,11 @@ export default async function CategoryDetailPage({ params, searchParams }: Props
     buildWebPageSchema({
       name: `${category.name} Casinos`,
       url: pageUrl,
-      description: `Best ${category.name} casinos reviewed by ${SITE_NAME}.`,
+      // The same sentence generateMetadata puts in the meta description. The
+      // formulaic "Best <name> casinos reviewed by <brand>." that was here
+      // survived from the template: it contradicted the description actually
+      // served in the <head>, and read identically on every sibling domain.
+      description: `${category.name} casinos — ${COPY.categories.categoryMetaSuffix}`,
       breadcrumbId: breadcrumbIdFor(pageUrl),
     }),
     breadcrumb,

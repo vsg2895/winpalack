@@ -80,6 +80,24 @@ export const getSpecialOffers = (
 export const getSpecialOffer = (slug: string): Promise<ApiResponse<SpecialOffer>> =>
   publicFetch(`/special-offers/${slug}`, [`special-offer:${slug}`])
 
+/**
+ * Does this site have at least one visible special offer?
+ *
+ * Drives the "Special Offers" nav item: with nothing to show, the link would
+ * lead to an empty page, so the layout drops it from the header and footer.
+ * Asks for a single row and shares the `special-offers` cache tag, so it costs
+ * next to nothing and flips back the moment an offer is published.
+ *
+ * Fails open — a transient API error must not silently strip navigation.
+ */
+export const hasSpecialOffers = async (): Promise<boolean> => {
+  try {
+    return (await getSpecialOffers(undefined, 1)).data.length > 0
+  } catch {
+    return true
+  }
+}
+
 // ── Social links (footer) ────────────────────────────────────────────────────
 export const getSocialLinks = (): Promise<ApiResponse<SocialLink[]>> =>
   publicFetch('/social-links', ['social-links'])

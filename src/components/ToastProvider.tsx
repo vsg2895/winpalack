@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useCallback, useContext, useEffect, useState, type CSSProperties, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 
 type ToastType = 'success' | 'error'
@@ -16,6 +16,28 @@ export function useToast() {
 let seq = 1
 
 /**
+ * True only once hydration has finished.
+ *
+ * `createPortal` needs a real `document`, so the stack must not render during
+ * SSR or on the hydration pass. The previous guard was a `useState(false)`
+ * flipped by `useEffect(() => setMounted(true), [])` — a setState inside an
+ * effect, which schedules an extra render pass and is what the
+ * `react-hooks/set-state-in-effect` rule flags.
+ *
+ * `useSyncExternalStore` states the same fact directly: the server snapshot is
+ * `false`, the client snapshot is `true`, and React swaps to the client value
+ * when hydration completes. The value never changes again, so `subscribe`
+ * hands back a no-op unsubscribe and is never called upon to fire.
+ */
+const subscribeToNothing = () => () => {}
+const onClient = () => true
+const onServer = () => false
+
+function useHydrated(): boolean {
+  return useSyncExternalStore(subscribeToNothing, onClient, onServer)
+}
+
+/**
  * App-wide toast host. State lives in React context (guaranteed shared across
  * every form/modal in the tree) and the stack is portaled to <body> and styled
  * INLINE — so it renders reliably regardless of CSS/Tailwind. Small card pinned
@@ -23,9 +45,7 @@ let seq = 1
  */
 export default function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => setMounted(true), [])
+  const mounted = useHydrated()
 
   const remove = useCallback((id: number) => {
     setToasts((list) => list.filter((t) => t.id !== id))
