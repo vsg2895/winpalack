@@ -121,14 +121,34 @@ export const unsubscribe = async (token: string): Promise<boolean> => {
 // Server-side only; never cached. Keyless like unsubscribe — the opaque token is
 // the credential, so it works from any site. Marks the subscriber verified; the
 // backend is idempotent (unknown/already-verified tokens still resolve ok).
-export const verifyEmail = async (token: string): Promise<boolean> => {
+export interface VerifyResult {
+  /** Whether the request reached the API at all. */
+  ok: boolean
+  /**
+   * Whether a bonus email is genuinely on its way to this subscriber.
+   *
+   * The API returns true ONLY when this click is the one that verified them AND
+   * the post-verification promotion is switched on — so the landing page never
+   * promises an email that will not arrive, on a second visit or while the
+   * feature is disabled.
+   */
+  bonusEmailExpected: boolean
+}
+
+export const verifyEmail = async (token: string): Promise<VerifyResult> => {
   const base = API.replace(/\/public\/?$/, '')
   const res = await fetch(`${base}/verify/${encodeURIComponent(token)}`, {
     method: 'POST',
     headers: { Accept: 'application/json' },
     cache: 'no-store',
   })
-  return res.ok
+
+  if (!res.ok) return { ok: false, bonusEmailExpected: false }
+
+  // A body that will not parse must not promise a bonus.
+  const data = (await res.json().catch(() => ({}))) as { bonus_email_expected?: unknown }
+
+  return { ok: true, bonusEmailExpected: data.bonus_email_expected === true }
 }
 
 // ── CMS / Legal pages (site-scoped, published only) ──────────────────
