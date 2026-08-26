@@ -216,7 +216,15 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             </nav>
 
             <div className="mt-6 flex flex-col items-center justify-between gap-3 border-t border-slate-200/70 pt-6 sm:flex-row">
-              <p className="text-xs text-slate-400">© {new Date().getFullYear()} {SITE_NAME}. All rights reserved.</p>
+              <div className="text-center sm:text-left">
+                <p className="text-xs text-slate-400">© {new Date().getFullYear()} {SITE_NAME}. All rights reserved.</p>
+                {/* Postal address on its own line under the copyright: it stays
+                    legible on a phone, where the two would otherwise wrap into
+                    one another. `address` is the correct element semantically;
+                    `not-italic` is load-bearing, because Preflight does not
+                    reset it and the browser default for the tag is italic. */}
+                <address className="mt-1 text-xs not-italic text-slate-400">{COPY.footer.postalAddress}</address>
+              </div>
               <p className="text-xs text-slate-400">18+ · Gamble responsibly</p>
             </div>
             <p className="mt-4 text-xs text-slate-400">{COPY.footer.disclaimer}</p>

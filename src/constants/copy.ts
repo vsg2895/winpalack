@@ -87,6 +87,11 @@ export const COPY = {
     // Short brand blurb in the footer, above the legal links.
     tagline:
       'An independent guide to casinos that treat players fairly. Check the terms, set a limit — 18+.',
+    // Registered postal address, shown beside the copyright line. A physical
+    // address in the footer is what mailbox providers and the gambling
+    // affiliate compliance checks both look for, and it must match the address
+    // used in the email templates.
+    postalAddress: '25 Makariou III Avenue, Nicosia 1065, Cyprus',
     disclaimer:
       'Gambling should stay entertainment, never a way to make money. Strictly 18+. Set a limit before you play and walk away when you reach it. Some links on this site earn us a commission, which never influences a safety score.',
   },
