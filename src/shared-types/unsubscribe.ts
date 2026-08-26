@@ -1,7 +1,12 @@
 import type { Site } from './site'
 
-// The email streams a subscriber can opt out of independently.
-export type UnsubscribeType = 'subscription' | 'promotion'
+// Which template an unsubscribe was attributed to. Send-gating is global (any
+// opt-out stops all mail); this only records which email prompted the opt-out.
+export type UnsubscribeType =
+  | 'subscription'
+  | 'promotion'
+  | 'verify'
+  | 'promotion_after_verification'
 
 // Fields match UnsubscribeResource.php — a per-stream opt-out record.
 export interface Unsubscribe {

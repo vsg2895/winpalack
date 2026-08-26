@@ -8,15 +8,15 @@ export interface SiteEmailTemplate {
   from_name: string
   from_email: string
   subject: string
-  header_title: string
-  header_subtitle: string
-  heading: string
-  intro_text: string
-  offer_text: string
-  spam_notice: string
-  footer_note: string
+  header_title: string | null
+  header_subtitle: string | null
+  heading: string | null
+  intro_text: string | null
+  offer_text: string | null
+  spam_notice: string | null
+  footer_note: string | null
   unsubscribe_label: string
-  copyright_text: string
+  copyright_text: string | null
   accent_color: string
   active: boolean
   // The SendGrid-verified domain the from address must use (read-only hint).

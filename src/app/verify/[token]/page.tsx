@@ -69,7 +69,7 @@ export default async function VerifyPage({ params }: Props) {
                 <p className="text-sm font-bold text-amber-900">Don&apos;t see it?</p>
                 <ul className="mt-2 list-disc space-y-2 pl-5 text-sm leading-relaxed text-amber-900">
                   <li>
-                    Check your <span className="font-bold">Promotions</span> tab and your{' '}
+                    Check your <span className="font-bold">Promotions</span> tab and your {' '}
                     <span className="font-bold">Spam</span> folder — that&apos;s where it usually
                     lands.
                   </li>

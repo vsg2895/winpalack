@@ -8,19 +8,42 @@ export interface SitePromotionEmail {
   from_name: string
   from_email: string
   subject: string
-  preheader: string
+  // Removable content blocks — null means the email omits that block entirely.
+  // Each is independent: any combination can be cleared.
+  preheader: string | null
   hero_image_url: string | null
-  hero_url: string
-  top_button_text: string
-  heading: string
-  intro_text: string
-  secondary_text: string
-  cta_button_text: string
-  disclaimer_text: string
+  hero_url: string | null
+  top_button_text: string | null
+  heading: string | null
+  intro_text: string | null
+  secondary_text: string | null
+  // Where the buttons point. Empty falls back to `hero_url`, so leaving it blank
+  // keeps the current destination.
+  cta_button_url: string | null
+  disclaimer_text: string | null
+  // Structural — the opt-out link is legally required and cannot be removed.
   unsubscribe_label: string
-  // CTA button fill colour and link/accent colour (hex).
-  button_color: string
-  accent_color: string
+  // Footer identity lines. Kept in the database even while hidden, so removing
+  // one is a toggle rather than a retype — see `hidden_blocks`.
+  postal_address: string | null
+  contact_email: string | null
+  copyright_text: string | null
+  // Blocks the admin has switched OFF. Each still has its content stored in its
+  // own field, so restoring one means dropping its key from here — never a
+  // retype. Keys come from `optional_blocks`.
+  hidden_blocks: string[]
+  // Read-only catalogue of what can be hidden, served by the API so the editor
+  // never duplicates the list.
+  optional_blocks: string[]
+  // Palette (hex). Never null: the API falls back to the design default for any
+  // colour a row predates, so the email always renders a complete palette.
+  button_color: string          // CTA button fill
+  accent_color: string          // unsubscribe link
+  background_color: string      // the email canvas
+  heading_color: string         // the heading
+  text_color: string            // greeting + intro paragraph
+  secondary_text_color: string  // secondary paragraph
+  muted_text_color: string      // disclaimer + the line around the unsubscribe link
   active: boolean
   // The SendGrid-verified domain the from address must use (read-only hint).
   from_domain: string
@@ -31,5 +54,11 @@ export interface SitePromotionEmail {
 // Payload for PUT /admin/sites/{id}/promotion-email — every editable field.
 export type UpdateSitePromotionEmailPayload = Omit<
   SitePromotionEmail,
-  'id' | 'site_id' | 'from_domain' | 'created_at' | 'updated_at'
+  | 'id'
+  | 'site_id'
+  | 'from_domain'
+  // Server-owned catalogue; the editor reads it but never sends it back.
+  | 'optional_blocks'
+  | 'created_at'
+  | 'updated_at'
 >
