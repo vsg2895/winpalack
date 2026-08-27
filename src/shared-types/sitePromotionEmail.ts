@@ -14,6 +14,9 @@ export interface SitePromotionEmail {
   hero_image_url: string | null
   hero_url: string | null
   top_button_text: string | null
+  // Where the top button points. Empty falls back to `cta_button_url` and then
+  // `hero_url`, so a row that never had one keeps its current destination.
+  top_button_url: string | null
   heading: string | null
   intro_text: string | null
   secondary_text: string | null
