@@ -6,9 +6,9 @@ import { getSpecialOffers, getSpecialOffer } from '@/lib/api'
 import { buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript } from '@/lib/seo'
 import { resolveImageUrl } from '@/lib/images'
 import { COPY } from '@/constants/copy'
+import { SITE_URL } from '@/lib/config'
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? ''
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -31,8 +31,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title,
       description,
-      alternates: { canonical: `${SITE_URL}/special-offers/${slug}` },
-      openGraph: { type: 'article', url: `${SITE_URL}/special-offers/${slug}`, siteName: SITE_NAME, title, description },
+      alternates: { canonical: `/special-offers/${slug}` },
+      openGraph: { type: 'article', url: `/special-offers/${slug}`, siteName: SITE_NAME, title, description },
       // A hidden offer stays reachable by direct link so it can be reviewed,
       // but it must never enter the index. It is already absent from every
       // listing and from the sitemap; this stops a crawler that finds the URL

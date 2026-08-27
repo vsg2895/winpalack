@@ -6,18 +6,25 @@ import { buildItemListSchema, buildBreadcrumbSchema, buildWebPageSchema, breadcr
 import { COPY } from '@/constants/copy'
 import CasinoCard from '@/components/CasinoCard'
 import Pagination from '@/components/Pagination'
+import { SITE_URL } from '@/lib/config'
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? ''
 
 type Props = {
   params: Promise<{ slug: string }>
   searchParams: Promise<{ page?: string }>
 }
 
-/** Canonical URL for a category view — page number only when past the first. */
-function canonicalFor(slug: string, page: number): string {
-  return `${SITE_URL}/categories/${slug}${page > 1 ? `?page=${page}` : ''}`
+/**
+ * Canonical PATH for a category view — page number only when past the first.
+ *
+ * A path, not an absolute URL: `alternates.canonical` and `openGraph.url` are
+ * resolved by Next against `metadataBase`, so the host is named in exactly one
+ * place (lib/config) and cannot drift per page. JSON-LD needs absolute URLs, so
+ * the two call sites below prefix SITE_URL explicitly.
+ */
+function canonicalPathFor(slug: string, page: number): string {
+  return `/categories/${slug}${page > 1 ? `?page=${page}` : ''}`
 }
 
 export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
@@ -36,7 +43,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     // formulaic. Composing the category name with this site's own line gives a
     // description long enough for a real snippet, and distinct per domain.
     const description = `${data.category.name} casinos — ${COPY.categories.categoryMetaSuffix}`
-    const canonical = canonicalFor(slug, page)
+    const canonical = canonicalPathFor(slug, page)
 
     return {
       title,
@@ -68,10 +75,10 @@ export default async function CategoryDetailPage({ params, searchParams }: Props
   const offset = ((meta?.current_page ?? page) - 1) * (meta?.per_page ?? casinos.length)
   const listSchema = buildItemListSchema(
     `${category.name} Casinos`,
-    canonicalFor(slug, page),
+    `${SITE_URL}${canonicalPathFor(slug, page)}`,
     casinos.map((c, i) => ({ position: offset + i + 1, name: c.name, url: `${SITE_URL}/casinos/${c.slug}` })),
   )
-  const pageUrl = canonicalFor(slug, page)
+  const pageUrl = `${SITE_URL}${canonicalPathFor(slug, page)}`
   const breadcrumb = buildBreadcrumbSchema(
     [
       { name: 'Home', url: SITE_URL },

@@ -10,9 +10,9 @@ import SpecialOfferCard from '@/components/SpecialOfferCard'
 import type { Category } from '@shared/types/category'
 import type { CasinoWithAttachment } from '@shared/types/casino'
 import type { SpecialOffer } from '@shared/types/specialOffer'
+import { SITE_URL } from '@/lib/config'
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? ''
 const YEAR = new Date().getFullYear()
 
 type Props = { searchParams: Promise<{ category?: string }> }
@@ -32,8 +32,8 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description,
-    alternates: { canonical: SITE_URL },
-    openGraph: { type: 'website', url: SITE_URL, siteName: SITE_NAME, title, description },
+    alternates: { canonical: '/' },
+    openGraph: { type: 'website', url: '/', siteName: SITE_NAME, title, description },
     twitter: { card: 'summary_large_image', title, description },
   }
 }

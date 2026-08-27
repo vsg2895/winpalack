@@ -22,11 +22,23 @@ const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin']
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? 'Winpalack'
 
-const SITE_TITLE = `${SITE_NAME} — Verified Casinos, Fair Bonuses & Safer Play`
-const SITE_DESCRIPTION = `${SITE_NAME} — independent, expert reviews of the best online casinos plus exclusive bonuses and special offers, with responsible play at heart.`
+// Both strings live in COPY so this site's wording is defined in exactly one
+// place — the same place the page-level titles and descriptions come from.
+// The previous SITE_DESCRIPTION here was byte-identical to a sibling domain's,
+// which made this site's default meta/og/twitter description duplicate content
+// on every page that falls back to it.
+const SITE_TITLE = `${SITE_NAME} — ${COPY.site.titleTail}`
+const SITE_DESCRIPTION = `${SITE_NAME} ${COPY.site.description}`
 
 export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL || 'https://winpalack.com'),
+  // THE origin every relative canonical and og:url in the app resolves
+  // against. `SITE_URL` is validated at module load (see lib/config), so the
+  // old `|| 'https://…'` literal is gone: a second hardcoded host here is
+  // exactly how the canonical and the sitemap drifted onto different hosts.
+  metadataBase: new URL(SITE_URL),
+  // Root default. Every page overrides it with its own path, so each URL
+  // gets a SELF-referencing canonical rather than inheriting the homepage's.
+  alternates: { canonical: '/' },
   title: {
     // Home & inner pages set their own; this is the SEO-friendly fallback title.
     default: SITE_TITLE,
@@ -34,7 +46,9 @@ export const metadata: Metadata = {
   },
   description: SITE_DESCRIPTION,
   applicationName: SITE_NAME,
-  keywords: ['online casino reviews', 'casino bonuses', 'special offers', 'responsible gambling', 'best online casinos', SITE_NAME],
+  // Terms that describe what THIS site publishes. The generic set that was
+  // here was shared with a sibling domain and described neither in particular.
+  keywords: [...COPY.site.keywords, SITE_NAME],
   // Tab icon.
   //
   // This used to offer ONLY icon.svg. Browsers that do not take an SVG favicon
@@ -56,7 +70,9 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
-    url: SITE_URL || 'https://winpalack.com',
+    // Relative on purpose: Next resolves it against metadataBase, so og:url
+    // and the canonical can never disagree about the host.
+    url: '/',
   },
   twitter: { card: 'summary_large_image', title: SITE_TITLE, description: SITE_DESCRIPTION },
   robots: { index: true, follow: true },

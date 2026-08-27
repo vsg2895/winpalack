@@ -16,6 +16,23 @@
  * safer-play tools are checked before anything gets listed.
  */
 export const COPY = {
+  // SEO identity. These three reach the <title>, the meta description and the
+  // keywords tag on EVERY page that does not set its own — which is most of
+  // them — so they are the strings most likely to be read as duplicate content
+  // if a sibling domain ships the same words. Kept here, beside the rest of this
+  // site's wording, rather than inline in layout.tsx.
+  site: {
+    titleTail: 'Verified Casinos, Fair Bonuses & Safer Play',
+    description:
+      'lists only casinos that treat players fairly: verified licences, bonuses with readable terms, and the tools to set a limit before you play.',
+    keywords: [
+      'fair online casinos',
+      'verified casino licences',
+      'transparent bonus terms',
+      'responsible gambling tools',
+      'safer casino play',
+    ],
+  },
   nav: {
     casinos: 'Casinos',
     specialOffers: 'Special Offers',

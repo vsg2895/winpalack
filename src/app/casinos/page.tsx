@@ -6,9 +6,9 @@ import CasinoCard from '@/components/CasinoCard'
 import CategoryNav from '@/components/CategoryNav'
 import Pagination from '@/components/Pagination'
 import type { Category } from '@shared/types/category'
+import { SITE_URL } from '@/lib/config'
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? ''
 
 type Props = { searchParams: Promise<{ category?: string; page?: string }> }
 
@@ -30,17 +30,22 @@ async function resolve(searchParams: Props['searchParams']) {
  * The canonical URL for a listing view, carrying only the parameters that
  * genuinely change the content.
  */
-function canonicalFor(selected: string | undefined, page: number): string {
+function canonicalPathFor(selected: string | undefined, page: number): string {
   // Under the Option B consolidation /categories/<slug> is the canonical home of
   // a category, and /casinos?category=<slug> 301s there (see next.config). What
   // reaches this page is therefore only the bare /casinos, which renders the
   // default category — so it points at that category's canonical URL rather
   // than competing with it as a second copy of the same list.
+  //
+  // A PATH, not an absolute URL: Next resolves alternates.canonical and
+  // openGraph.url against `metadataBase`, so the host is named once (lib/config)
+  // and cannot drift per page. JSON-LD needs absolute URLs and prefixes
+  // SITE_URL at its own call site.
   if (!selected) {
-    return `${SITE_URL}/casinos`
+    return '/casinos'
   }
 
-  return `${SITE_URL}/categories/${selected}${page > 1 ? `?page=${page}` : ''}`
+  return `/categories/${selected}${page > 1 ? `?page=${page}` : ''}`
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
@@ -48,7 +53,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   // Page 2+ gets its own title so paginated views are not reported as duplicate
   // titles, and so a searcher landing on one knows where they are.
   const title = page > 1 ? `${COPY.casinos.pageTitle} — Page ${page}` : COPY.casinos.pageTitle
-  const canonical = canonicalFor(selected, page)
+  const canonical = canonicalPathFor(selected, page)
 
   return {
     title,
@@ -89,7 +94,7 @@ export default async function CasinosPage({ searchParams }: Props) {
   const graph = [
     buildWebPageSchema({
       name: COPY.casinos.pageTitle,
-      url: canonicalFor(selected, page),
+      url: `${SITE_URL}${canonicalPathFor(selected, page)}`,
       description: COPY.casinos.pageDescription,
     }),
     listSchema,

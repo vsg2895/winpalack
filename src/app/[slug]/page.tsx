@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { getPage } from '@/lib/api'
 import { LEGAL_PAGES } from '@/constants/legalPages'
 import { buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript } from '@/lib/seo'
+import { SITE_URL } from '@/lib/config'
 
 // The known legal slugs are pre-rendered; any OTHER published CMS page renders
 // on demand (and unknown/unpublished slugs 404 via notFound()). Static segments
@@ -11,7 +12,6 @@ import { buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScrip
 export const dynamicParams = true
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? ''
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -38,8 +38,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: { absolute: title },
     description: page.meta_description ?? undefined,
-    alternates: { canonical: `${SITE_URL}/${slug}` },
-    openGraph: { type: 'article', url: `${SITE_URL}/${slug}`, siteName: SITE_NAME, title: headline, description: page.meta_description ?? undefined },
+    alternates: { canonical: `/${slug}` },
+    openGraph: { type: 'article', url: `/${slug}`, siteName: SITE_NAME, title: headline, description: page.meta_description ?? undefined },
     robots: { index: true, follow: true },
   }
 }

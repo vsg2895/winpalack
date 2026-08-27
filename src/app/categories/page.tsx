@@ -3,16 +3,16 @@ import Link from 'next/link'
 import { getCategories } from '@/lib/api'
 import { buildWebPageSchema, jsonLdScript } from '@/lib/seo'
 import { COPY } from '@/constants/copy'
+import { SITE_URL } from '@/lib/config'
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? ''
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
     title: COPY.categories.pageTitle,
     description: COPY.categories.pageDescription,
-    alternates: { canonical: `${SITE_URL}/categories` },
-    openGraph: { type: 'website', url: `${SITE_URL}/categories`, siteName: SITE_NAME, title: COPY.categories.pageTitle, description: COPY.categories.pageDescription },
+    alternates: { canonical: `/categories` },
+    openGraph: { type: 'website', url: `/categories`, siteName: SITE_NAME, title: COPY.categories.pageTitle, description: COPY.categories.pageDescription },
   }
 }
 

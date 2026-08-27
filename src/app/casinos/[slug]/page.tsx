@@ -7,9 +7,9 @@ import { buildCasinoReviewSchema, buildBreadcrumbSchema, buildWebPageSchema, bre
 import { resolveImageUrl } from '@/lib/images'
 import CasinoSpecialOffers from '@/components/CasinoSpecialOffers'
 import { COPY } from '@/constants/copy'
+import { SITE_URL } from '@/lib/config'
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? ''
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -38,8 +38,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title,
       description,
-      alternates: { canonical: `${SITE_URL}/casinos/${slug}` },
-      openGraph: { type: 'article', url: `${SITE_URL}/casinos/${slug}`, siteName: SITE_NAME, title, description },
+      alternates: { canonical: `/casinos/${slug}` },
+      openGraph: { type: 'article', url: `/casinos/${slug}`, siteName: SITE_NAME, title, description },
     }
   } catch {
     return { title: COPY.errors.notFound }

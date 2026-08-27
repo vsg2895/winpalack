@@ -33,8 +33,47 @@ export const API_URL: string = process.env.API_URL ?? `${API_ORIGIN}/api/v1/publ
 
 export const API_IMAGE: string = process.env.API_IMAGE ?? API_ORIGIN
 
-export const SITE_URL: string =
-  process.env.NEXT_PUBLIC_SITE_URL ??
-  (PROD
-    ? (SITE_DOMAINS[SLUG] ?? `https://${SLUG}.com`)
-    : `http://localhost:${SITE_DEV_PORTS[SLUG] ?? '3000'}`)
+/**
+ * THE canonical origin for this site — the single place the host is decided.
+ *
+ * Everything public-facing derives from this and nothing else: `metadataBase`
+ * in the root layout (which resolves every page's relative canonical and
+ * og:url), the sitemap, robots.txt and every absolute URL in the JSON-LD. A
+ * page that builds its own base URL from `process.env` is a bug: that is how
+ * the two drifted apart before, and how a missing env var silently produced
+ * RELATIVE canonicals that Next then resolved against a different fallback.
+ *
+ * Normalised with any trailing slash removed, so `${SITE_URL}/casinos` can
+ * never become `//casinos` when the env var is written with one.
+ */
+function resolveSiteUrl(): string {
+  const raw =
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    (PROD
+      ? (SITE_DOMAINS[SLUG] ?? `https://${SLUG}.com`)
+      : `http://localhost:${SITE_DEV_PORTS[SLUG] ?? '3000'}`)
+
+  let parsed: URL
+  try {
+    parsed = new URL(raw)
+  } catch {
+    // Thrown at module load, so `next build` FAILS rather than shipping a site
+    // whose canonical tags point at a relative path. Failing loudly here is the
+    // whole point: the previous behaviour was to degrade quietly.
+    throw new Error(
+      `NEXT_PUBLIC_SITE_URL must be an absolute http(s) URL; received ${JSON.stringify(raw)}. ` +
+        'NEXT_PUBLIC_* values are inlined by `next build`, so it has to be set at BUILD time, ' +
+        'not only in the runtime environment.',
+    )
+  }
+
+  if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+    throw new Error(
+      `NEXT_PUBLIC_SITE_URL must use http or https; received ${JSON.stringify(raw)}.`,
+    )
+  }
+
+  return raw.replace(/\/+$/, '')
+}
+
+export const SITE_URL: string = resolveSiteUrl()

@@ -3,16 +3,16 @@ import { getSpecialOffers } from '@/lib/api'
 import { buildWebPageSchema, jsonLdScript } from '@/lib/seo'
 import { COPY } from '@/constants/copy'
 import SpecialOfferCard from '@/components/SpecialOfferCard'
+import { SITE_URL } from '@/lib/config'
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? ''
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
     title: COPY.specialOffers.pageTitle,
     description: COPY.specialOffers.pageDescription,
-    alternates: { canonical: `${SITE_URL}/special-offers` },
-    openGraph: { type: 'website', url: `${SITE_URL}/special-offers`, siteName: SITE_NAME, title: COPY.specialOffers.pageTitle, description: COPY.specialOffers.pageDescription },
+    alternates: { canonical: `/special-offers` },
+    openGraph: { type: 'website', url: `/special-offers`, siteName: SITE_NAME, title: COPY.specialOffers.pageTitle, description: COPY.specialOffers.pageDescription },
   }
 }
 

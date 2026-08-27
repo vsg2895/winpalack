@@ -4,6 +4,11 @@ export interface Site {
   name: string
   slug: string
   domain: string
+  // One short sentence saying what makes this brand different. It is appended to
+  // every generated legal page's meta description, so the eleven standard pages
+  // stop reading identically across the sibling domains. Null = the previous
+  // generic wording.
+  positioning: string | null
   revalidation_url: string | null
   settings: Record<string, unknown> | null
   active: boolean
