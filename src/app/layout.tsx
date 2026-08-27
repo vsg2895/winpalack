@@ -6,6 +6,8 @@ import SubscribeModal from '@/components/SubscribeModal'
 import ToastProvider from '@/components/ToastProvider'
 import SocialIcons from '@/components/SocialIcons'
 import CookieConsent from '@/components/CookieConsent'
+import ConsentModeScript from '@/components/ConsentModeScript'
+import Analytics from '@/components/Analytics'
 import CookieSettingsButton from '@/components/CookieSettingsButton'
 import Logo from '@/components/Logo'
 import { getSocialLinks, hasSpecialOffers } from '@/lib/api'
@@ -21,6 +23,20 @@ const fraunces = Fraunces({ variable: '--font-fraunces', subsets: ['latin'], sty
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] })
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? 'Winpalack'
+
+/**
+ * GA4 measurement ID — PRODUCTION ONLY, and only when actually configured.
+ *
+ * Undefined here means neither the consent bootstrap nor the tag renders at all,
+ * so `next dev` and any preview build that simply lacks the variable emit no
+ * analytics markup whatsoever — not a disabled tag, nothing.
+ *
+ * NEXT_PUBLIC_* is inlined by `next build`, so this must be present at BUILD
+ * time (a Docker --build-arg). Setting it only in the runtime environment leaves
+ * GA silently absent with no error to find.
+ */
+const GA_ID =
+  process.env.NODE_ENV === 'production' ? process.env.NEXT_PUBLIC_GA_ID : undefined
 
 // Both strings live in COPY so this site's wording is defined in exactly one
 // place — the same place the page-level titles and descriptions come from.
@@ -156,6 +172,10 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html lang="en" className={`${inter.variable} ${fraunces.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col text-slate-900">
+        {/* FIRST thing in the body, before anything that could load gtag.js:
+            denies every Consent Mode storage type. Rendered only when GA is
+            configured, so a build without a measurement ID emits nothing. */}
+        {GA_ID && <ConsentModeScript />}
         <ToastProvider>
         <script
           type="application/ld+json"
@@ -249,6 +269,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 
         <CookieConsent />
         <SubscribeModal />
+        {GA_ID && <Analytics gaId={GA_ID} />}
         </ToastProvider>
       </body>
     </html>

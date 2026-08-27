@@ -59,6 +59,40 @@ export function openCookieSettings(): void {
   listeners.forEach((notify) => notify())
 }
 
+/**
+ * What the visitor chose, or null if they have not chosen yet (or chose under an
+ * older CONSENT_VERSION, which counts as "not chosen" — the banner re-prompts
+ * them, so nothing may be granted on the strength of the stale record).
+ *
+ * Read by the analytics bridge. Deliberately a separate export from the banner's
+ * own `shouldShow` snapshot: "show the banner" and "what did they consent to"
+ * are different questions, and conflating them is how a reopened banner would
+ * look like a withdrawal of consent.
+ */
+export function getConsentChoice(): Choice | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as { choice?: Choice; v?: number }
+    if (parsed?.v !== CONSENT_VERSION) return null
+
+    return parsed.choice === 'all' || parsed.choice === 'necessary' ? parsed.choice : null
+  } catch {
+    // Storage blocked (private mode, cookies disabled). No record means no
+    // consent — the safe direction.
+    return null
+  }
+}
+
+/**
+ * Subscribe to consent changes, reusing the banner's existing listener set so a
+ * click on "Accept all" reaches analytics in the same tick it reaches the UI.
+ * That is what makes mid-session consent work without a page reload.
+ */
+export function subscribeToConsent(onChange: () => void): () => void {
+  return subscribe(onChange)
+}
+
 export default function CookieConsent() {
   const visible = useSyncExternalStore(subscribe, shouldShow, shouldShowServer)
 
