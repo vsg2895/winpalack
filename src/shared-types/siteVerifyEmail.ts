@@ -47,6 +47,12 @@ export interface SiteVerifyEmail {
   // never duplicates the list.
   optional_blocks: string[]
   accent_color: string
+  // Colour of the three footer lines (note, address/contact, copyright). Null
+  // renders `footer_text_color_default`. Footer LINKS keep accent_color, so an
+  // opt-out link never blends into the text around it.
+  footer_text_color: string | null
+  // Read-only fallback, so the editor never hard-codes the grey.
+  footer_text_color_default: string
   active: boolean
   // The SendGrid-verified domain the from address must use (read-only hint).
   from_domain: string
@@ -63,6 +69,7 @@ export type UpdateSiteVerifyEmailPayload = Omit<
   // Server-owned catalogue; the editor reads it but never sends it back.
   | 'optional_blocks'
   | 'verify_button_text_default'
+  | 'footer_text_color_default'
   | 'button_text_min_size'
   | 'button_text_max_size'
   | 'button_text_default_size'
