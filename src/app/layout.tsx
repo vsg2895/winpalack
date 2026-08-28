@@ -7,7 +7,10 @@ import ToastProvider from '@/components/ToastProvider'
 import SocialIcons from '@/components/SocialIcons'
 import CookieConsent from '@/components/CookieConsent'
 import ConsentModeScript from '@/components/ConsentModeScript'
-import Analytics from '@/components/Analytics'
+import GaPageView from '@/components/GaPageView'
+import Script from 'next/script'
+import { Suspense } from 'react'
+import { GA_MEASUREMENT_ID } from '@/lib/ga'
 import CookieSettingsButton from '@/components/CookieSettingsButton'
 import Logo from '@/components/Logo'
 import { getSocialLinks, hasSpecialOffers } from '@/lib/api'
@@ -24,19 +27,6 @@ const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin']
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? 'Winpalack'
 
-/**
- * GA4 measurement ID — PRODUCTION ONLY, and only when actually configured.
- *
- * Undefined here means neither the consent bootstrap nor the tag renders at all,
- * so `next dev` and any preview build that simply lacks the variable emit no
- * analytics markup whatsoever — not a disabled tag, nothing.
- *
- * NEXT_PUBLIC_* is inlined by `next build`, so this must be present at BUILD
- * time (a Docker --build-arg). Setting it only in the runtime environment leaves
- * GA silently absent with no error to find.
- */
-const GA_ID =
-  process.env.NODE_ENV === 'production' ? process.env.NEXT_PUBLIC_GA_ID : undefined
 
 // Both strings live in COPY so this site's wording is defined in exactly one
 // place — the same place the page-level titles and descriptions come from.
@@ -172,10 +162,9 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html lang="en" className={`${inter.variable} ${fraunces.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col text-slate-900">
-        {/* FIRST thing in the body, before anything that could load gtag.js:
-            denies every Consent Mode storage type. Rendered only when GA is
-            configured, so a build without a measurement ID emits nothing. */}
-        {GA_ID && <ConsentModeScript />}
+        {/* FIRST thing in the body, before anything that could load gtag.js.
+            Grants every Consent Mode storage type — see ConsentModeScript. */}
+        <ConsentModeScript />
         <ToastProvider>
         <script
           type="application/ld+json"
@@ -269,7 +258,30 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 
         <CookieConsent />
         <SubscribeModal />
-        {GA_ID && <Analytics gaId={GA_ID} />}
+        {/* GA4 — unconditional. No consent gate, no environment gate, no
+            interaction gate: these load on every page for every visitor.
+            `afterInteractive` keeps them off the critical path, so nothing here
+            blocks rendering. */}
+        <Script
+          id="ga-loader"
+          strategy="afterInteractive"
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+        />
+        <Script id="ga-config" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){ dataLayer.push(arguments); }
+            window.gtag = window.gtag || gtag;
+            gtag('js', new Date());
+            gtag('config', '${GA_MEASUREMENT_ID}');
+          `}
+        </Script>
+        {/* Suspense is required: GaPageView calls useSearchParams(), which would
+            otherwise opt this whole tree into dynamic rendering and lose static
+            generation across the site. */}
+        <Suspense fallback={null}>
+          <GaPageView />
+        </Suspense>
         </ToastProvider>
       </body>
     </html>

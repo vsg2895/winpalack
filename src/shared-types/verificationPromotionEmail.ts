@@ -42,6 +42,10 @@ export interface VerificationPromotionEmail {
   // Where the CTA points. Empty falls back to `hero_url`, then the site URL — so
   // leaving it blank keeps the button's existing destination.
   cta_button_url: string | null
+  // Label size for BOTH buttons, in px. One value on purpose: the two buttons
+  // share a fixed width so they read as one repeated call to action, and
+  // different label sizes would undo that. Null = the layout's own 16px.
+  button_text_font_size: number | null
   disclaimer_text: string | null
   // Structural — the opt-out link is legally required and cannot be removed.
   unsubscribe_label: string
@@ -56,6 +60,9 @@ export interface VerificationPromotionEmail {
   intro_text_min_size: number
   intro_text_max_size: number
   intro_text_default_size: number
+  button_text_min_size: number
+  button_text_max_size: number
+  button_text_default_size: number
   // Which site the PREVIEW and test render {{site_name}} / {{site_url}} against.
   // Persisted so reopening the editor keeps the admin's choice. NOT ownership —
   // this template is global, and the automatic send resolves the site from each
@@ -142,6 +149,9 @@ export type UpdateVerificationPromotionEmailPayload = Omit<
   | 'intro_text_min_size'
   | 'intro_text_max_size'
   | 'intro_text_default_size'
+  | 'button_text_min_size'
+  | 'button_text_max_size'
+  | 'button_text_default_size'
   | 'created_at'
   | 'updated_at'
 >
