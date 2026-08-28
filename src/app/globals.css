@@ -15,13 +15,39 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Base canvas colour lives on `html`, not `body`, so the decorative layer
+   below can sit behind body content (z-index:-1) and still paint above it. */
+html {
+  background: var(--background);
+}
+
 body {
-  background:
-    radial-gradient(55rem 55rem at 110% -10%, rgba(16, 185, 129, 0.12), transparent 60%),
-    radial-gradient(45rem 45rem at -10% 0%, rgba(20, 184, 166, 0.12), transparent 55%),
-    var(--background);
   color: var(--foreground);
   font-family: var(--font-inter), Arial, Helvetica, sans-serif;
+}
+
+/* Decorative corner glows.
+   These used to be `background` on `body`. A body's background box is the FULL
+   DOCUMENT height, and these blobs are sized in rem but positioned in
+   PERCENTAGES — so `at 110% -10%` resolved against a page thousands of pixels
+   tall and dropped an 880px circle into the middle of the text. With the
+   gradient ending at `transparent 60%` that edge read as a hard-edged tinted
+   band across a paragraph, which is what it looked like on any long page
+   (FAQ, casino review) on a phone. Desktop hid it because the page is short
+   enough that the blobs stayed in the corners.
+   Pinning the layer to the VIEWPORT makes the position independent of page
+   length, so the glow stays in the corners at every scroll position and on
+   every page. A fixed pseudo-element rather than `background-attachment: fixed`
+   because that property is unreliable and janky on iOS Safari. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(55rem 55rem at 110% -10%, rgba(16, 185, 129, 0.12), transparent 60%),
+    radial-gradient(45rem 45rem at -10% 0%, rgba(20, 184, 166, 0.12), transparent 55%);
 }
 
 .font-display {
