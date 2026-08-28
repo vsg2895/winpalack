@@ -52,7 +52,7 @@ export default function SocialIcons({ links }: { links: SocialLink[] }) {
               rel="noopener noreferrer"
               aria-label={name}
               title={name}
-              className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 bg-white/70 text-slate-500 backdrop-blur transition-colors hover:border-emerald-300 hover:text-emerald-600"
+              className="grid h-11 w-11 place-items-center rounded-full border border-slate-200 bg-white/70 text-slate-500 backdrop-blur transition-colors hover:border-emerald-300 hover:text-emerald-600"
             >
               <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="currentColor" aria-hidden>
                 {path ? <path d={path} /> : <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2" />}

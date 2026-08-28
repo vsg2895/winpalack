@@ -9,7 +9,7 @@ export default function CookieSettingsButton() {
     <button
       type="button"
       onClick={openCookieSettings}
-      className="text-xs text-slate-400 transition-colors hover:text-emerald-700"
+      className="inline-block py-1.5 -my-1.5 text-xs text-slate-400 transition-colors hover:text-emerald-700"
     >
       Cookie settings
     </button>

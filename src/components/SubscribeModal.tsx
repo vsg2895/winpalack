@@ -173,7 +173,7 @@ export default function SubscribeModal() {
                   onChange={(e) => setFullName(e.target.value)}
                   autoComplete="name"
                   placeholder="Your name (optional)"
-                  className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-base text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
                 />
                 <input
                   type="email"
@@ -181,7 +181,7 @@ export default function SubscribeModal() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={COPY.newsletter.placeholder}
-                  className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-base text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
                 />
                 <button
                   type="submit"
@@ -203,7 +203,7 @@ export default function SubscribeModal() {
                   type="checkbox"
                   checked={alreadySubscribed}
                   onChange={(e) => onAlreadySubscribed(e.target.checked)}
-                  className="h-3.5 w-3.5 rounded border-slate-300 accent-emerald-600"
+                  className="h-5 w-5 shrink-0 rounded border-slate-300 accent-emerald-600 text-base"
                 />
                 I already subscribed — don’t show this again
               </label>

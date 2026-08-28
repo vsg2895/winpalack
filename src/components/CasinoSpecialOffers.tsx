@@ -72,6 +72,7 @@ export default function CasinoSpecialOffers({ offers }: { offers: SpecialOffer[]
                   alt={offer.title}
                   width={112}
                   height={64}
+                  sizes="112px"
                   className="h-16 w-28 shrink-0 rounded-lg bg-slate-50 object-contain object-center p-1"
                 />
               )}

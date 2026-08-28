@@ -42,6 +42,7 @@ export default function CasinoCard({ casino, rank }: { casino: CasinoWithAttachm
               alt={casino.name}
               width={320}
               height={192}
+              sizes="160px"
               className="h-24 w-40 rounded-xl ring-1 ring-slate-100"
               style={{ objectFit: 'contain' }}
             />

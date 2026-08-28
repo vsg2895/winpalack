@@ -100,7 +100,7 @@ export default async function CasinoDetailPage({ params }: Props) {
           )}
 
           <header className="flex items-center gap-4">
-            {logo && <Image src={logo} alt={`${casino.name} logo`} width={64} height={64} className="rounded object-contain" />}
+            {logo && <Image src={logo} alt={`${casino.name} logo`} width={64} height={64} sizes="64px" className="rounded object-contain" />}
             <div>
               <h1 className="text-3xl font-bold text-zinc-900">{casino.name}</h1>
               <p className="mt-1 text-amber-500" aria-label={`${casino.rating} out of 5`}>{'★'.repeat(casino.rating)}{'☆'.repeat(5 - casino.rating)}</p>

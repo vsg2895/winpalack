@@ -18,9 +18,9 @@ export default function SpecialOfferCard({ offer }: { offer: SpecialOffer }) {
         {offer.bonuses && <p className="inline-block rounded-lg bg-emerald-50 px-2.5 py-1 text-sm font-semibold text-emerald-700">{offer.bonuses}</p>}
         <span className="text-xs text-amber-400" aria-label={`${offer.rating} out of 5`}>{'★'.repeat(offer.rating)}<span className="text-slate-200">{'★'.repeat(5 - offer.rating)}</span></span>
         <div className="mt-auto flex gap-2 pt-2">
-          <Link href={`/special-offers/${offer.slug}`} className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-sm font-semibold text-slate-700 transition-colors hover:border-emerald-300 hover:text-emerald-700">Details</Link>
+          <Link href={`/special-offers/${offer.slug}`} className="flex min-h-11 flex-1 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-sm font-semibold text-slate-700 transition-colors hover:border-emerald-300 hover:text-emerald-700">Details</Link>
           {offer.affiliate_url && (
-            <a href={offer.affiliate_url} target="_blank" rel="nofollow sponsored noopener" className="flex-1 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 px-3 py-2 text-center text-sm font-semibold text-white shadow-md shadow-emerald-500/30 transition-transform hover:scale-[1.03]">Claim</a>
+            <a href={offer.affiliate_url} target="_blank" rel="nofollow sponsored noopener" className="flex min-h-11 flex-1 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 px-3 py-2 text-center text-sm font-semibold text-white shadow-md shadow-emerald-500/30 transition-transform hover:scale-[1.03]">Claim</a>
           )}
         </div>
       </div>
