@@ -26,6 +26,19 @@ export interface SiteVerifyEmail {
   postal_address: string | null
   contact_email: string | null
   copyright_text: string | null
+  // The verify button's caption. Placeholders are substituted. Null or blank
+  // renders `verify_button_text_default` instead of an empty button — this one
+  // block is NOT removable, because the button is the email's whole purpose.
+  verify_button_text: string | null
+  // Read-only fallback caption, so the editor never hard-codes it.
+  verify_button_text_default: string
+  // Button label size in px. Null = the size this template has always rendered
+  // at (they differ per template on purpose, so no existing email changes).
+  button_text_font_size: number | null
+  // Read-only sizing bounds, so the admin input never hard-codes them.
+  button_text_min_size: number
+  button_text_max_size: number
+  button_text_default_size: number
   // Optional blocks the admin switched OFF. Anything NOT listed is visible, so
   // an existing row renders unchanged. Keys are limited to
   // SiteVerifyEmail::OPTIONAL_BLOCKS server-side.
@@ -49,6 +62,10 @@ export type UpdateSiteVerifyEmailPayload = Omit<
   | 'from_domain'
   // Server-owned catalogue; the editor reads it but never sends it back.
   | 'optional_blocks'
+  | 'verify_button_text_default'
+  | 'button_text_min_size'
+  | 'button_text_max_size'
+  | 'button_text_default_size'
   | 'created_at'
   | 'updated_at'
 >

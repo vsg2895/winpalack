@@ -31,6 +31,13 @@ export interface SitePromotionEmail {
   postal_address: string | null
   contact_email: string | null
   copyright_text: string | null
+  // Button label size in px. Null = the size this template has always rendered
+  // at (they differ per template on purpose, so no existing email changes).
+  button_text_font_size: number | null
+  // Read-only sizing bounds, so the admin input never hard-codes them.
+  button_text_min_size: number
+  button_text_max_size: number
+  button_text_default_size: number
   // Blocks the admin has switched OFF. Each still has its content stored in its
   // own field, so restoring one means dropping its key from here — never a
   // retype. Keys come from `optional_blocks`.
@@ -62,6 +69,9 @@ export type UpdateSitePromotionEmailPayload = Omit<
   | 'from_domain'
   // Server-owned catalogue; the editor reads it but never sends it back.
   | 'optional_blocks'
+  | 'button_text_min_size'
+  | 'button_text_max_size'
+  | 'button_text_default_size'
   | 'created_at'
   | 'updated_at'
 >
