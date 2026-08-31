@@ -40,7 +40,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: page.meta_description ?? undefined,
     alternates: { canonical: `/${slug}` },
     openGraph: { type: 'article', url: `/${slug}`, siteName: SITE_NAME, title: headline, description: page.meta_description ?? undefined },
-    robots: { index: true, follow: true },
+    // NOINDEX, FOLLOW on the standard legal pages.
+    //
+    // These eleven are generated from one template for every site in the
+    // network (see App\Support\LegalPageContent), so indexing them would put
+    // six near-identical copies of the same privacy policy and the same AML
+    // statement into the index competing with each other — cannibalisation
+    // between our own domains, on pages that were never going to rank anyway.
+    //
+    // `follow` stays TRUE: the pages must still pass authority back through
+    // their internal links, and a visitor reaching one from search is not the
+    // problem — a duplicate in the index is.
+    //
+    // A CMS page that is NOT one of the eleven is bespoke editorial for this
+    // site, so it indexes normally.
+    robots: LEGAL_PAGES.some((p) => p.slug === slug)
+      ? { index: false, follow: true }
+      : { index: true, follow: true },
   }
 }
 

@@ -18,6 +18,8 @@ const SITE_DOMAINS: Record<string, string> = {
   winpalack: 'https://winpalack.com',
   roulettingo: 'https://roulettingo.com',
   viglinksi: 'https://viglinksi.com',
+  nongambles: 'https://nongambles.com',
+  crogambline: 'https://crogambline.com',
 }
 // Ports each site's dev server actually runs on. Kept in step with the
 // revalidation URLs registered against each site in the admin — if these drift,
@@ -27,6 +29,8 @@ const SITE_DEV_PORTS: Record<string, string> = {
   winpalack: '3002',
   roulettingo: '3003',
   viglinksi: '3004',
+  nongambles: '3005',
+  crogambline: '3006',
 }
 
 export const API_URL: string = process.env.API_URL ?? `${API_ORIGIN}/api/v1/public`

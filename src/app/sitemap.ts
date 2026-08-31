@@ -1,6 +1,5 @@
 import type { MetadataRoute } from 'next'
 import { getCasinos, getCategories, getSpecialOffers } from '@/lib/api'
-import { LEGAL_PAGES } from '@/constants/legalPages'
 import { SITE_URL } from '@/lib/config'
 
 
@@ -54,15 +53,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/categories`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
   ]
 
-  // The legal / informational pages are linked from every footer but were absent
-  // from the sitemap, leaving 11 indexable URLs per site discoverable only by
-  // crawling. They change rarely, so a low priority and a monthly frequency.
-  const legalUrls: MetadataRoute.Sitemap = LEGAL_PAGES.map(({ slug }) => ({
-    url: `${SITE_URL}/${slug}`,
-    lastModified: new Date(),
-    changeFrequency: 'monthly',
-    priority: 0.3,
-  }))
+  // THE LEGAL PAGES ARE DELIBERATELY ABSENT FROM THIS SITEMAP.
+  //
+  // They are served with `noindex, follow` (see app/[slug]/page.tsx) because
+  // all eleven are generated from one template shared by every site in the
+  // network. Listing a noindexed URL in a sitemap is a contradictory signal —
+  // the sitemap says "index this", the page header says "do not" — and Search
+  // Console reports it as an error rather than resolving it.
+  //
+  // They remain reachable and crawlable: every footer links to all eleven.
+  const legalUrls: MetadataRoute.Sitemap = []
 
   return [...staticUrls, ...casinoUrls, ...categoryUrls, ...offerUrls, ...legalUrls]
 }

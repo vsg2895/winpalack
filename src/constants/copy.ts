@@ -57,7 +57,7 @@ export const COPY = {
       'Online casinos checked for licensing, fair withdrawal limits and responsible-play tools before we recommend them to anyone.',
   },
   casinos: {
-    pageTitle: 'Verified Casino Reviews',
+    pageTitle: 'Licence & Safety Checks',
     pageDescription:
       'Licensed casinos assessed for withdrawal limits, complaint history and the safer-play tools they give players.',
     // Meta-description fallback for a casino review page. Casino records are
@@ -66,6 +66,14 @@ export const COPY = {
     // Short per-site tail appended to an ADMIN-ENTERED casino meta description.
     // Casino records are shared by every site, so without this the same
     // description would ship on all four domains the moment the field is filled.
+    // Appended to og:title / twitter:title on a casino review. The casino's
+    // own meta_title is shared master data, so without this every domain
+    // shipped an IDENTICAL share-card title for the same casino.
+    // H2 over the offers block on a casino page. The literal 'Special Offers'
+    // was hardcoded in the component on all six sites — an identical H2 on
+    // every review page in the network.
+    offersHeading: 'Offers Worth Claiming',
+    reviewTitleTail: 'Licence & Limits Checked',
     reviewSignature: 'Licence and payout limits verified.',
     reviewSummary: 'checked for licensing, withdrawal limits and the safer-play tools it gives players.',
     visitCasino: 'Go to Casino',
@@ -98,7 +106,7 @@ export const COPY = {
     placeholder: 'Your email address',
     button: 'Subscribe',
     success: 'Thanks! Check your inbox to confirm your address and finish signing up.',
-    error: 'That did not go through. Please try again.',
+    error: 'That did not send. Check the address and try once more.',
   },
   footer: {
     // Short brand blurb in the footer, above the legal links.

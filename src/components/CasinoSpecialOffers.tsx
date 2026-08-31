@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { resolveImageUrl } from '@/lib/images'
+import { COPY } from '@/constants/copy'
 import type { SpecialOffer } from '@shared/types/specialOffer'
 
 const PER_PAGE = 4
@@ -30,7 +31,7 @@ export default function CasinoSpecialOffers({ offers }: { offers: SpecialOffer[]
     <section className="mt-10">
       <div className="mb-4 flex items-center justify-between gap-4">
         <h2 className="text-xl font-bold text-zinc-900">
-          Special Offers <span className="font-semibold text-zinc-400">({total})</span>
+          {COPY.casinos.offersHeading} <span className="font-semibold text-zinc-400">({total})</span>
         </h2>
         {pageCount > 1 && (
           <div className="flex items-center gap-2">

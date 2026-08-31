@@ -35,11 +35,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const description = casino.meta_description
       ? `${casino.meta_description} ${COPY.casinos.reviewSignature}`
       : `${casino.name} — ${COPY.casinos.reviewSummary}`
+    // The `title` above is the casino's own meta_title — shared master data, so
+    // it is byte-identical on every domain in the network. The share card is
+    // where that was most visible: six results, one headline. This site's tail
+    // makes the card its own without touching the shared record.
+    const shareTitle = `${title} — ${COPY.casinos.reviewTitleTail}`
     return {
       title,
       description,
       alternates: { canonical: `/casinos/${slug}` },
-      openGraph: { type: 'article', url: `/casinos/${slug}`, siteName: SITE_NAME, title, description },
+      openGraph: { type: 'article', url: `/casinos/${slug}`, siteName: SITE_NAME, title: shareTitle, description },
+      twitter: { card: 'summary_large_image', title: shareTitle, description },
     }
   } catch {
     return { title: COPY.errors.notFound }
@@ -75,7 +81,12 @@ export default async function CasinoDetailPage({ params }: Props) {
     buildWebPageSchema({
       name: `${casino.name} Review`,
       url: pageUrl,
-      description: casino.meta_description ?? undefined,
+      // Same composition as the <meta> description in generateMetadata. Passing
+      // the raw shared `meta_description` here put an identical WebPage
+      // description on all six domains for the same casino.
+      description: casino.meta_description
+        ? `${casino.meta_description} ${COPY.casinos.reviewSignature}`
+        : `${casino.name} — ${COPY.casinos.reviewSummary}`,
       breadcrumbId: breadcrumbIdFor(pageUrl),
       dateModified: casino.updated_at,
     }),
