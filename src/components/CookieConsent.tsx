@@ -86,7 +86,7 @@ export function getConsentChoice(): Choice | null {
 
 /**
  * Subscribe to consent changes, reusing the banner's existing listener set so a
- * click on "Accept all" reaches analytics in the same tick it reaches the UI.
+ * click on "Accept All" reaches analytics in the same tick it reaches the UI.
  * That is what makes mid-session consent work without a page reload.
  */
 export function subscribeToConsent(onChange: () => void): () => void {
@@ -124,14 +124,14 @@ export default function CookieConsent() {
             onClick={() => recordConsent('necessary')}
             className="inline-flex min-h-11 items-center justify-center rounded-lg border border-zinc-300 px-4 py-2 text-sm font-semibold text-zinc-700 transition-colors hover:bg-zinc-100"
           >
-            Reject non-essential
+            Reject Non-Essential
           </button>
           <button
             type="button"
             onClick={() => recordConsent('all')}
             className="inline-flex min-h-11 items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
           >
-            Accept all
+            Accept All
           </button>
         </div>
       </div>

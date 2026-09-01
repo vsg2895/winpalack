@@ -73,10 +73,12 @@ export const COPY = {
     // was hardcoded in the component on all six sites — an identical H2 on
     // every review page in the network.
     offersHeading: 'Offers Worth Claiming',
+    // Tail of the summary-panel H2: `{casino.name} the safety checks`.
+    glanceHeadingTail: 'safety record',
     reviewTitleTail: 'Licence & Limits Checked',
     reviewSignature: 'Licence and payout limits verified.',
     reviewSummary: 'checked for licensing, withdrawal limits and the safer-play tools it gives players.',
-    visitCasino: 'Go to Casino',
+    visitCasino: 'Go To Casino',
     readReview: 'Read Safety Review',
     rating: 'Safety Score',
     noResults: 'No verified casinos match this filter yet.',
