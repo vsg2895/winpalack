@@ -14,8 +14,21 @@ export interface MailgunKey {
   name: string
   domain: string
   region: MailgunRegion
+  /**
+   * Sender identity registered with Mailgun for this domain. Recorded for
+   * reference only: no send path reads it, because every send takes its sender
+   * from the site template's own from_email. Both fields are legitimately null
+   * on a credential that works perfectly well.
+   */
+  from_address: string | null
+  from_name: string | null
   masked_key: string
   status: MailgunKeyStatus
+  /**
+   * Whether the credential can AUTHENTICATE (has a key and a domain).
+   * Deliberately unrelated to sender identity.
+   */
+  can_authenticate: boolean
   created_at: string
   updated_at: string
 }
@@ -27,5 +40,7 @@ export interface UpsertMailgunKeyPayload {
   domain: string
   api_key?: string | null
   region?: MailgunRegion
+  from_address?: string | null
+  from_name?: string | null
   status?: MailgunKeyStatus
 }
