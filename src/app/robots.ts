@@ -7,7 +7,10 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/api/'],
+      // /go/* are outbound affiliate redirects, not content. Crawling them
+      // wastes budget on 302s, inflates the click counts with bot traffic and
+      // points crawlers at operator sites we do not control.
+      disallow: ['/api/', '/go/'],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,
   }

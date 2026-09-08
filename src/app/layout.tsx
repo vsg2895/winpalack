@@ -13,7 +13,7 @@ import { Suspense } from 'react'
 import { GA_MEASUREMENT_ID } from '@/lib/ga'
 import CookieSettingsButton from '@/components/CookieSettingsButton'
 import Logo from '@/components/Logo'
-import { getSocialLinks, hasSpecialOffers } from '@/lib/api'
+import { getSocialLinks, hasSpecialOffers, getSiteFeatures, getNavigation, getArticles } from '@/lib/api'
 import { buildOrganizationSchema, buildWebSiteSchema, jsonLdScript } from '@/lib/seo'
 import { SITE_URL } from '@/lib/config'
 import { COPY } from '@/constants/copy'
@@ -120,6 +120,8 @@ const NAV_LINKS = [
   { href: '/casinos', label: COPY.nav.casinos },
   { href: '/special-offers', label: COPY.nav.specialOffers },
   { href: '/categories', label: COPY.nav.categories },
+  { href: '/countries', label: COPY.nav.countries },
+  { href: '/forum', label: COPY.nav.forum },
 ]
 
 function ShieldMark() {
@@ -146,7 +148,53 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   // a visible offer to show; with none, the link would lead to an empty page,
   // so both the header and the footer drop it.
   const showSpecialOffers = await hasSpecialOffers()
-  const navLinks = NAV_LINKS.filter(({ href }) => href !== '/special-offers' || showSpecialOffers)
+
+  // "Countries" is a per-site feature switch rather than a content check: the
+  // page 404s when it is off, so linking to it would advertise a dead route.
+  const {
+    countries_enabled: showCountries,
+    guides_enabled: guidesEnabled,
+    // Set by the admin's Forum page screen, already ANDed with reviews_enabled
+    // server-side, so the link cannot advertise a page that 404s.
+    forum_enabled: showForum,
+  } = await getSiteFeatures()
+
+  // The guides link appears only once the section is actually open. Same
+  // three-article threshold the /guides route itself enforces, so the nav can
+  // never point at a 404 — and a section with one post never advertises itself.
+  const showGuides = guidesEnabled && (await getArticles()).length >= 3
+
+  // Admin-managed menus, or null when this site has none configured.
+  const navigation = await getNavigation()
+
+  // The built-in menu, filtered by the feature switches. Still the fallback, and
+  // still what every site that has not adopted admin navigation renders.
+  const codeNavLinks = [
+    ...NAV_LINKS,
+    // Appended rather than declared in NAV_LINKS: it is conditional on content
+    // volume, not just a feature switch.
+    ...(showGuides ? [{ href: '/guides', label: COPY.nav.guides }] : []),
+  ].filter(({ href }) => {
+    if (href === '/special-offers') return showSpecialOffers
+    if (href === '/countries') return showCountries
+    // Unlike Special Offers, this is NOT gated on having content. An empty
+    // forum has a real empty state that asks for the first review, so the link
+    // is how that review gets written — dropping it would be the deadlock.
+    if (href === '/forum') return showForum
+    return true
+  })
+
+  // An admin-managed menu is taken AS AUTHORED — no feature filtering. If an
+  // editor put a link in the menu, they meant it; silently dropping it because
+  // of a switch they also control would be the panel arguing with itself. The
+  // filtering above exists only for links this site never chose.
+  const headerLinks = navigation?.header.length
+    ? navigation.header.map((i) => ({ href: i.url, label: i.label, external: i.opens_in_new_tab }))
+    : codeNavLinks.map((l) => ({ ...l, external: false }))
+
+  const footerLinks = navigation?.footer.length
+    ? navigation.footer.map((i) => ({ href: i.url, label: i.label, external: i.opens_in_new_tab }))
+    : codeNavLinks.map((l) => ({ ...l, external: false }))
 
   // Site-wide structured data, rendered once here so every page carries it.
   // Next.js manages the document <head> (manual <head> tags in a root layout are
@@ -177,11 +225,23 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             <Logo />
             <nav aria-label="Main navigation" className="no-scrollbar -mr-4 min-w-0 overflow-x-auto pr-4">
               <ul className="flex items-center gap-0.5 sm:gap-1" role="list">
-                {navLinks.map(({ href, label }) => (
+                {headerLinks.map(({ href, label, external }) => (
                   <li key={href}>
-                    <Link href={href} className="flex min-h-11 items-center whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-emerald-50 hover:text-emerald-700 sm:px-4">
-                      {label}
-                    </Link>
+                    {/* An absolute URL gets a plain <a>: next/link is for
+                        in-app routes and cannot prefetch another origin. */}
+                    {external || href.startsWith('http') ? (
+                      <a
+                        href={href}
+                        {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                        className="group relative flex min-h-11 items-center whitespace-nowrap rounded-full px-3 py-2 text-[15px] font-semibold tracking-tight transition-all duration-200 sm:px-4 sm:text-base after:absolute after:bottom-1 after:left-1/2 after:h-[2px] after:w-0 after:-translate-x-1/2 after:rounded-full after:transition-all after:duration-300 after:content-[''] hover:after:w-1/2 text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 after:bg-emerald-600"
+                      >
+                        {label}
+                      </a>
+                    ) : (
+                      <Link href={href} className="group relative flex min-h-11 items-center whitespace-nowrap rounded-full px-3 py-2 text-[15px] font-semibold tracking-tight transition-all duration-200 sm:px-4 sm:text-base after:absolute after:bottom-1 after:left-1/2 after:h-[2px] after:w-0 after:-translate-x-1/2 after:rounded-full after:transition-all after:duration-300 after:content-[''] hover:after:w-1/2 text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 after:bg-emerald-600">
+                        {label}
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -218,9 +278,19 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               <div className="sm:text-right">
                 <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-500">Explore</p>
                 <ul className="flex flex-col gap-2">
-                  {navLinks.map(({ href, label }) => (
+                  {footerLinks.map(({ href, label, external }) => (
                     <li key={href}>
-                      <Link href={href} className="inline-block py-1.5 -my-1.5 text-sm text-slate-500 transition-colors hover:text-emerald-700">{label}</Link>
+                      {external || href.startsWith('http') ? (
+                        <a
+                          href={href}
+                          {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                          className="inline-block py-1.5 -my-1.5 text-sm text-slate-500 transition-colors hover:text-emerald-700"
+                        >
+                          {label}
+                        </a>
+                      ) : (
+                        <Link href={href} className="inline-block py-1.5 -my-1.5 text-sm text-slate-500 transition-colors hover:text-emerald-700">{label}</Link>
+                      )}
                     </li>
                   ))}
                 </ul>

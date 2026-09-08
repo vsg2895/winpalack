@@ -102,11 +102,28 @@ export function buildWebPageSchema(params: {
   }
 }
 
-export function buildCasinoReviewSchema(casino: CasinoWithAttachment): WithContext<Review> {
+export function buildCasinoReviewSchema(
+  casino: CasinoWithAttachment,
+  /**
+   * The named reviewer, when this site has one configured. OMITTED entirely
+   * when absent — an `author` node naming the organisation instead of a person
+   * would assert human authorship we cannot point at, which is precisely the
+   * claim structured data is scrutinised for.
+   */
+  author?: { name: string } | null,
+): WithContext<Review> {
   return {
     '@context': 'https://schema.org',
     '@type': 'Review',
     name: `${casino.name} Review`,
+    // Only emitted alongside a real review date, matching the visible byline —
+    // the markup and the page must make the same claim.
+    ...(author && casino.reviewed_at
+      ? {
+          author: { '@type': 'Person' as const, name: author.name },
+          datePublished: casino.reviewed_at,
+        }
+      : {}),
     // When the editorial verdict was last revised. Answer engines weight recency
     // heavily when choosing which source to quote.
     ...(casino.updated_at ? { dateModified: casino.updated_at } : {}),
@@ -132,7 +149,13 @@ export function buildCasinoReviewSchema(casino: CasinoWithAttachment): WithConte
       bestRating: 5,
       worstRating: 0,
     },
-    author: { '@type': 'Organization', name: SITE_NAME },
+    // The site as author, used ONLY when no named reviewer is configured.
+    // Declared after the spread above, so without this guard it silently
+    // overwrote the Person node and the markup credited the brand while the
+    // visible byline credited a person — two different claims on one page.
+    ...(author && casino.reviewed_at
+      ? {}
+      : { author: { '@type': 'Organization' as const, name: SITE_NAME } }),
     publisher: { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
   }
 }

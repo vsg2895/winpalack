@@ -12,6 +12,50 @@ export interface Site {
   revalidation_url: string | null
   settings: Record<string, unknown> | null
   active: boolean
+  /**
+<<<<<<< Updated upstream
+   * Whether this site mails the people who subscribe to it.
+   *
+   * Off, the signup form still works and the subscriber is still recorded —
+   * only the outbound mail stops, and those subscribers stay unverified because
+   * they were never sent a link to click.
+   */
+  newsletter_emails_enabled: boolean
+  /**
+=======
+>>>>>>> Stashed changes
+   * Does this site publish the countries filter? Opt-in per site, off by
+   * default. The public /countries endpoints 404 when it is false, so this is
+   * what the front end reads to decide whether to render the nav link at all.
+   */
+  countries_enabled: boolean
+  /**
+   * Does this site display AND accept visitor reviews? Opt-in per site, off by
+   * default. Gates both directions — the public read and write endpoints 404
+   * when it is false.
+   */
+  reviews_enabled: boolean
+  /** Whether this site renders the casino's factual operator profile. */
+  operator_profile_enabled: boolean
+  /** Whether reviews carry a named reviewer. Requires author_name to be set. */
+  byline_enabled: boolean
+  /** Whether this site publishes editorial guides. */
+  guides_enabled: boolean
+  /**
+   * Cache health, denormalised so the sites list needs no aggregate.
+   *
+   * Null until the first attempt. A `failed` status with an error is the state
+   * that matters: it means an editor's save did not reach the public site.
+   */
+  last_revalidated_at: string | null
+  last_revalidation_status: 'success' | 'failed' | null
+  last_revalidation_error: string | null
+  author_name: string | null
+  author_role: string | null
+  author_bio: string | null
+  author_avatar_path: string | null
+  /** Slug of the CMS page describing how reviews are done. */
+  methodology_page_slug: string | null
   created_at: string
   updated_at: string
 }

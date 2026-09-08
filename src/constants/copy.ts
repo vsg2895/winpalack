@@ -37,6 +37,9 @@ export const COPY = {
     casinos: 'Casinos',
     specialOffers: 'Special Offers',
     categories: 'Categories',
+    countries: 'Countries',
+    forum: 'Forum',
+    guides: 'Guides',
   },
   home: {
     heroEyebrow: 'Player Protection First',
@@ -81,6 +84,36 @@ export const COPY = {
     visitCasino: 'Go To Casino',
     readReview: 'Read Safety Review',
     rating: 'Safety Score',
+    // Reads off `casino.updated_at`, which the API already returns and which
+    // until now only reached JSON-LD as `dateModified`. A visible revision date
+    // is the cheapest trust signal a review page has — it says the entry is
+    // maintained, not abandoned.
+    // Reads off `updated_at`, which bumps on ANY field change — so it is
+    // labelled as what it is. The editorial claim is reviewedOn below, which
+    // comes from a date a person actually set.
+    lastChecked: 'Entry updated',
+    // Reads off `casinos.reviewed_at`. Only rendered when someone recorded a
+    // real review date; never falls back to updated_at.
+    reviewedOn: 'Checked by',
+    methodologyLink: 'How we check casinos',
+    // Rendered from the PER-SITE `attachment.featured` pivot flag, so the same
+    // casino can be a pick here and an ordinary listing on another domain.
+    // Editorial control lives in the admin: Casino → Attach to Sites → Featured.
+    featuredBadge: 'Our pick',
+    // Heading over the casino's promoted offer — `featured_special_offer_id` on
+    // the casino record, chosen in the admin.
+    featuredOfferHeading: 'The offer we would take',
+    // Heading over the country chips on a casino page. Links into the
+    // /countries hub, which is itself per-site switchable in the admin.
+    countriesHeading: 'Accepts players from',
+    // Heading/title tail for the per-operator bonus sub-page. Published only
+    // when the operator has 2+ live offers AND admin-written intro copy.
+    bonusesTitleTail: 'Bonuses & Offers',
+    bonusesLink: 'See all bonuses',
+    // Operator profile block — the licence, payment, support and safer-play
+    // facts. Rendered only for the groups that actually have values.
+    profileHeadingTail: 'in detail',
+    profileIntro: 'Stated by the operator and checked against its licence where one is published. Blank fields are ones we have not verified.',
     noResults: 'No verified casinos match this filter yet.',
   },
   specialOffers: {
@@ -101,6 +134,67 @@ export const COPY = {
     // shared master data, so this is what keeps the four sites distinct there.
     categoryMetaSuffix: 'each one checked for licensing, withdrawal limits and responsible-play tools before listing.',
     noResults: 'No categories to show yet.',
+  },
+  countries: {
+    pageTitle: 'Casinos By Country',
+    pageDescription:
+      'Find licensed casinos that accept players from your country, with the same licensing and payout checks applied everywhere on this site.',
+    // Meta-description tail for a single country page. Country records are
+    // shared master data, so this is what keeps the sites distinct there.
+    countryMetaSuffix:
+      'each one checked for licensing, withdrawal limits and responsible-play tools before listing.',
+    showCasinos: 'Show Casinos',
+    noResults: 'No countries to show yet.',
+    emptyCountry: 'No casinos listed for this country yet.',
+    casinoCount: (n: number) => `${n} ${n === 1 ? 'casino' : 'casinos'}`,
+  },
+  guides: {
+    pageTitle: 'Guides',
+    pageDescription:
+      'Plain explanations of the terms that decide what a bonus is actually worth, and what to check before you deposit.',
+    // Shown on every guide. A guide may link to an operator, and a reader is
+    // entitled to know how the site is paid.
+    affiliateDisclosure:
+      'Some links on this page are affiliate links. If you sign up through one we may be paid a commission, at no cost to you. It never changes which casinos we list or what we say about them.',
+    backToIndex: 'All guides',
+  },
+  // The forum — every published player review on the site, grouped by casino.
+  //
+  // ONLY the strings that are not editable in the admin panel live here. The
+  // heading, eyebrow, intro, empty state and both meta strings come from
+  // Sites → Forum page and are defaulted server-side (SiteForum::resolved), so
+  // duplicating them here would create a second source of truth that an editor
+  // could not see or change.
+  //
+  // What remains is number formatting: labels whose text is inseparable from a
+  // count, where a free-text field would let an editor write a plural that
+  // disagrees with the figure beside it.
+  forum: {
+    statReviews: (n: number) => `${n} ${n === 1 ? 'review' : 'reviews'}`,
+    statCasinos: (n: number) => `across ${n} ${n === 1 ? 'casino' : 'casinos'}`,
+    statAverage: (avg: number) => `${avg.toFixed(1)} average rating`,
+    lastActivity: 'Last review',
+    readAll: (n: number) => `Read all ${n} reviews`,
+    writeOne: 'Write a review',
+    threadRating: (avg: number, total: number) =>
+      `${avg.toFixed(1)}/5 from ${total} ${total === 1 ? 'review' : 'reviews'}`,
+  },
+  reviews: {
+    heading: 'Player Reviews',
+    empty: 'No reviews yet — be the first to share your experience.',
+    formTitle: 'Write A Review',
+    formIntro: 'Reviews are checked before they appear, so yours will not show straight away.',
+    nameLabel: 'Your name',
+    emailLabel: 'Email (optional, never published)',
+    ratingLabel: 'Rating',
+    titleLabel: 'Headline (optional)',
+    bodyLabel: 'Your review',
+    bodyPlaceholder: 'What was your experience — payouts, support, verification?',
+    submit: 'Submit Review',
+    success: 'Thanks — your review has been submitted and will appear once approved.',
+    error: 'That did not send. Please check the form and try again.',
+    ratingSummary: (avg: number, total: number) =>
+      `${avg.toFixed(1)} out of 5 from ${total} ${total === 1 ? 'review' : 'reviews'}`,
   },
   newsletter: {
     title: 'Stay on the safe side',

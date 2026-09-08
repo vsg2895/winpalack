@@ -56,6 +56,16 @@ export default function CasinoCard({ casino, rank }: { casino: CasinoWithAttachm
 
       {/* The three things that matter */}
       <div className="min-w-0 flex-1">
+        {/* Per-site editorial promotion. `attachment.featured` has been in the
+            API payload all along and was read by nothing, so a featured casino
+            looked identical to every other row. Toggled per site in the admin,
+            which is why it sits on the attachment and not on the casino. */}
+        {casino.attachment.featured && (
+          <p className="mb-1 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">
+            <span aria-hidden>◆</span>
+            {COPY.casinos.featuredBadge}
+          </p>
+        )}
         <h3 className="font-display text-lg font-bold leading-tight text-slate-900 sm:text-xl">{casino.name}</h3>
         <div className="mt-1.5 flex items-center gap-2">
           <Stars rating={casino.rating} />
@@ -68,8 +78,11 @@ export default function CasinoCard({ casino, rank }: { casino: CasinoWithAttachm
 
       {/* CTAs — Visit is primary, Read Review secondary */}
       <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-shrink-0">
+        {/* Through our own /go route, not the operator URL: the destination
+            is admin-editable and the click is counted. rel/target are unchanged
+            — the link is still sponsored and still opens in a new tab. */}
         <a
-          href={casino.attachment.affiliate_url}
+          href={`/go/${casino.slug}`}
           target="_blank"
           rel="nofollow sponsored noopener"
           className="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 px-6 py-3 text-center text-sm font-bold text-white shadow-lg shadow-emerald-500/30 transition-transform hover:scale-[1.03] sm:min-w-[150px]"

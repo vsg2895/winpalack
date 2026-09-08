@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { getCategories } from '@/lib/api'
 import { buildWebPageSchema, jsonLdScript } from '@/lib/seo'
 import { COPY } from '@/constants/copy'
+import { resolveImageUrl } from '@/lib/images'
 import { SITE_URL } from '@/lib/config'
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
@@ -43,7 +44,20 @@ export default async function CategoriesPage() {
           <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {categories.map((c) => (
               <li key={c.id}>
-                <Link href={`/categories/${c.slug}`} className="block rounded-2xl border border-zinc-100 bg-white p-6 text-center font-semibold text-zinc-800 shadow-sm hover:border-emerald-300 hover:text-emerald-600 transition-colors">
+                <Link href={`/categories/${c.slug}`} className="block rounded-2xl border border-zinc-100 bg-white p-6 text-center font-bold text-zinc-800 shadow-sm hover:border-emerald-300 hover:text-emerald-600 transition-colors">
+                  {/* Stacked, not inline: these cards are centred and one
+                      word wide, so a logo beside the label would push long
+                      names onto a second line. */}
+                  {resolveImageUrl(c.logo_path) && (
+                    <img
+                      src={resolveImageUrl(c.logo_path)!}
+                      alt=""
+                      width={32}
+                      height={32}
+                      className="mx-auto mb-3 h-8 w-8"
+                      aria-hidden
+                    />
+                  )}
                   {c.name}
                 </Link>
               </li>

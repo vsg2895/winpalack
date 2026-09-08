@@ -1,10 +1,11 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { getCategories, getCategory } from '@/lib/api'
+import { getCasinoFacets, getCategories, getCategory, getFilteredCasinos } from '@/lib/api'
 import { buildItemListSchema, buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript } from '@/lib/seo'
 import { COPY } from '@/constants/copy'
 import CasinoCard from '@/components/CasinoCard'
+import CasinoFilters from '@/components/CasinoFilters'
 import Pagination from '@/components/Pagination'
 import { SITE_URL } from '@/lib/config'
 
@@ -12,7 +13,9 @@ const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
 
 type Props = {
   params: Promise<{ slug: string }>
-  searchParams: Promise<{ page?: string }>
+  // Facet values arrive as query params alongside `page`. Unknown keys are
+  // ignored by the API, so a stale link cannot break the page.
+  searchParams: Promise<Record<string, string | undefined>>
 }
 
 /**
@@ -34,7 +37,10 @@ export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const { slug } = await params
-  const page = Math.max(1, Number((await searchParams).page) || 1)
+  const sp = await searchParams
+  const page = Math.max(1, Number(sp.page) || 1)
+  // Any facet param means this is a filtered view.
+  const isFiltered = ['country', 'licence', 'payment_method', 'provider'].some((k) => sp[k])
   try {
     const { data } = await getCategory(slug, page)
     // Distinct title per page so paginated views are never reported as duplicates.
@@ -47,6 +53,10 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 
     return {
       title,
+      // Filtered views stay OUT of the index: the combinations are
+      // near-duplicates of the category page. `follow` is kept so the
+      // casinos they link to still receive the links.
+      ...(isFiltered ? { robots: { index: false, follow: true } } : {}),
       description,
       // Self-referencing canonical: this route is now the canonical home of a
       // category, and /casinos?category=<slug> 301s here (see next.config).
@@ -60,7 +70,8 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 
 export default async function CategoryDetailPage({ params, searchParams }: Props) {
   const { slug } = await params
-  const page = Math.max(1, Number((await searchParams).page) || 1)
+  const sp = await searchParams
+  const page = Math.max(1, Number(sp.page) || 1)
 
   let payload
   try {
@@ -69,7 +80,28 @@ export default async function CategoryDetailPage({ params, searchParams }: Props
     notFound()
   }
 
-  const { category, casinos, meta } = payload
+  const { category, meta } = payload
+
+  // Facets, minus `category` — this page IS a category, so offering it again
+  // would let a visitor select a second one and expect both.
+  const facets = (await getCasinoFacets()).filter((f) => f.facet !== 'category')
+
+  // Which facet values the URL is asking for.
+  const selected: Record<string, string> = {}
+  for (const facet of facets) {
+    const value = sp[facet.facet]
+    if (value) selected[facet.facet] = value
+  }
+  const isFiltered = Object.keys(selected).length > 0
+
+  // Unfiltered, the paginated category payload is used as-is — same request,
+  // same cache entry, no behaviour change. Filtered, the full filtered set is
+  // fetched instead: combining server-side pagination with facets would need a
+  // paginated filter endpoint, and the honest interim is to filter within the
+  // category rather than pretend the page numbers still mean the same thing.
+  const casinos = isFiltered
+    ? (await getFilteredCasinos({ ...selected, category: slug })).data
+    : payload.casinos
   // Position continues across pages so the ItemList reflects the real ranking
   // rather than restarting at 1 on every page.
   const offset = ((meta?.current_page ?? page) - 1) * (meta?.per_page ?? casinos.length)
@@ -112,6 +144,13 @@ export default async function CategoryDetailPage({ params, searchParams }: Props
             <Link href="/" className="hover:text-emerald-600">Home</Link> / <Link href="/categories" className="hover:text-emerald-600">Categories</Link> / <span className="text-zinc-600">{category.name}</span>
           </nav>
           <h1 className="text-3xl font-bold text-zinc-900">{category.name} Casinos</h1>
+
+          {/* Only rendered when this site actually has facets with values, so a
+              category page never shows an empty control strip. */}
+          <div className="mt-6">
+            <CasinoFilters facets={facets} />
+          </div>
+
           {casinos.length === 0 ? (
             <p className="mt-6 text-zinc-500">{COPY.casinos.noResults}</p>
           ) : (
@@ -119,7 +158,11 @@ export default async function CategoryDetailPage({ params, searchParams }: Props
               {casinos.map((casino, i) => <CasinoCard key={casino.id} casino={casino} rank={offset + i + 1} />)}
             </ol>
           )}
-          <Pagination basePath={`/categories/${slug}`} current={meta?.current_page ?? 1} last={meta?.last_page ?? 1} />
+          {/* Pagination applies to the unfiltered category only — see above for
+              why a filtered view returns the whole matching set. */}
+          {!isFiltered && (
+            <Pagination basePath={`/categories/${slug}`} current={meta?.current_page ?? 1} last={meta?.last_page ?? 1} />
+          )}
         </div>
       </main>
     </>

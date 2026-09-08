@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { getCategories, getCategory, getSpecialOffers } from '@/lib/api'
+import { getCasinoFacets, getCategories, getCategory, getSpecialOffers } from '@/lib/api'
 import { buildItemListSchema, buildWebPageSchema, jsonLdScript, buildFaqSchema } from '@/lib/seo'
 import { COPY } from '@/constants/copy'
 import { FAQ_ITEMS } from '@/constants/faq'
 import CasinoCard from '@/components/CasinoCard'
 import CategoryNav from '@/components/CategoryNav'
+import CountryNav from '@/components/CountryNav'
 import SpecialOfferCard from '@/components/SpecialOfferCard'
 import type { Category } from '@shared/types/category'
 import type { CasinoWithAttachment } from '@shared/types/casino'
@@ -15,15 +16,36 @@ import { SITE_URL } from '@/lib/config'
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
 const YEAR = new Date().getFullYear()
 
-type Props = { searchParams: Promise<{ category?: string }> }
+type Props = { searchParams: Promise<{ category?: string; country?: string }> }
 
-// Resolve the selected category (default = first/highest-priority) for the home casinos section.
-async function resolveCategory(searchParams: Props['searchParams']) {
+/**
+ * Resolve the country, then the category WITHIN it.
+ *
+ * Order matters: country is the outer filter, so the category list is fetched
+ * scoped to it. A category that holds nothing in the chosen country therefore
+ * does not appear at all, and the default selection falls to one that does —
+ * which is why a visitor never lands on an empty list after switching country.
+ */
+async function resolveFilters(searchParams: Props['searchParams']) {
   const sp = await searchParams
-  const categories = (await getCategories()).data
+
+  // Countries that actually have casinos on this site, with counts. Empty until
+  // casinos are attached to countries, and the filter then renders nothing.
+  const countryFacet = (await getCasinoFacets()).find((f) => f.facet === 'country')
+  const countries = countryFacet?.values ?? []
+
+  // Ignore a country that is not on offer — a stale or hand-edited link must
+  // fall back to "all countries" rather than showing an empty site.
+  const country =
+    sp.country && countries.some((c) => c.value === sp.country) ? sp.country : undefined
+
+  const categories = (await getCategories(country)).data
   const selected =
-    sp.category && categories.some((c) => c.slug === sp.category) ? sp.category : categories[0]?.slug
-  return { categories: categories as Category[], selected }
+    sp.category && categories.some((c) => c.slug === sp.category)
+      ? sp.category
+      : categories[0]?.slug
+
+  return { categories: categories as Category[], selected, countries, country }
 }
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -39,10 +61,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage({ searchParams }: Props) {
-  const { categories, selected } = await resolveCategory(searchParams)
+  const { categories, selected, countries, country } = await resolveFilters(searchParams)
 
   const [categoryRes, offersRes, anyOffersRes] = await Promise.allSettled([
-    selected ? getCategory(selected) : Promise.resolve(null),
+    selected ? getCategory(selected, 1, country) : Promise.resolve(null),
     getSpecialOffers(selected, 6),
     // Site-wide, unfiltered, limit 1 — just "does a visible offer exist at all?".
     // Runs alongside the others, so it costs no extra round-trip of latency, and
@@ -135,8 +157,20 @@ export default async function HomePage({ searchParams }: Props) {
               )}
             </div>
 
+            {/* Country first, categories nested inside it. The country filter
+                renders independently of the categories: it must stay reachable
+                even if the chosen country leaves no categories to show, or a
+                visitor could narrow into a dead end with no way back. */}
+            {countries.length > 0 && (
+              <div className="mb-4">
+                <CountryNav countries={countries} selected={country} />
+              </div>
+            )}
+
             {categories.length > 0 && selected && (
-              <div className="mb-8"><CategoryNav categories={categories} selected={selected} basePath="/" /></div>
+              <div className="mb-8">
+                <CategoryNav categories={categories} selected={selected} basePath="/" country={country} />
+              </div>
             )}
 
             {casinos.length === 0 ? (
