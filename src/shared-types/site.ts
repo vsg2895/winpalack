@@ -13,7 +13,6 @@ export interface Site {
   settings: Record<string, unknown> | null
   active: boolean
   /**
-<<<<<<< Updated upstream
    * Whether this site mails the people who subscribe to it.
    *
    * Off, the signup form still works and the subscriber is still recorded —
@@ -22,8 +21,6 @@ export interface Site {
    */
   newsletter_emails_enabled: boolean
   /**
-=======
->>>>>>> Stashed changes
    * Does this site publish the countries filter? Opt-in per site, off by
    * default. The public /countries endpoints 404 when it is false, so this is
    * what the front end reads to decide whether to render the nav link at all.
