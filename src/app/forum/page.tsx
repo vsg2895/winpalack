@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { getReviewFeed } from '@/lib/api'
+import { getEditorial, getReviewFeed } from '@/lib/api'
 import { resolveImageUrl } from '@/lib/images'
 import { COPY } from '@/constants/copy'
 import { SITE_URL } from '@/lib/config'
@@ -145,6 +145,11 @@ export default async function ForumPage({ searchParams }: Props) {
   const res = await getReviewFeed(page)
   if (res === null) notFound()
 
+  // Attribution for the editorial note. Reuses the site's ONE editorial
+  // identity rather than a second author field on the forum — two places to
+  // set it is how they drift apart. Fails soft to the site name.
+  const editorial = await getEditorial().catch(() => ({ author: null, methodology_page_slug: null }))
+
   // Heading, intro, empty state and page sizes all come from the admin panel.
   // Blanks were already replaced by defaults server-side, so nothing here has
   // to second-guess an empty string.
@@ -266,6 +271,36 @@ export default async function ForumPage({ searchParams }: Props) {
         </section>
 
         {/* Threads */}
+        {/* The site's own note. Visually and semantically distinct from the
+            visitor reviews below it: a different surface, an explicit byline,
+            and NO Review markup — it is the site speaking, and must never read
+            as though a player wrote it. Rendered whether or not there are
+            reviews, so an empty forum still says something true. */}
+        {settings.editorial_enabled && (
+          <section className="px-5 pb-10 sm:px-6" aria-labelledby="editorial-heading">
+            <div className="container mx-auto max-w-5xl">
+              <div className="rounded-2xl border border-slate-200/70 bg-white/70 p-6 backdrop-blur sm:p-8">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.15em] text-emerald-700">
+                  {editorial.author ? 'From the editor' : `From ${SITE_NAME}`}
+                </p>
+                <h2 id="editorial-heading" className="font-display text-xl font-semibold text-slate-900 sm:text-2xl">
+                  {settings.editorial_title}
+                </h2>
+                <p className="mt-3 whitespace-pre-line text-[15px] leading-relaxed text-slate-600">
+                  {settings.editorial_body}
+                </p>
+
+                {editorial.author && (
+                  <p className="mt-5 border-t border-slate-200/70 pt-4 text-sm text-slate-500">
+                    <span className="font-semibold text-slate-700">{editorial.author.name}</span>
+                    {editorial.author.role && <span> · {editorial.author.role}</span>}
+                  </p>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+
         <section className="px-5 pb-24 sm:px-6" aria-labelledby="threads-heading">
           <div className="container mx-auto max-w-5xl">
             <h2 id="threads-heading" className="sr-only">

@@ -23,6 +23,19 @@ export interface ForumSettings {
   /** A path on this site, always starting with "/". */
   empty_cta_url: string
   show_stats: boolean
+  /**
+   * The site's own editorial note.
+   *
+   * Deliberately separate from the visitor reviews it sits beside: it is the
+   * site speaking, attributed to the site, and must never be rendered as though
+   * a player wrote it.
+   *
+   * Already false when the body is empty, so the front end never has to check
+   * both.
+   */
+  editorial_enabled: boolean
+  editorial_title: string
+  editorial_body: string
   threads_per_page: number
   preview_reviews: number
 }
@@ -45,6 +58,9 @@ export interface SiteForum {
   empty_cta_label: string | null
   empty_cta_url: string | null
   show_stats: boolean
+  editorial_enabled: boolean
+  editorial_title: string | null
+  editorial_body: string | null
   threads_per_page: number
   preview_reviews: number
   /** What visitors actually get, with defaults filled in. Read-only. */
