@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { getCasinoFacets, getCategories, getCategory, getSpecialOffers } from '@/lib/api'
+import { getCategories, getCategory, getCountries, getSpecialOffers } from '@/lib/api'
 import { buildItemListSchema, buildWebPageSchema, jsonLdScript, buildFaqSchema } from '@/lib/seo'
 import { COPY } from '@/constants/copy'
 import { FAQ_ITEMS } from '@/constants/faq'
@@ -29,15 +29,18 @@ type Props = { searchParams: Promise<{ category?: string; country?: string }> }
 async function resolveFilters(searchParams: Props['searchParams']) {
   const sp = await searchParams
 
-  // Countries that actually have casinos on this site, with counts. Empty until
-  // casinos are attached to countries, and the filter then renders nothing.
-  const countryFacet = (await getCasinoFacets()).find((f) => f.facet === 'country')
-  const countries = countryFacet?.values ?? []
+  // Countries grouped by continent, each with its flag and its per-site casino
+  // count. The facet endpoint carries the same counts but is a flat list with
+  // no continent and no flag, and the filter needs both to group and to render.
+  // Null means the site has countries switched off — the filter then renders
+  // nothing, exactly as an empty list does.
+  const continents = (await getCountries())?.data ?? []
+  const countries = continents.flatMap((c) => c.countries ?? []).filter((c) => (c.casinos_count ?? 0) > 0)
 
   // Ignore a country that is not on offer — a stale or hand-edited link must
   // fall back to "all countries" rather than showing an empty site.
   const country =
-    sp.country && countries.some((c) => c.value === sp.country) ? sp.country : undefined
+    sp.country && countries.some((c) => c.slug === sp.country) ? sp.country : undefined
 
   const categories = (await getCategories(country)).data
   const selected =
@@ -45,7 +48,7 @@ async function resolveFilters(searchParams: Props['searchParams']) {
       ? sp.category
       : categories[0]?.slug
 
-  return { categories: categories as Category[], selected, countries, country }
+  return { categories: categories as Category[], selected, continents, countries, country }
 }
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -61,7 +64,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage({ searchParams }: Props) {
-  const { categories, selected, countries, country } = await resolveFilters(searchParams)
+  const { categories, selected, continents, countries, country } = await resolveFilters(searchParams)
 
   const [categoryRes, offersRes, anyOffersRes] = await Promise.allSettled([
     selected ? getCategory(selected, 1, country) : Promise.resolve(null),
@@ -163,7 +166,7 @@ export default async function HomePage({ searchParams }: Props) {
                 visitor could narrow into a dead end with no way back. */}
             {countries.length > 0 && (
               <div className="mb-4">
-                <CountryNav countries={countries} selected={country} />
+                <CountryNav continents={continents} selected={country} />
               </div>
             )}
 

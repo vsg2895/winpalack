@@ -32,6 +32,7 @@ export interface Site {
    * when it is false.
    */
   reviews_enabled: boolean
+  review_auto_publish: boolean
   /** Whether this site renders the casino's factual operator profile. */
   operator_profile_enabled: boolean
   /** Whether reviews carry a named reviewer. Requires author_name to be set. */

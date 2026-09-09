@@ -1,6 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
+import { submitReview } from '@/app/actions/reviews'
 import { COPY } from '@/constants/copy'
 import { useToast } from '@/components/ToastProvider'
 
@@ -11,8 +13,10 @@ import { useToast } from '@/components/ToastProvider'
  * static, server-rendered page — the review list above it stays a server
  * component so the reviews themselves are in the HTML for crawlers.
  *
- * It posts to /api/reviews rather than the backend directly, so API_SITE_KEY is
- * never shipped to a browser.
+ * It calls the `submitReview` server action rather than the backend directly,
+ * so API_SITE_KEY is never shipped to a browser. The action — not a route
+ * handler — because only a server action may call `updateTag`, and only
+ * `updateTag` makes the new review present in the very next render.
  */
 export default function ReviewForm({ casinoSlug }: { casinoSlug: string }) {
   const [name, setName] = useState('')
@@ -24,8 +28,13 @@ export default function ReviewForm({ casinoSlug }: { casinoSlug: string }) {
   // Field-level errors from the API, keyed as Laravel returns them.
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitted, setSubmitted] = useState(false)
+  // Which of the two confirmations to show — set from the API's answer,
+  // never assumed, because the site can be switched to pre-moderation.
+  const [published, setPublished] = useState(false)
 
   const toast = useToast()
+  const router = useRouter()
+  const [, startTransition] = useTransition()
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -35,41 +44,35 @@ export default function ReviewForm({ casinoSlug }: { casinoSlug: string }) {
     setErrors({})
 
     try {
-      const res = await fetch('/api/reviews', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          casino_slug: casinoSlug,
-          author_name: name,
-          author_email: email,
-          rating,
-          title,
-          body,
-        }),
+      const result = await submitReview({
+        casinoSlug,
+        author_name: name,
+        author_email: email,
+        rating,
+        title,
+        body,
       })
 
-      if (!res.ok) {
-        const data = (await res.json().catch(() => ({}))) as {
-          message?: string
-          errors?: Record<string, string[]>
-        }
-
-        if (data.errors) {
-          setErrors(
-            Object.fromEntries(
-              Object.entries(data.errors).map(([field, messages]) => [field, messages[0] ?? '']),
-            ),
-          )
-        }
-
-        toast(data.message ?? COPY.reviews.error, 'error')
+      if (!result.ok) {
+        if (result.errors) setErrors(result.errors)
+        toast(result.message ?? COPY.reviews.error, 'error')
         return
       }
 
-      // Replaced by a confirmation rather than cleared: the review is held for
-      // moderation, so an empty form would read as "nothing happened".
+      // Replaced by a confirmation rather than cleared: an empty form would read
+      // as "nothing happened" either way.
+      setPublished(result.published)
       setSubmitted(true)
-      toast(COPY.reviews.success, 'success')
+      toast(result.published ? COPY.reviews.success : COPY.reviews.successPending, 'success')
+
+      // Re-render the server components above so the review really is in the
+      // list the author is being told to scroll up to. The action has already
+      // expired the tags those reads are cached under, so this refetch returns
+      // it. Wrapped in a transition so the refresh does not block the
+      // confirmation from painting.
+      if (result.published) {
+        startTransition(() => router.refresh())
+      }
     } catch {
       toast(COPY.reviews.error, 'error')
     } finally {
@@ -80,7 +83,7 @@ export default function ReviewForm({ casinoSlug }: { casinoSlug: string }) {
   if (submitted) {
     return (
       <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-6 text-sm text-emerald-800">
-        {COPY.reviews.success}
+        {published ? COPY.reviews.success : COPY.reviews.successPending}
       </div>
     )
   }
