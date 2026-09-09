@@ -67,7 +67,6 @@ export interface VerificationPromotionEmail {
   // Persisted so reopening the editor keeps the admin's choice. NOT ownership —
   // this template is global, and the automatic send resolves the site from each
   // subscriber's own newsletters.site_id.
-  preview_site_id: number | null
 
   // ── New design components (removable — null omits the block) ─────────────────
   header_brand_text: string | null
