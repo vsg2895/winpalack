@@ -13,6 +13,7 @@ import { Suspense } from 'react'
 import { GA_MEASUREMENT_ID } from '@/lib/ga'
 import CookieSettingsButton from '@/components/CookieSettingsButton'
 import Logo from '@/components/Logo'
+import SearchOverlay from '@/components/SearchOverlay'
 import { getSocialLinks, hasSpecialOffers, getSiteFeatures, getNavigation, getArticles } from '@/lib/api'
 import { buildOrganizationSchema, buildWebSiteSchema, jsonLdScript } from '@/lib/seo'
 import { SITE_URL } from '@/lib/config'
@@ -246,6 +247,11 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                 ))}
               </ul>
             </nav>
+
+            {/* Search trigger + overlay. A client island in an otherwise server
+                -rendered header: it renders only a button until opened, so no
+                result markup is shipped and nothing indexed moves client-side. */}
+            <SearchOverlay />
           </div>
         </header>
 

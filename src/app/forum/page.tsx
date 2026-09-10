@@ -340,7 +340,13 @@ export default async function ForumPage({ searchParams }: Props) {
                 {threads.map((thread) => (
                   <li
                     key={thread.casino.id}
-                    className="overflow-hidden rounded-3xl border border-slate-200/70 bg-white/70 shadow-[0_2px_18px_-10px_rgba(15,23,42,0.2)] backdrop-blur transition-shadow hover:shadow-[0_20px_44px_-18px_rgba(5,150,105,0.35)]"
+                    // Anchor target for a search result. The forum is a single
+                    // route with no per-review URL, so a "Forum" suggestion
+                    // links to /forum#casino-<slug> and lands on the thread
+                    // rather than at the top of the page. scroll-mt clears the
+                    // sticky header, which would otherwise cover the heading.
+                    id={`casino-${thread.casino.slug}`}
+                    className="scroll-mt-24 overflow-hidden rounded-3xl border border-slate-200/70 bg-white/70 shadow-[0_2px_18px_-10px_rgba(15,23,42,0.2)] backdrop-blur transition-shadow hover:shadow-[0_20px_44px_-18px_rgba(5,150,105,0.35)]"
                   >
                     {/* Thread head — who is being reviewed */}
                     <div className="flex flex-wrap items-center gap-4 border-b border-slate-200/70 bg-gradient-to-r from-emerald-50/60 to-teal-50/40 px-5 py-5 sm:px-7">

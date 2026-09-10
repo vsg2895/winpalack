@@ -114,8 +114,8 @@ export default async function GuidePage({ params }: Props) {
       <main className="py-12 px-4">
         <article className="container mx-auto max-w-3xl">
           <nav className="mb-6 text-sm text-zinc-400">
-            <Link href="/" className="hover:text-emerald-600">Home</Link> /{' '}
-            <Link href="/guides" className="hover:text-emerald-600">{COPY.guides.pageTitle}</Link> /{' '}
+            <Link href="/" className="inline-block py-1 -my-1 hover:text-emerald-600">Home</Link> /{' '}
+            <Link href="/guides" className="inline-block py-1 -my-1 hover:text-emerald-600">{COPY.guides.pageTitle}</Link> /{' '}
             <span className="text-zinc-600">{article.title}</span>
           </nav>
 

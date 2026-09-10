@@ -141,7 +141,7 @@ export default async function CategoryDetailPage({ params, searchParams }: Props
       <main className="py-12 px-4">
         <div className="container mx-auto max-w-5xl">
           <nav className="mb-6 text-sm text-zinc-400">
-            <Link href="/" className="hover:text-emerald-600">Home</Link> / <Link href="/categories" className="hover:text-emerald-600">Categories</Link> / <span className="text-zinc-600">{category.name}</span>
+            <Link href="/" className="inline-block py-1 -my-1 hover:text-emerald-600">Home</Link> / <Link href="/categories" className="inline-block py-1 -my-1 hover:text-emerald-600">Categories</Link> / <span className="text-zinc-600">{category.name}</span>
           </nav>
           <h1 className="text-3xl font-bold text-zinc-900">{category.name} Casinos</h1>
 

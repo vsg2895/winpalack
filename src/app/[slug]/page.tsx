@@ -92,7 +92,7 @@ export default async function LegalPage({ params }: Props) {
       <main className="py-12 px-4">
         <div className="container mx-auto max-w-3xl">
           <nav className="mb-6 text-sm text-zinc-400">
-            <Link href="/" className="hover:text-emerald-600">Home</Link> / <span className="text-zinc-600">{page.title}</span>
+            <Link href="/" className="inline-block py-1 -my-1 hover:text-emerald-600">Home</Link> / <span className="text-zinc-600">{page.title}</span>
           </nav>
 
           <h1 className="text-3xl font-bold text-zinc-900">{page.title}</h1>

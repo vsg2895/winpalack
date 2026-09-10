@@ -160,7 +160,7 @@ export default async function CasinoDetailPage({ params }: Props) {
       <main className="py-12 px-4">
         <div className="container mx-auto max-w-3xl">
           <nav className="mb-6 text-sm text-zinc-400">
-            <Link href="/" className="hover:text-emerald-600">Home</Link> / <Link href="/casinos" className="hover:text-emerald-600">Casinos</Link> / <span className="text-zinc-600">{casino.name}</span>
+            <Link href="/" className="inline-block py-1 -my-1 hover:text-emerald-600">Home</Link> / <Link href="/casinos" className="inline-block py-1 -my-1 hover:text-emerald-600">Casinos</Link> / <span className="text-zinc-600">{casino.name}</span>
           </nav>
 
           {banner && (
