@@ -50,6 +50,8 @@ export default function SubscribeModal() {
   const [open, setOpen] = useState(false)
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
+  // Honeypot value; always '' for a human.
+  const [website, setWebsite] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
   const [alreadySubscribed, setAlreadySubscribed] = useState(false)
@@ -98,7 +100,7 @@ export default function SubscribeModal() {
       const res = await fetch('/api/newsletter', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, full_name: fullName }),
+        body: JSON.stringify({ email, full_name: fullName, website }),
       })
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as {
@@ -109,13 +111,17 @@ export default function SubscribeModal() {
         setStatus('error')
         return
       }
+      // Same rule as the inline form: only promise an inbox when one is
+      // actually being mailed.
+      const { email_sent: emailSent } = (await res.json().catch(() => ({}))) as { email_sent?: boolean }
+
       setEmail('')
       setFullName('')
       // They just subscribed here — don't prompt them again in this browser.
       setCookie(OPTOUT_COOKIE, '1', OPTOUT_SECONDS)
       // Close the modal and confirm via a top-corner toast (form isn't hidden).
       setOpen(false)
-      toast(COPY.newsletter.success, 'success')
+      toast(emailSent === false ? COPY.newsletter.successNoEmail : COPY.newsletter.success, 'success')
     } catch {
       setStatus('error')
     }
@@ -166,7 +172,45 @@ export default function SubscribeModal() {
                 Subscribe and <span className="font-semibold text-slate-900">verify your email</span> to
                 receive our latest special offers and exclusive bonuses.
               </p>
-              <form onSubmit={onSubmit} className="mt-4 flex flex-col gap-2.5">
+              <form onSubmit={onSubmit} className="relative mt-4 flex flex-col gap-2.5">
+
+          {/* HONEYPOT. Never shown, never focusable, never autofilled — a human
+              cannot reach it, a naive bot fills every field it finds. The server
+              rejects any request that carries a value, before the site is
+              touched and long before a paid validation credit could be spent.
+              Positioned off-screen rather than display:none, which some bots
+              skip. */}
+          <input
+            type="text"
+            name="website"
+            value={website}
+            onChange={(e) => setWebsite(e.target.value)}
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+            // Hidden by an INLINE STYLE, deliberately not by a Tailwind class.
+            // The class was a real bug: utility CSS can load late, fail, or be
+            // purged, and for as long as it is missing this renders as an
+            // ordinary focusable text input sitting in the middle of the
+            // subscribe form. A person who types into it gets their signup
+            // rejected as a bot — an anti-bot measure silently turning away the
+            // humans it exists to protect. An inline style travels inside the
+            // HTML, so it cannot desync from the markup that carries it.
+            //
+            // Still off-screen rather than display:none or the hidden
+            // attribute: a honeypot only works while a bot believes the field
+            // is real, and the obvious ways of hiding it are the ways a bot
+            // checks for. pointer-events:none means that even a rendering
+            // accident cannot let a human click into it.
+            style={{
+              position: 'absolute',
+              left: '-9999px',
+              width: 1,
+              height: 1,
+              opacity: 0,
+              pointerEvents: 'none',
+            }}
+          />
                 <input
                   type="text"
                   value={fullName}

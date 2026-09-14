@@ -16,6 +16,24 @@ export function useToast() {
 let seq = 1
 
 /**
+ * How long a toast waits before dismissing itself.
+ *
+ * An error outlives a success because it asks the reader to DO something — the
+ * subscribe form now answers with an instruction ("use a personal address",
+ * "check the part after the @") rather than a shrug, and five seconds is not
+ * enough to read a sentence, look back at the field and act on it. A success
+ * only has to be noticed, though it too is longer than it was: the confirmation
+ * carries the "check your spam folder" line, which is useless unread.
+ *
+ * Neither is a deadline. Every toast has a close button, and one that is missed
+ * costs nothing — the form is still there.
+ */
+const AUTO_HIDE_MS: Record<ToastType, number> = {
+  success: 8000,
+  error: 12000,
+}
+
+/**
  * True only once hydration has finished.
  *
  * `createPortal` needs a real `document`, so the stack must not render during
@@ -41,7 +59,7 @@ function useHydrated(): boolean {
  * App-wide toast host. State lives in React context (guaranteed shared across
  * every form/modal in the tree) and the stack is portaled to <body> and styled
  * INLINE — so it renders reliably regardless of CSS/Tailwind. Small card pinned
- * top-right on all devices; auto-dismisses after 5s; has a close button.
+ * top-right on all devices; auto-dismisses (see AUTO_HIDE_MS); has a close button.
  */
 export default function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
@@ -54,7 +72,7 @@ export default function ToastProvider({ children }: { children: ReactNode }) {
   const show = useCallback((message: string, type: ToastType = 'success') => {
     const id = seq++
     setToasts((list) => [...list, { id, message, type }])
-    window.setTimeout(() => remove(id), 5000)
+    window.setTimeout(() => remove(id), AUTO_HIDE_MS[type])
   }, [remove])
 
   return (

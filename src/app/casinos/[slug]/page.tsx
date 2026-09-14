@@ -85,11 +85,10 @@ export default async function CasinoDetailPage({ params }: Props) {
     notFound()
   }
 
-  // Whether this site publishes the /countries hub. Country chips below link
-  // into it, so they must not render when the hub is switched off for this site
-  // — the links would 404. Toggled per site in the admin (Sites → Countries).
-  const { countries_enabled: countriesEnabled, operator_profile_enabled: profileEnabled } =
-    await getSiteFeatures()
+  // The "Accepts players from" section was removed from this page, and
+  // countries_enabled went with it — it gated only those chips. The /countries
+  // hub itself is untouched and still honours the flag on its own routes.
+  const { operator_profile_enabled: profileEnabled } = await getSiteFeatures()
 
   // Who stands behind this review, and where the method is written down. Both
   // null unless the site configured them — no placeholder is ever shown.
@@ -276,30 +275,6 @@ export default async function CasinoDetailPage({ params }: Props) {
                 <Link key={c.id} href={`/categories/${c.slug}`} className="rounded-full bg-zinc-100 px-3 py-1 text-sm text-zinc-600 hover:bg-zinc-200">{c.name}</Link>
               ))}
             </div>
-          )}
-
-          {/* Countries this casino serves. The relation has been in the database
-              and admin-editable all along (Casino → Countries) and reached no
-              public page, so nothing linked a casino to the /countries hub that
-              already exists. Gated on the site's own countries flag; the API
-              returns active countries only, so a chip never points at a 404. */}
-          {countriesEnabled && casino.countries && casino.countries.length > 0 && (
-            <section className="mt-8" aria-labelledby="accepts-players">
-              <h2 id="accepts-players" className="text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-                {COPY.casinos.countriesHeading}
-              </h2>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {casino.countries.map((country) => (
-                  <Link
-                    key={country.id}
-                    href={`/countries/${country.slug}`}
-                    className="rounded-full border border-zinc-200 px-3 py-1 text-sm text-zinc-600 transition-colors hover:border-emerald-300 hover:text-emerald-700"
-                  >
-                    {country.name}
-                  </Link>
-                ))}
-              </div>
-            </section>
           )}
 
           {/* The casino's promoted offer, picked in the admin

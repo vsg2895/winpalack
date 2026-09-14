@@ -170,14 +170,17 @@ export const COPY = {
   // count, where a free-text field would let an editor write a plural that
   // disagrees with the figure beside it.
   forum: {
-    statReviews: (n: number) => `${n} ${n === 1 ? 'review' : 'reviews'}`,
-    statCasinos: (n: number) => `across ${n} ${n === 1 ? 'casino' : 'casinos'}`,
-    statAverage: (avg: number) => `${avg.toFixed(1)} average rating`,
-    lastActivity: 'Last review',
-    readAll: (n: number) => `Read all ${n} reviews`,
-    writeOne: 'Write a review',
+    // Title Case, written into the strings rather than applied with a
+    // `capitalize` utility: the class would also capitalise anything an editor
+    // later interpolated, and these read as labels on a stat card, not sentences.
+    statReviews: (n: number) => `${n} ${n === 1 ? 'Review' : 'Reviews'}`,
+    statCasinos: (n: number) => `Across ${n} ${n === 1 ? 'Casino' : 'Casinos'}`,
+    statAverage: (avg: number) => `${avg.toFixed(1)} Average Rating`,
+    lastActivity: 'Last Review',
+    readAll: (n: number) => `Read All ${n} ${n === 1 ? 'Review' : 'Reviews'}`,
+    writeOne: 'Write A Review',
     threadRating: (avg: number, total: number) =>
-      `${avg.toFixed(1)}/5 from ${total} ${total === 1 ? 'review' : 'reviews'}`,
+      `${avg.toFixed(1)}/5 From ${total} ${total === 1 ? 'Review' : 'Reviews'}`,
   },
   reviews: {
     heading: 'Player Reviews',
@@ -205,7 +208,24 @@ export const COPY = {
     subtitle: 'Occasional updates on verified casinos and offers with terms worth reading.',
     placeholder: 'Your email address',
     button: 'Subscribe',
-    success: 'Thanks! Check your inbox to confirm your address and finish signing up.',
+    // Shown while the address is being checked. The subscribe request now
+    // waits on a live address-validation call, so the button has to say so
+    // rather than just dimming for a second or two.
+    checking: 'Checking…',
+        // The spam line is NOT optional wording. This is a double opt-in list: an
+    // unconfirmed subscriber never receives anything again, and the verify mail
+    // is the single most likely message to be filtered — new sender, one link,
+    // no history. Telling people where to look is the difference between a
+    // signup and a dead row.
+    success:
+      'Thanks! Check your inbox to confirm your address and finish signing up. '
+      + 'No email? Check your spam or junk folder.',
+    // Shown when the API reports email_sent=false — the site is still
+    // collecting addresses but its sending is switched off in the admin.
+    // Promising an inbox (and a spam folder to search) for mail that will
+    // never arrive is worse than not collecting the address at all.
+    successNoEmail:
+      "You're on the list. No confirmation email is being sent from this site right now.",
     error: 'That did not send. Check the address and try once more.',
   },
   footer: {
