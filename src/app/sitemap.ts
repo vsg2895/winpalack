@@ -128,6 +128,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     forumRes.value !== null &&
     forumRes.value.data.threads.length > 0
 
+  // The COMMUNITY forum switch — distinct from `forum_enabled`, which is the
+  // reviews feed. Read here because both the /register entry below and the
+  // board URLs further down depend on it.
+  const communityEnabled =
+    featuresRes.status === 'fulfilled' && featuresRes.value.community_forum_enabled === true
+
   const staticUrls: MetadataRoute.Sitemap = [
     { url: SITE_URL, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
     { url: `${SITE_URL}/casinos`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
@@ -143,6 +149,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             lastModified: new Date(),
             changeFrequency: 'weekly',
             priority: 0.7,
+          },
+        ] satisfies MetadataRoute.Sitemap)
+      : []),
+    // The join page — only while the community forum is switched on, since
+    // the page 404s otherwise. /login is noindex and deliberately absent.
+    ...(communityEnabled
+      ? ([
+          {
+            url: `${SITE_URL}/register`,
+            lastModified: new Date(),
+            changeFrequency: 'monthly',
+            priority: 0.4,
           },
         ] satisfies MetadataRoute.Sitemap)
       : []),
@@ -178,8 +196,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
    * reached from their board, they churn constantly, and a forum that submits
    * every thread is how a sitemap stops being a signal.
    */
-  const communityEnabled =
-    featuresRes.status === 'fulfilled' && featuresRes.value.forum_enabled === true
 
   const forumSections =
     communityEnabled && communityRes.status === 'fulfilled' ? communityRes.value.data.sections : []

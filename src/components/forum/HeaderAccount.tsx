@@ -22,8 +22,8 @@ export default async function HeaderAccount({ enabled }: { enabled: boolean }) {
       <AccountMenu
         label="Account"
         entries={[
-          { href: '/forum/account', label: 'Sign in', primary: true },
-          { href: '/forum/account?mode=register', label: 'Create an account' },
+          { href: '/login', label: 'Sign in', primary: true },
+          { href: '/register', label: 'Create an account' },
         ]}
       />
     )

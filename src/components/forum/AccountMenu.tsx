@@ -99,10 +99,24 @@ export default function AccountMenu({
             {initial}
           </span>
         ) : (
-          // The person icon. Decorative — aria-label on the button names it.
-          <svg viewBox="0 0 24 24" aria-hidden className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="8" r="3.5" />
-            <path d="M4.5 20a7.5 7.5 0 0 1 15 0" />
+          // The signed-out mark: a person on the brand's emerald→teal disc,
+          // the same gradient the primary buttons use, so the control reads
+          // as "join us" rather than as a generic settings glyph. Inline SVG,
+          // no image request. Decorative — aria-label on the button names it.
+          <svg viewBox="0 0 32 32" aria-hidden className="h-8 w-8 shrink-0 drop-shadow-[0_2px_4px_rgba(16,185,129,0.35)]">
+            <defs>
+              <linearGradient id="acct-disc" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stopColor="#10b981" />
+                <stop offset="1" stopColor="#14b8a6" />
+              </linearGradient>
+            </defs>
+            <circle cx="16" cy="16" r="15" fill="url(#acct-disc)" />
+            <circle cx="16" cy="12.5" r="4.6" fill="#ffffff" />
+            <path d="M7.5 25.5a8.5 8.5 0 0 1 17 0" fill="#ffffff" />
+            {/* A small "+" badge: the control's job is to sign up as much as to sign in. */}
+            <circle cx="24.5" cy="24" r="5.2" fill="#ffffff" />
+            <circle cx="24.5" cy="24" r="4.2" fill="#059669" />
+            <path d="M24.5 21.6v4.8M22.1 24h4.8" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" />
           </svg>
         )}
 

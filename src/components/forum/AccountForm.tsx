@@ -66,7 +66,6 @@ export default function AccountForm({ next, initialMode = 'signin' }: { next?: s
           display_name: form.get('display_name'),
           email: form.get('email'),
           password: form.get('password'),
-          password_confirmation: form.get('password_confirmation'),
           website: form.get('website') ?? '',
         }),
       })
@@ -106,7 +105,13 @@ export default function AccountForm({ next, initialMode = 'signin' }: { next?: s
             key={m}
             type="button"
             aria-pressed={mode === m}
-            onClick={() => { setMode(m); setError(null); setNotice(null); setFieldErrors({}) }}
+            onClick={() => {
+              setMode(m); setError(null); setNotice(null); setFieldErrors({})
+              // Keep the address honest: /login shows the sign-in form,
+              // /register the sign-up form. `replace`, not `push`, so the
+              // toggle does not fill the back button with form flips.
+              router.replace(`${m === 'signin' ? '/login' : '/register'}${next ? `?next=${encodeURIComponent(next)}` : ''}`)
+            }}
             className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
               mode === m ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
             }`}
@@ -122,7 +127,7 @@ export default function AccountForm({ next, initialMode = 'signin' }: { next?: s
             <label htmlFor="display_name" className="mb-1 block text-xs font-semibold text-slate-700">
               Display name
             </label>
-            <input id="display_name" name="display_name" required minLength={2} maxLength={60} className={field} />
+            <input id="display_name" name="display_name" required minLength={2} maxLength={60} autoComplete="nickname" className={field} />
             {errorFor('display_name') && <p className="mt-1 text-xs text-red-600">{errorFor('display_name')}</p>}
           </div>
         )}
@@ -140,38 +145,25 @@ export default function AccountForm({ next, initialMode = 'signin' }: { next?: s
           <label htmlFor="password" className="mb-1 block text-xs font-semibold text-slate-700">Password</label>
           <input
             id="password" name="password" type="password" required
+            minLength={mode === 'register' ? 6 : undefined}
             autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
             aria-invalid={errorFor('password') ? true : undefined} className={field}
           />
           {errorFor('password') && <p className="mt-1 text-xs text-red-600">{errorFor('password')}</p>}
           {mode === 'register' && !errorFor('password') && (
-            <p className="mt-1 text-xs text-slate-400">
-              At least 12 characters, with upper and lower case, a number and a symbol.
-            </p>
+            <p className="mt-1 text-xs text-slate-400">At least 6 characters — anything you'll remember.</p>
           )}
         </div>
 
         {mode === 'register' && (
-          <>
-            <div>
-              <label htmlFor="password_confirmation" className="mb-1 block text-xs font-semibold text-slate-700">
-                Confirm password
-              </label>
-              <input
-                id="password_confirmation" name="password_confirmation" type="password"
-                required autoComplete="new-password" className={field}
-              />
-            </div>
-
-            {/* Honeypot — inline styles, never a utility class: a Tailwind class
-                that fails to generate turns this into a visible input that
-                rejects real people as bots. That has happened on this project
-                before, on the subscribe form. */}
-            <div aria-hidden style={{ position: 'absolute', left: '-9999px', width: 0, height: 0, overflow: 'hidden' }}>
-              <label htmlFor="website">Website</label>
-              <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" defaultValue="" />
-            </div>
-          </>
+          /* Honeypot — inline styles, never a utility class: a Tailwind class
+             that fails to generate turns this into a visible input that
+             rejects real people as bots. That has happened on this project
+             before, on the subscribe form. */
+          <div aria-hidden style={{ position: 'absolute', left: '-9999px', width: 0, height: 0, overflow: 'hidden' }}>
+            <label htmlFor="website">Website</label>
+            <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" defaultValue="" />
+          </div>
         )}
 
         {error && <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}

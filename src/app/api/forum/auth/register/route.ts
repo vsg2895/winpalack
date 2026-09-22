@@ -28,7 +28,6 @@ export async function POST(req: NextRequest) {
       display_name: String(body.display_name ?? ''),
       email: String(body.email ?? ''),
       password: String(body.password ?? ''),
-      password_confirmation: String(body.password_confirmation ?? ''),
       website: String(body.website ?? ''),
     }
   } catch {

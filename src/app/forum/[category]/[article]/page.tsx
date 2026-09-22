@@ -302,7 +302,7 @@ export default async function ForumArticlePage({ params, searchParams }: Props) 
                   {COPY.communityForum.signInBody}
                 </p>
                 <Link
-                  href={`/forum/account?next=${encodeURIComponent(`/forum/${category}/${article}`)}`}
+                  href={`/login?next=${encodeURIComponent(`/forum/${category}/${article}`)}`}
                   className="mt-5 inline-flex min-h-11 items-center rounded-full bg-emerald-600 px-6 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
                 >
                   {COPY.communityForum.signInCta}
