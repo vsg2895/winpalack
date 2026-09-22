@@ -60,7 +60,7 @@ export default function BonusTerms({ terms }: { terms: SpecialOfferTerms }) {
             href={terms.terms_url}
             target="_blank"
             rel="nofollow sponsored noopener"
-            className="font-semibold text-emerald-700 underline underline-offset-4 hover:text-emerald-800"
+            className="inline-flex min-h-11 items-center font-semibold text-emerald-700 underline underline-offset-4 hover:text-emerald-800"
           >
             T&amp;Cs apply — read the full terms
           </a>

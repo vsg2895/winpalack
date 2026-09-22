@@ -138,10 +138,11 @@ export default async function CategoryDetailPage({ params, searchParams }: Props
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(graph) }} />
 
-      <main className="py-12 px-4">
-        <div className="container mx-auto max-w-5xl">
+      <main className="py-12 px-4 sm:px-6 lg:px-8">
+        {/* Same 90rem measure and `large` rows as /casinos. */}
+        <div className="mx-auto max-w-[90rem]">
           <nav className="mb-6 text-sm text-zinc-400">
-            <Link href="/" className="inline-block py-1 -my-1 hover:text-emerald-600">Home</Link> / <Link href="/categories" className="inline-block py-1 -my-1 hover:text-emerald-600">Categories</Link> / <span className="text-zinc-600">{category.name}</span>
+            <Link href="/" className="inline-block -mx-1 px-1 py-3 -my-3 hover:text-emerald-600">Home</Link> / <Link href="/categories" className="inline-block -mx-1 px-1 py-3 -my-3 hover:text-emerald-600">Categories</Link> / <span className="text-zinc-600">{category.name}</span>
           </nav>
           <h1 className="text-3xl font-bold text-zinc-900">{category.name} Casinos</h1>
 
@@ -154,8 +155,8 @@ export default async function CategoryDetailPage({ params, searchParams }: Props
           {casinos.length === 0 ? (
             <p className="mt-6 text-zinc-500">{COPY.casinos.noResults}</p>
           ) : (
-            <ol className="mt-8 flex flex-col gap-4">
-              {casinos.map((casino, i) => <CasinoCard key={casino.id} casino={casino} rank={offset + i + 1} />)}
+            <ol className="mt-8 flex flex-col gap-4 lg:gap-5">
+              {casinos.map((casino, i) => <CasinoCard key={casino.id} casino={casino} rank={offset + i + 1} large />)}
             </ol>
           )}
           {/* Pagination applies to the unfiltered category only — see above for

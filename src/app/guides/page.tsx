@@ -63,30 +63,44 @@ export default async function GuidesPage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(graph) }} />
 
-      <main className="py-12 px-4">
-        <div className="container mx-auto max-w-4xl">
+      <main className="py-12 px-4 sm:px-6 lg:px-8">
+        {/* Same 90rem measure as the other listings; the grid steps up to
+            three and four columns so the cards stay card-sized. */}
+        <div className="mx-auto max-w-[90rem]">
           <h1 className="font-display text-4xl font-semibold text-slate-900">{COPY.guides.pageTitle}</h1>
           <p className="mt-3 max-w-2xl text-slate-500">{COPY.guides.pageDescription}</p>
 
-          <ul className="mt-10 grid gap-6 sm:grid-cols-2" role="list">
+          <ul className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-7 2xl:grid-cols-4" role="list">
             {articles.map((article) => {
               const hero = resolveImageUrl(article.hero_image_path)
 
               return (
-                <li key={article.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-                  <Link href={`/guides/${article.slug}`} className="block">
+                <li key={article.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md">
+                  <Link href={`/guides/${article.slug}`} className="flex h-full flex-col">
                     {hero && (
                       <div className="relative aspect-[16/9] bg-slate-100">
-                        <Image src={hero} alt={article.title} fill className="object-cover" sizes="(max-width: 640px) 100vw, 384px" />
+                        <Image src={hero} alt={article.title} fill className="object-cover" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1536px) 33vw, 340px" />
                       </div>
                     )}
-                    <div className="p-5">
-                      <h2 className="font-display text-lg font-bold leading-snug text-slate-900">{article.title}</h2>
+                    <div className="flex flex-1 flex-col p-6 lg:p-8">
+                      {/* Guides carry no hero image, so the card opens with an
+                          "information" mark instead — it says "explainer, not
+                          news" before the title is read. Decorative: the
+                          heading carries the meaning, so the SVG is hidden
+                          from assistive tech. */}
+                      <span className="mb-4 grid h-11 w-11 place-items-center rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100 lg:h-12 lg:w-12" aria-hidden>
+                        <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10" />
+                          <path d="M12 16v-4" />
+                          <path d="M12 8h.01" />
+                        </svg>
+                      </span>
+                      <h2 className="font-display text-xl font-bold leading-snug text-slate-900 lg:text-2xl">{article.title}</h2>
                       {article.excerpt && (
-                        <p className="mt-2 line-clamp-3 text-sm text-slate-500">{article.excerpt}</p>
+                        <p className="mt-3 line-clamp-3 text-sm text-slate-500 lg:text-base">{article.excerpt}</p>
                       )}
                       {article.published_at && (
-                        <p className="mt-3 text-xs text-slate-400">
+                        <p className="mt-auto pt-5 text-xs text-slate-400 lg:text-sm">
                           <time dateTime={article.published_at}>
                             {new Date(article.published_at).toLocaleDateString('en-GB', {
                               day: 'numeric',

@@ -83,7 +83,7 @@ export default function CategoryNav({
             // `flex` + centring rather than the old inline box: the chip is now
             // as wide as its grid track, so its contents have to be placed
             // inside that width instead of defining it.
-            className={`flex items-center justify-center rounded-full px-5 py-2.5 text-center text-sm font-bold transition-all ${
+            className={`flex min-h-11 items-center justify-center rounded-full px-5 py-2.5 text-center text-sm font-bold transition-all ${
               active
                 ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-lg shadow-emerald-500/30'
                 : 'border border-slate-200 bg-white/70 text-slate-600 backdrop-blur hover:border-emerald-300 hover:text-emerald-700'

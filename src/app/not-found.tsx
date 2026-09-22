@@ -40,7 +40,7 @@ export default function NotFound() {
               <li key={href}>
                 <Link
                   href={href}
-                  className="inline-flex rounded-full border border-slate-300 bg-white/70 px-5 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-400"
+                  className="inline-flex min-h-11 items-center rounded-full border border-slate-300 bg-white/70 px-5 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-400"
                 >
                   {label}
                 </Link>

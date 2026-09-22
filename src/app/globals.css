@@ -87,3 +87,26 @@ body {
 .prose :where(pre) {
   overflow-x: auto;
 }
+
+/* ── Touch readability floor (phones and tablets, ≤1024px) ──
+   `text-xs` is 12px on desktop, where it suits eyebrow labels and footer
+   meta, but 12px body-ish text on a phone fails the 14px readability floor;
+   raise it to 14px there. Form fields go to 16px because iOS Safari zooms the
+   whole page when a smaller field takes focus. Width-based rather than
+   `pointer: coarse` on purpose: an iPad in a desktop-class browser reports a
+   fine pointer and would be missed. Unlayered on purpose so it wins over the
+   `@layer utilities` Tailwind classes regardless of source order. */
+@media (max-width: 1024px) {
+  .text-xs,
+  .sm\:text-xs,
+  .md\:text-xs,
+  .lg\:text-xs {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+  input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  select,
+  textarea {
+    font-size: 1rem;
+  }
+}

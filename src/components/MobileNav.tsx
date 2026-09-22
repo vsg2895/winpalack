@@ -25,7 +25,16 @@ import { createPortal } from 'react-dom'
 
 export type MobileNavLink = { href: string; label: string; external?: boolean }
 
-export default function MobileNav({ links }: { links: MobileNavLink[] }) {
+export default function MobileNav({
+  links,
+  bonusSections = [],
+  bonusLabel = 'Bonus',
+}: {
+  links: MobileNavLink[]
+  /** Categories under Bonus. Empty means this site publishes no Bonus area. */
+  bonusSections?: { slug: string; name: string }[]
+  bonusLabel?: string
+}) {
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -88,7 +97,7 @@ export default function MobileNav({ links }: { links: MobileNavLink[] }) {
         aria-expanded={open}
         aria-controls="mobile-nav"
         aria-label={open ? 'Close menu' : 'Open menu'}
-        className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-slate-700 transition-colors hover:bg-emerald-50 hover:text-emerald-700 sm:hidden"
+        className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-slate-700 transition-colors hover:bg-emerald-50 hover:text-emerald-700 lg:hidden"
       >
         <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
           {open ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
@@ -98,7 +107,7 @@ export default function MobileNav({ links }: { links: MobileNavLink[] }) {
       {!open || !mounted
         ? null
         : createPortal(
-            <div className="fixed inset-0 z-50 sm:hidden" role="presentation">
+            <div className="fixed inset-0 z-50 lg:hidden" role="presentation">
               <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" aria-hidden />
 
               {/* Below the header, not over it: the close button stays where the
@@ -114,28 +123,49 @@ export default function MobileNav({ links }: { links: MobileNavLink[] }) {
               >
                 <nav aria-label="Main navigation">
                   <ul className="flex flex-col p-2" role="list">
-                    {links.map(({ href, label, external }) => (
-                      <li key={href}>
-                        {external || href.startsWith('http') ? (
-                          <a
-                            href={href}
-                            {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                            onClick={close}
-                            className="flex min-h-12 items-center rounded-xl px-4 text-[17px] font-semibold tracking-tight text-slate-700 transition-colors hover:bg-emerald-50 hover:text-emerald-700 focus-visible:bg-emerald-50 focus-visible:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
-                          >
-                            {label}
-                          </a>
-                        ) : (
-                          <Link
-                            href={href}
-                            onClick={close}
-                            className="flex min-h-12 items-center rounded-xl px-4 text-[17px] font-semibold tracking-tight text-slate-700 transition-colors hover:bg-emerald-50 hover:text-emerald-700 focus-visible:bg-emerald-50 focus-visible:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
-                          >
-                            {label}
+                    {links.map(({ href, label, external }) =>
+                      /* Bonus and its categories, matching the desktop dropdown and the
+                         footer. Expanded inline rather than behind another tap: this panel
+                         already scrolls, and burying two links behind an accordion inside a
+                         menu the reader has just opened is a tap for nothing. */
+                      href === '/special-offers' && bonusSections.length > 0 ? (
+                        <li key={href}>
+                          <Link href={href} onClick={close} className="flex min-h-12 items-center rounded-xl px-4 text-[17px] font-semibold tracking-tight text-slate-700 transition-colors hover:bg-emerald-50 hover:text-emerald-700 focus-visible:bg-emerald-50 focus-visible:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
+                            {bonusLabel}
                           </Link>
-                        )}
-                      </li>
-                    ))}
+                          <ul role="list">
+                            {bonusSections.map((section) => (
+                              <li key={section.slug}>
+                                <Link href={`/#bonus-${section.slug}`} onClick={close} className="flex min-h-11 items-center gap-2.5 rounded-xl py-2 pl-8 pr-4 text-[15px] font-semibold tracking-tight text-slate-500 transition-colors hover:bg-emerald-50 hover:text-emerald-700 focus-visible:bg-emerald-50 focus-visible:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
+                                  {/* Takes its colour from the text, so it follows the hover
+                                      state without a group variant — those have repeatedly
+                                      failed to generate on this project. */}
+                                  <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-40" />
+                                  {section.name}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        </li>
+                      ) : (
+                        <li key={href}>
+                          {external || href.startsWith('http') ? (
+                            <a
+                              href={href}
+                              {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                              onClick={close}
+                              className="flex min-h-12 items-center rounded-xl px-4 text-[17px] font-semibold tracking-tight text-slate-700 transition-colors hover:bg-emerald-50 hover:text-emerald-700 focus-visible:bg-emerald-50 focus-visible:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                            >
+                              {label}
+                            </a>
+                          ) : (
+                            <Link href={href} onClick={close} className="flex min-h-12 items-center rounded-xl px-4 text-[17px] font-semibold tracking-tight text-slate-700 transition-colors hover:bg-emerald-50 hover:text-emerald-700 focus-visible:bg-emerald-50 focus-visible:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
+                              {label}
+                            </Link>
+                          )}
+                        </li>
+                      ),
+                    )}
                   </ul>
                 </nav>
               </div>

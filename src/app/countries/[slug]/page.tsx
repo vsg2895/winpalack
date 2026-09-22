@@ -128,11 +128,11 @@ export default async function CountryDetailPage({ params, searchParams }: Props)
       <main className="px-4 py-12">
         <div className="container mx-auto max-w-5xl">
           <nav className="mb-6 text-sm text-slate-400">
-            <Link href="/" className="inline-block py-1 -my-1 hover:text-emerald-600">
+            <Link href="/" className="inline-block -mx-1 px-1 py-3 -my-3 hover:text-emerald-600">
               Home
             </Link>{' '}
             /{' '}
-            <Link href="/countries" className="inline-block py-1 -my-1 hover:text-emerald-600">
+            <Link href="/countries" className="inline-block -mx-1 px-1 py-3 -my-3 hover:text-emerald-600">
               {COPY.countries.pageTitle}
             </Link>{' '}
             / <span className="text-slate-600">{country.name}</span>

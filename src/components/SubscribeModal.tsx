@@ -150,7 +150,7 @@ export default function SubscribeModal() {
           type="button"
           onClick={close}
           aria-label="Close"
-          className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full text-white/80 transition-colors hover:bg-white/20 hover:text-white"
+          className="absolute right-3 top-3 grid h-11 w-11 place-items-center rounded-full text-white/80 transition-colors hover:bg-white/20 hover:text-white"
         >
           <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
             <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />
@@ -158,7 +158,7 @@ export default function SubscribeModal() {
         </button>
 
         <div className="bg-gradient-to-br from-emerald-600 to-teal-500 px-6 py-6 text-white">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/75">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/75">
             {COPY.newsletter.subtitle}
           </p>
           <h2 id="subscribe-modal-title" className="mt-1 font-display text-xl font-bold">

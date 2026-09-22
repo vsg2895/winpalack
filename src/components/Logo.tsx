@@ -14,7 +14,7 @@ export default function Logo({ className = '' }: { className?: string }) {
     <Link
       href="/"
       aria-label="Winpalack home"
-      className={`inline-flex shrink-0 items-center rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 ${className}`.trim()}
+      className={`inline-flex min-h-11 shrink-0 items-center rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 ${className}`.trim()}
     >
       <svg
         viewBox="0 0 680 260"

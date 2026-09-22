@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { resolveImageUrl } from '@/lib/images'
+import CountryStrip from '@/components/CountryStrip'
 import { COPY } from '@/constants/copy'
 import type { CasinoWithAttachment } from '@shared/types/casino'
 
@@ -17,13 +18,17 @@ function Stars({ rating }: { rating: number }) {
 // Winpalack — minimalist review row: an elegant rank numeral, a prominent brand
 // logo, then only the three things that matter (name · rating · bonus) and a
 // clear primary CTA. No rank chip, no category clutter.
-export default function CasinoCard({ casino, rank }: { casino: CasinoWithAttachment; rank?: number }) {
+//
+// `large` is the home-page list: it runs the full 90rem measure, so the row
+// gets more padding, a taller minimum and a bigger logo on desktop. Listing
+// pages keep the default so their narrower column does not feel padded out.
+export default function CasinoCard({ casino, rank, large = false }: { casino: CasinoWithAttachment; rank?: number; large?: boolean }) {
   // Card shows the casino's "Image" (logo), NOT the wide "Banner Image" (that's
   // used big on the single casino page). Falls back to the banner if no Image.
   const image = resolveImageUrl(casino.image_path ?? casino.banner_image)
 
   return (
-    <li className="group flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-[0_2px_18px_-10px_rgba(15,23,42,0.2)] transition-all hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-18px_rgba(5,150,105,0.45)] sm:h-36 sm:flex-row sm:items-center sm:gap-6 sm:p-5">
+    <li className={`group flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-[0_2px_18px_-10px_rgba(15,23,42,0.2)] transition-all hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-18px_rgba(5,150,105,0.45)] sm:min-h-36 sm:flex-row sm:items-center sm:gap-6 sm:p-5 ${large ? 'lg:min-h-44 lg:gap-8 lg:p-7' : ''}`}>
       {/* Rank numeral + prominent logo */}
       <div className="flex items-center gap-3 sm:gap-4">
         {rank != null && (
@@ -42,12 +47,12 @@ export default function CasinoCard({ casino, rank }: { casino: CasinoWithAttachm
               alt={casino.name}
               width={320}
               height={192}
-              sizes="160px"
-              className="h-24 w-40 rounded-xl ring-1 ring-slate-100"
+              sizes={large ? '(min-width: 1024px) 192px, 160px' : '160px'}
+              className={`h-24 w-40 rounded-xl ring-1 ring-slate-100 ${large ? 'lg:h-28 lg:w-48' : ''}`}
               style={{ objectFit: 'contain' }}
             />
           ) : (
-            <span className="grid h-24 w-40 place-items-center rounded-xl bg-gradient-to-br from-emerald-100 to-teal-100 text-2xl font-bold text-emerald-700" aria-label={casino.name}>
+            <span className={`grid h-24 w-40 place-items-center rounded-xl bg-gradient-to-br from-emerald-100 to-teal-100 text-2xl font-bold text-emerald-700 ${large ? 'lg:h-28 lg:w-48' : ''}`} aria-label={casino.name}>
               {casino.name.charAt(0).toUpperCase()}
             </span>
           )}
@@ -66,7 +71,7 @@ export default function CasinoCard({ casino, rank }: { casino: CasinoWithAttachm
             {COPY.casinos.featuredBadge}
           </p>
         )}
-        <h3 className="font-display text-lg font-bold leading-tight text-slate-900 sm:text-xl">{casino.name}</h3>
+        <h3 className={`font-display text-lg font-bold leading-tight text-slate-900 sm:text-xl ${large ? 'lg:text-2xl' : ''}`}>{casino.name}</h3>
         <div className="mt-1.5 flex items-center gap-2">
           <Stars rating={casino.rating} />
           <span className="text-sm font-semibold text-slate-400">{casino.rating.toFixed(1)}</span>
@@ -74,6 +79,14 @@ export default function CasinoCard({ casino, rank }: { casino: CasinoWithAttachm
         {casino.bonuses && (
           <p className="mt-2 line-clamp-2 text-[15px] font-bold text-emerald-700">{casino.bonuses}</p>
         )}
+      </div>
+
+      {/* Its own column, in the gap the card already had between the bonus and
+          the buttons. That space was doing nothing, and the alternative — a
+          fourth line under the bonus — pushed the card taller on every row.
+          On mobile the card stacks, so this simply falls between the two. */}
+      <div className="sm:flex-shrink-0 sm:pr-2">
+        <CountryStrip countries={casino.countries ?? []} />
       </div>
 
       {/* CTAs — Visit is primary, Read Review secondary */}
@@ -91,7 +104,7 @@ export default function CasinoCard({ casino, rank }: { casino: CasinoWithAttachm
         </a>
         <Link
           href={`/casinos/${casino.slug}`}
-          className="rounded-xl border border-slate-200 px-6 py-2.5 text-center text-sm font-semibold text-slate-600 transition-colors hover:border-emerald-300 hover:text-emerald-700"
+          className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 px-6 py-2.5 text-center text-sm font-semibold text-slate-600 transition-colors hover:border-emerald-300 hover:text-emerald-700"
         >
           {COPY.casinos.readReview}
         </Link>

@@ -1,53 +1,26 @@
-// Per-site settings for the player forum page (`site_forums`).
+// Fields match SiteForumResource.php — the per-site settings for the combined
+// review feed.
 //
-// TWO SHAPES, and the split matters. The admin edits raw columns where `null`
-// means "I left this blank"; the public site reads `resolved`, where every blank
-// has already been replaced by the shipped default and both page sizes are
-// clamped into range. An editor who clears the heading must see an empty box and
-// visitors must still see a heading — one shape cannot do both.
+// NAMING, because it is genuinely confusing: this file is about `site_forums`,
+// the page that used to live at /forum and now lives at /reviews. It is a feed
+// of casino reviews grouped by operator, not a discussion board.
+//
+// The COMMUNITY forum — sections, boards, discussions, member posts — is a
+// different feature in ./community-forum. They share only the word.
 
-/** What the public site renders. Every string is non-empty by construction. */
-export interface ForumSettings {
-  enabled: boolean
-  title: string
-  /** An empty string when the editor switched the eyebrow off. */
-  eyebrow: string
-  intro: string
-  meta_title: string
-  meta_description: string
-  /** Keeps the page for visitors while withholding it from search engines. */
-  noindex: boolean
-  empty_title: string
-  empty_body: string
-  empty_cta_label: string
-  /** A path on this site, always starting with "/". */
-  empty_cta_url: string
-  show_stats: boolean
-  /**
-   * The site's own editorial note.
-   *
-   * Deliberately separate from the visitor reviews it sits beside: it is the
-   * site speaking, attributed to the site, and must never be rendered as though
-   * a player wrote it.
-   *
-   * Already false when the body is empty, so the front end never has to check
-   * both.
-   */
-  editorial_enabled: boolean
-  editorial_title: string
-  editorial_body: string
-  threads_per_page: number
-  preview_reviews: number
-}
-
-/** The admin/moderation shape — SiteForumResource.php. */
+/**
+ * The raw row as the admin edits it.
+ *
+ * Nulls are preserved: the editor must see an empty box where they cleared one,
+ * not the default silently filled in. `resolved` rides alongside so the screen
+ * can show what visitors will actually get.
+ */
 export interface SiteForum {
   id: number
   site_id: number
   enabled: boolean
   title: string | null
   eyebrow: string | null
-  /** Its own switch: an empty box means "use the default", not "hide it". */
   show_eyebrow: boolean
   intro: string | null
   meta_title: string | null
@@ -63,9 +36,55 @@ export interface SiteForum {
   editorial_body: string | null
   threads_per_page: number
   preview_reviews: number
-  /** What visitors actually get, with defaults filled in. Read-only. */
+  /** Every field with its default applied — what the public page renders. */
   resolved: ForumSettings
 }
 
-/** PUT /admin/sites/{site}/forum — a partial update; omitted keys are untouched. */
-export type UpdateSiteForumPayload = Partial<Omit<SiteForum, 'id' | 'site_id' | 'resolved'>>
+/**
+ * The resolved settings, as the public site receives them.
+ *
+ * No nulls: every text field has already fallen back to its shipped default
+ * server-side, so the front end never has to decide what to show for a blank.
+ */
+export interface ForumSettings {
+  enabled: boolean
+  title: string
+  /** Empty string when the editor switched the eyebrow off. */
+  eyebrow: string
+  intro: string
+  meta_title: string
+  meta_description: string
+  noindex: boolean
+  empty_title: string
+  empty_body: string
+  empty_cta_label: string
+  empty_cta_url: string
+  show_stats: boolean
+  editorial_enabled: boolean
+  editorial_title: string
+  editorial_body: string
+  threads_per_page: number
+  preview_reviews: number
+}
+
+/** PUT /admin/sites/{site}/forum — partial; omitted keys are untouched. */
+export interface UpdateSiteForumPayload {
+  enabled?: boolean
+  title?: string | null
+  eyebrow?: string | null
+  show_eyebrow?: boolean
+  intro?: string | null
+  meta_title?: string | null
+  meta_description?: string | null
+  noindex?: boolean
+  empty_title?: string | null
+  empty_body?: string | null
+  empty_cta_label?: string | null
+  empty_cta_url?: string | null
+  show_stats?: boolean
+  editorial_enabled?: boolean
+  editorial_title?: string | null
+  editorial_body?: string | null
+  threads_per_page?: number
+  preview_reviews?: number
+}

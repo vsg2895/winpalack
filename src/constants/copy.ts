@@ -36,9 +36,16 @@ export const COPY = {
   nav: {
     casinos: 'Casinos',
     specialOffers: 'Special Offers',
+    bonus: 'Bonus',
+    // First entry in the Bonus dropdown — the parent's own destination.
+    allOffers: 'All Offers',
     categories: 'Categories',
     countries: 'Countries',
-    forum: 'Forum',
+    // Renamed from "Forum". This page is a combined feed of player-written
+    // casino reviews, not a discussion board — /forum now belongs to the
+    // community forum, which is a different feature entirely.
+    forum: 'Reviews',
+    news: 'News',
     guides: 'Guides',
   },
   home: {
@@ -52,6 +59,16 @@ export const COPY = {
     topCasinosSubtitle: 'Each one cleared our licensing and payout checks. Filter them by category.',
     featuredCasinos: 'See Verified Casinos',
     specialOffers: 'Offers With Fair Terms',
+    // Heading for the Bonus area — the categories render beneath it.
+    bonus: 'Bonus',
+    // The home page's news block carries TWO headings, the same shape the Bonus
+    // block above it uses: the section's own name, then what this particular
+    // strip within it is. Without the first one the block announced itself as
+    // "Most Popular" with no clue what it was popular *among*.
+    news: 'News',
+    // Sub-heading under it — the editor's picks, not a measured ranking.
+    bestNews: 'Most Popular',
+    bestNewsAll: 'All news',
     viewAll: 'View All',
     // Leads the home <title>; the year and brand are appended in page.tsx.
     homeTitle: 'Verified Casinos & Safer Play',
@@ -60,6 +77,16 @@ export const COPY = {
       'Online casinos checked for licensing, fair withdrawal limits and responsible-play tools before we recommend them to anyone.',
   },
   casinos: {
+    // ── Country availability, shown on the listing card ──────────────────────
+    // The label is spelled out for screen readers because the flags themselves
+    // are decorative: a row of small images conveys "many countries" visually
+    // and nothing at all to someone who cannot see them.
+    countriesWorldwide: 'Worldwide',
+    countriesWorldwideAria: 'Accepts players worldwide',
+    countriesAria: (total: number, shown: string[]) =>
+      `Accepts players from ${total} ${total === 1 ? 'country' : 'countries'}`
+      + (shown.length > 0 ? `, including ${shown.join(', ')}` : ''),
+    countriesMore: (n: number) => `+${n}`,
     pageTitle: 'Licence & Safety Checks',
     pageDescription:
       'Licensed casinos assessed for withdrawal limits, complaint history and the safer-play tools they give players.',
@@ -105,7 +132,9 @@ export const COPY = {
     featuredOfferHeading: 'The offer we would take',
     // Heading over the country chips on a casino page. Links into the
     // /countries hub, which is itself per-site switchable in the admin.
-    countriesHeading: 'Accepts players from',
+    // Reused as the label above the flag strip on the listing card. Title Case
+    // to match the other labels on this site.
+    countriesHeading: 'Accepts Players From',
     // Heading/title tail for the per-operator bonus sub-page. Published only
     // when the operator has 2+ live offers AND admin-written intro copy.
     bonusesTitleTail: 'Bonuses & Offers',
@@ -125,6 +154,9 @@ export const COPY = {
     offerMetaSuffix: 'Wagering requirements and withdrawal caps stated up front, so nothing surprises you later.',
     claim: 'Claim Safely',
     noResults: 'No verified offers are running right now.',
+    // Heading for offers filed under no bonus category — they still belong
+    // on this page, so they get a home rather than disappearing.
+    otherOffers: 'More Offers',
   },
   categories: {
     pageTitle: 'Browse by Category',
@@ -148,6 +180,32 @@ export const COPY = {
     emptyCountry: 'No casinos listed for this country yet.',
     casinoCount: (n: number) => `${n} ${n === 1 ? 'casino' : 'casinos'}`,
   },
+  // News — the dated feed. Separate copy from guides on purpose: the two
+  // sections answer different questions, and sharing strings would make one of
+  // them read as an afterthought of the other.
+  news: {
+    pageTitle: 'News',
+    pageDescription:
+      'Licensing decisions, operator changes and offer updates — what changed, when, and what it means for players.',
+    // Shown on every post. A post may link to an operator, and a reader is
+    // entitled to know how the site is paid.
+    affiliateDisclosure:
+      'Some links on this page are affiliate links. If you sign up through one we may be paid a commission, at no cost to you. It never changes which casinos we list or what we say about them.',
+    backToIndex: 'All news',
+    latest: 'Latest',
+    // The rail beside the feed. It is the editor's PICK, not a measured count —
+    // the site has no view tracking, and tabs over picks would be a
+    // measurement we never took.
+    mostPopular: 'Most Popular',
+    // Built here rather than in the component so the wording lives with the
+    // rest of the site's copy, and the plural cannot disagree with the number.
+    readTime: (minutes: number) => `${minutes} min read`,
+    topics: 'Topics',
+    allTopics: 'All',
+    emptyTopic: 'No posts in this section yet.',
+    empty: 'No news has been published yet.',
+  },
+
   guides: {
     pageTitle: 'Guides',
     pageDescription:
@@ -169,6 +227,76 @@ export const COPY = {
   // What remains is number formatting: labels whose text is inseparable from a
   // count, where a free-text field would let an editor write a plural that
   // disagrees with the figure beside it.
+  /**
+   * The COMMUNITY forum — sections, boards, discussions, member replies.
+   *
+   * Separate from `forum` below, which is the combined review feed that used to
+   * live at /forum and now lives at /reviews. The two features share a word and
+   * nothing else, so their wording is kept apart rather than merged into one
+   * block that would have to hedge about which page it described.
+   */
+  communityForum: {
+    title: 'Community Forum',
+    intro:
+      'Discussions started by our editors, answered by players. Ask about a withdrawal, compare terms, or say what actually happened when you cashed out.',
+    metaTitle: 'Community Forum — Player Discussions',
+    metaDescription:
+      'Player discussions about casino withdrawals, bonus terms and account checks. Topics opened by our editors, answered by people who played.',
+    cta: 'Browse discussions',
+    ctaReviews: 'Read player reviews',
+
+    tabCategories: 'Categories',
+    tabLatest: 'Latest Posts',
+    tabHot: 'Hot Threads',
+
+    // Written as functions so the plural always agrees with the figure beside
+    // it — a free-text string would let "1 posts" through.
+    boardTotals: (posts: number, articles: number) =>
+      `${posts.toLocaleString('en-GB')} ${posts === 1 ? 'post' : 'posts'} in ${articles.toLocaleString('en-GB')} ${articles === 1 ? 'discussion' : 'discussions'}`,
+    threadTotals: (posts: number, views: number) =>
+      `${posts.toLocaleString('en-GB')} ${posts === 1 ? 'reply' : 'replies'} · ${views.toLocaleString('en-GB')} views`,
+
+    statPosts: 'Posts',
+    statDiscussions: 'Discussions',
+    statMembers: 'Members',
+    statOnline: 'Online now',
+
+    noPostsYet: 'No posts yet',
+
+    // Day one is an EMPTY forum, so this is a real state the page must handle
+    // well rather than an afterthought.
+    emptyTitle: 'The forum opens soon',
+    emptyBody:
+      'We are setting up the first discussions. In the meantime, the player reviews on our casino pages are where the conversation is happening.',
+    emptyCta: 'Read player reviews',
+
+    // Category page
+    pinned: 'Pinned',
+    locked: 'Locked',
+    startedBy: 'Started by',
+    noDiscussions: 'No discussions in this board yet.',
+    noDiscussionsBody: 'Our editors open the topics here. Check back shortly, or browse another board.',
+
+    // Article page
+    replies: (n: number) => `${n.toLocaleString('en-GB')} ${n === 1 ? 'reply' : 'replies'}`,
+    views: (n: number) => `${n.toLocaleString('en-GB')} views`,
+    noReplies: 'No replies yet — be the first.',
+    replyHeading: 'Join the discussion',
+    replyPlaceholder: 'Share what happened, or ask a question…',
+    replyButton: 'Post reply',
+    replyToPost: 'Reply',
+    lockedNotice: 'This discussion is closed to new replies.',
+    signInPrompt: 'Sign in to reply',
+    signInBody: 'Replies come from verified members, which is what keeps this readable.',
+    signInCta: 'Sign in or create an account',
+    olderReplies: 'Older replies',
+    newerReplies: 'Newer replies',
+    reportPost: 'Report',
+
+    premoderationNotice:
+      'Your first few posts are checked by a moderator before they appear. This stops the spam that an open gambling forum attracts on day one.',
+  },
+
   forum: {
     // Title Case, written into the strings rather than applied with a
     // `capitalize` utility: the class would also capitalise anything an editor

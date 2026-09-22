@@ -67,7 +67,7 @@ export default function CasinoFilters({ facets }: { facets: Facet[] }) {
               id={`facet-${facet.facet}`}
               value={params.get(facet.facet) ?? ''}
               onChange={(e) => apply(facet.facet, e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+              className="min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
             >
               <option value="">Any</option>
               {facet.values.map((v) => (

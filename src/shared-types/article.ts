@@ -8,9 +8,13 @@
 export interface Article {
   id: number
   site_id: number
+  /** Which section this belongs to: evergreen guide, or dated news post. */
+  type: 'guide' | 'news'
   title: string
   slug: string
   excerpt: string | null
+  /** Minutes to read at 200 wpm, computed from the body. Null when empty. */
+  read_minutes: number | null
   /**
    * Absent from LISTING responses — twenty cards do not need twenty full
    * articles, and shipping them would make the guides index the heaviest
@@ -25,6 +29,13 @@ export interface Article {
    */
   published_at: string | null
   position: number
+  /** Shown on the site. Separate from published_at, which is the date. */
+  active: boolean
+  /** Promoted to the home page's Best News strip. */
+  featured: boolean
+  /** Editorial section. Null is valid — the post publishes without a badge. */
+  news_category_id: number | null
+  news_category?: { id: number; name: string; slug: string } | null
   meta_title: string | null
   meta_description: string | null
   canonical_url: string | null
@@ -41,6 +52,9 @@ export interface UpsertArticlePayload {
   hero_image_path?: string | null
   published_at?: string | null
   position?: number
+  active?: boolean
+  featured?: boolean
+  news_category_id?: number | null
   meta_title?: string | null
   meta_description?: string | null
   canonical_url?: string | null

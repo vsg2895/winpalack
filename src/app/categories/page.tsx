@@ -32,8 +32,10 @@ export default async function CategoriesPage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(webPage) }} />
-      <main className="py-12 px-4">
-      <div className="container mx-auto max-w-5xl">
+      <main className="py-12 px-4 sm:px-6 lg:px-8">
+      {/* Same 90rem measure as the other listings; the tiles stay four
+          across on desktop, so each one is simply bigger. */}
+      <div className="mx-auto max-w-[90rem]">
         <header className="mb-8">
           <h1 className="text-3xl font-bold text-zinc-900">{COPY.categories.pageTitle}</h1>
           <p className="mt-2 text-zinc-500">{COPY.categories.pageDescription}</p>
@@ -41,10 +43,10 @@ export default async function CategoriesPage() {
         {categories.length === 0 ? (
           <p className="text-zinc-500">{COPY.categories.noResults}</p>
         ) : (
-          <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 lg:gap-6">
             {categories.map((c) => (
               <li key={c.id}>
-                <Link href={`/categories/${c.slug}`} className="block rounded-2xl border border-zinc-100 bg-white p-6 text-center font-bold text-zinc-800 shadow-sm hover:border-emerald-300 hover:text-emerald-600 transition-colors">
+                <Link href={`/categories/${c.slug}`} className="block rounded-2xl border border-zinc-100 bg-white p-6 text-center font-bold text-zinc-800 shadow-sm lg:p-9 lg:text-lg hover:border-emerald-300 hover:text-emerald-600 transition-colors">
                   {/* Stacked, not inline: these cards are centred and one
                       word wide, so a logo beside the label would push long
                       names onto a second line. */}
@@ -52,9 +54,9 @@ export default async function CategoriesPage() {
                     <img
                       src={resolveImageUrl(c.logo_path)!}
                       alt=""
-                      width={32}
-                      height={32}
-                      className="mx-auto mb-3 h-8 w-8"
+                      width={44}
+                      height={44}
+                      className="mx-auto mb-3 h-8 w-8 lg:mb-4 lg:h-11 lg:w-11"
                       aria-hidden
                     />
                   )}

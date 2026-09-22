@@ -9,6 +9,7 @@ import BonusTerms from '@/components/BonusTerms'
 import CasinoProfile from '@/components/CasinoProfile'
 import CasinoSpecialOffers from '@/components/CasinoSpecialOffers'
 import CasinoReviews from '@/components/CasinoReviews'
+import CountryStrip from '@/components/CountryStrip'
 import { COPY } from '@/constants/copy'
 import { SITE_URL } from '@/lib/config'
 
@@ -156,20 +157,26 @@ export default async function CasinoDetailPage({ params }: Props) {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(graph) }} />
 
-      <main className="py-12 px-4">
-        <div className="container mx-auto max-w-3xl">
+      <main className="py-12 px-4 sm:px-6 lg:px-8">
+        {/* Same 90rem measure as the listings. The width is spent on a
+            two-column layout from `lg`: the review, offers and player reviews
+            run in the main column, the safety record sits in a sticky rail
+            beside them — a single column at this measure would put the
+            description on a 200-character line. */}
+        <div className="mx-auto max-w-[90rem]">
           <nav className="mb-6 text-sm text-zinc-400">
-            <Link href="/" className="inline-block py-1 -my-1 hover:text-emerald-600">Home</Link> / <Link href="/casinos" className="inline-block py-1 -my-1 hover:text-emerald-600">Casinos</Link> / <span className="text-zinc-600">{casino.name}</span>
+            <Link href="/" className="inline-block -mx-1 px-1 py-3 -my-3 hover:text-emerald-600">Home</Link> / <Link href="/casinos" className="inline-block -mx-1 px-1 py-3 -my-3 hover:text-emerald-600">Casinos</Link> / <span className="text-zinc-600">{casino.name}</span>
           </nav>
 
           {banner && (
             <div className="relative mb-6 aspect-[16/5] overflow-hidden rounded-2xl bg-zinc-100">
-              <Image src={banner} alt={`${casino.name} banner`} fill className="object-contain" sizes="(max-width: 768px) 100vw, 768px" priority />
+              <Image src={banner} alt={`${casino.name} banner`} fill className="object-contain" sizes="(max-width: 1024px) 100vw, 1440px" priority />
             </div>
           )}
 
-          <header className="flex items-center gap-4">
-            {logo && <Image src={logo} alt={`${casino.name} logo`} width={64} height={64} sizes="64px" className="rounded object-contain" />}
+          <header className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-4">
+            {logo && <Image src={logo} alt={`${casino.name} logo`} width={80} height={80} sizes="(min-width: 1024px) 80px, 64px" className="h-16 w-16 rounded object-contain lg:h-20 lg:w-20" />}
             <div>
               {/* Per-site pivot flag — see CasinoCard for why it lives on the
                   attachment rather than on the casino. */}
@@ -179,37 +186,71 @@ export default async function CasinoDetailPage({ params }: Props) {
                   {COPY.casinos.featuredBadge}
                 </p>
               )}
-              <h1 className="text-3xl font-bold text-zinc-900">{casino.name}</h1>
+              <h1 className="text-3xl font-bold text-zinc-900 lg:text-4xl">{casino.name}</h1>
               <p className="mt-1 text-amber-500" aria-label={`${casino.rating} out of 5`}>{'★'.repeat(casino.rating)}{'☆'.repeat(5 - casino.rating)}</p>
             </div>
-          </header>
+          </div>
 
+          {/* Bonus line and the primary CTA share the header's right edge on
+              desktop — the two things a visitor came for, without scrolling. */}
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center lg:justify-end">
           {casino.bonuses && (
-            <p className="mt-4 rounded-xl bg-emerald-50 px-4 py-3 text-lg font-semibold text-emerald-800">{casino.bonuses}</p>
+            <p className="rounded-xl bg-emerald-50 px-4 py-3 text-lg font-semibold text-emerald-800">{casino.bonuses}</p>
           )}
 
           {/* /go carries the click count and keeps the destination editable. */}
-          <a href={`/go/${casino.slug}`} target="_blank" rel="nofollow sponsored noopener" className="mt-6 inline-block rounded-xl bg-emerald-600 px-8 py-3.5 font-semibold text-white hover:bg-emerald-700 transition-colors">
+          <a href={`/go/${casino.slug}`} target="_blank" rel="nofollow sponsored noopener" className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-xl bg-emerald-600 px-8 py-3.5 font-semibold text-white hover:bg-emerald-700 transition-colors">
             {COPY.casinos.visitCasino}
           </a>
+          </div>
+          </header>
 
-
+          <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-10 xl:grid-cols-[minmax(0,1fr)_26rem]">
+          {/* The rail. First in source so the at-a-glance facts still read
+              before the long description on phones, where the columns stack;
+              on desktop `lg:order-2` moves it to the right and `sticky` keeps
+              it in view while the review scrolls. */}
+          <aside className="lg:order-2 lg:sticky lg:top-24 lg:self-start">
           {/* Summary panel — the same at-a-glance facts the sibling sites show,
               so a reader gets rating, offer count, categories and revision date
               without scrolling the review. Every row is conditional: a casino
               with no offers or no categories simply renders fewer rows. */}
-          <section className="mt-8 rounded-2xl border border-zinc-200 bg-white p-6" aria-labelledby="at-a-glance">
-            <h2 id="at-a-glance" className="text-xl font-bold text-zinc-900">
-              {casino.name} {COPY.casinos.glanceHeadingTail}
-            </h2>
-            <dl className="mt-4 grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-3">
-              <div>
-                <dt className="text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">{COPY.casinos.rating}</dt>
-                <dd className="mt-1 text-zinc-800">{casino.rating} out of 5</dd>
-              </div>
+          {/*
+            Redesigned from a flat 3-column dl.
+            Two things were wrong with it. Four facts in three columns left the
+            fourth stranded alone on a second row with a column and a half of
+            dead space beside it — which is what the panel looked like in
+            practice, not in theory. And every fact was typeset identically, so
+            the safety score carried exactly the same weight as the date the
+            entry was edited.
+            Now: the score is promoted into the header as a badge (the stars
+            already appear above, so repeating them here would be a third copy of
+            the same claim), and the remaining facts sit in a 2-column grid that
+            fills evenly whether there are two of them or four.
+          */}
+          <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white" aria-labelledby="at-a-glance">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-100 bg-zinc-50/60 px-6 py-4">
+              <h2 id="at-a-glance" className="text-lg font-bold text-zinc-900 sm:text-xl">
+                {casino.name} {COPY.casinos.glanceHeadingTail}
+              </h2>
+              <p
+                className="inline-flex items-baseline gap-1.5 rounded-full bg-emerald-50 px-3.5 py-1.5 ring-1 ring-emerald-100"
+                aria-label={`${COPY.casinos.rating}: ${casino.rating} out of 5`}
+              >
+                <span className="text-base font-bold leading-none text-emerald-800">{casino.rating}</span>
+                <span className="text-xs font-semibold text-emerald-600/80">/ 5</span>
+                <span className="ml-1 text-xs font-semibold uppercase tracking-[0.08em] text-emerald-700/70">
+                  {COPY.casinos.rating}
+                </span>
+              </p>
+            </div>
+
+            {/* Two columns, not three: four facts divide evenly, and three still
+                leave only one short cell rather than a row and a half of gap. */}
+            <dl className="grid grid-cols-1 gap-x-8 gap-y-5 px-6 py-5 sm:grid-cols-2 lg:grid-cols-1">
               {liveOffers > 0 && (
                 <div>
-                  <dt className="text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">Offers listed</dt>
+                  <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-400">Offers listed</dt>
                   <dd className="mt-1 text-zinc-800">
                     {liveOffers} {liveOffers === 1 ? 'offer' : 'offers'} on this page
                   </dd>
@@ -217,13 +258,27 @@ export default async function CasinoDetailPage({ params }: Props) {
               )}
               {categoryNames.length > 0 && (
                 <div>
-                  <dt className="text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">Listed under</dt>
+                  <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-400">Listed under</dt>
                   <dd className="mt-1 text-zinc-800">{categoryNames.join(', ')}</dd>
+                </div>
+              )}
+              {/* Where this casino accepts players — the same strip the listing
+                  cards use, so the two surfaces cannot describe one casino
+                  differently. Its own caption is suppressed because the <dt>
+                  beside it already carries the words. */}
+              {casino.countries && casino.countries.length > 0 && (
+                <div>
+                  <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-400">
+                    {COPY.casinos.countriesHeading}
+                  </dt>
+                  <dd className="mt-1.5">
+                    <CountryStrip countries={casino.countries} showHeading={false} />
+                  </dd>
                 </div>
               )}
               {checkedOn && (
                 <div>
-                  <dt className="text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">{COPY.casinos.lastChecked}</dt>
+                  <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-400">{COPY.casinos.lastChecked}</dt>
                   {/* <time> so the machine-readable date matches the one in
                       JSON-LD rather than being a second, looser claim. */}
                   <dd className="mt-1 text-zinc-800">
@@ -233,13 +288,15 @@ export default async function CasinoDetailPage({ params }: Props) {
               )}
             </dl>
 
+            {author && reviewedOn && (
+              <div className="px-6 pb-5">
             {/* The byline. Rendered ONLY when the site has named a real person
                 AND someone recorded a review date for this casino — either
                 missing and the claim is not made at all. A byline without a
                 date, or a date without a name, would both assert more than we
                 can support. */}
             {author && reviewedOn && (
-              <p className="mt-5 border-t border-zinc-100 pt-4 text-sm text-zinc-600">
+              <p className="border-t border-zinc-100 pt-4 text-sm text-zinc-600">
                 {COPY.casinos.reviewedOn}{' '}
                 <span className="font-semibold text-zinc-800">{author.name}</span>
                 {author.role && <span className="text-zinc-500"> · {author.role}</span>}
@@ -255,8 +312,14 @@ export default async function CasinoDetailPage({ params }: Props) {
                 )}
               </p>
             )}
+              </div>
+            )}
           </section>
+          </aside>
 
+          {/* Every block below carries its own `mt-8`; the first one loses it
+              so the column starts level with the rail. */}
+          <div className="min-w-0 lg:order-1 [&>*:first-child]:mt-0">
           {/* The factual profile. Gated on this site's own flag, and the API
               omits `detail` entirely when nothing has been filled in, so the
               block disappears in both the "switched off" and the "no data yet"
@@ -272,7 +335,7 @@ export default async function CasinoDetailPage({ params }: Props) {
           {casino.categories && casino.categories.length > 0 && (
             <div className="mt-8 flex flex-wrap gap-2">
               {casino.categories.map((c) => (
-                <Link key={c.id} href={`/categories/${c.slug}`} className="rounded-full bg-zinc-100 px-3 py-1 text-sm text-zinc-600 hover:bg-zinc-200">{c.name}</Link>
+                <Link key={c.id} href={`/categories/${c.slug}`} className="inline-flex min-h-11 items-center rounded-full bg-zinc-100 px-3 py-1 text-sm text-zinc-600 hover:bg-zinc-200">{c.name}</Link>
               ))}
             </div>
           )}
@@ -298,14 +361,14 @@ export default async function CasinoDetailPage({ params }: Props) {
                     href={`/go/${casino.slug}?offer=${featuredOffer.slug}`}
                     target="_blank"
                     rel="nofollow sponsored noopener"
-                    className="rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+                    className="inline-flex min-h-11 items-center rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
                   >
                     {COPY.casinos.visitCasino}
                   </a>
                 )}
                 <Link
                   href={`/special-offers/${featuredOffer.slug}`}
-                  className="text-sm font-semibold text-emerald-700 underline underline-offset-4 hover:text-emerald-800"
+                  className="inline-flex min-h-11 items-center text-sm font-semibold text-emerald-700 underline underline-offset-4 hover:text-emerald-800"
                 >
                   Full terms and details
                 </Link>
@@ -327,7 +390,7 @@ export default async function CasinoDetailPage({ params }: Props) {
             <p className="mt-6">
               <Link
                 href={`/casinos/${casino.slug}/bonuses`}
-                className="text-sm font-semibold text-emerald-700 underline underline-offset-4 hover:text-emerald-800"
+                className="inline-flex min-h-11 items-center text-sm font-semibold text-emerald-700 underline underline-offset-4 hover:text-emerald-800"
               >
                 {COPY.casinos.bonusesLink}
               </Link>
@@ -336,6 +399,8 @@ export default async function CasinoDetailPage({ params }: Props) {
 
           {/* Renders nothing when this site has reviews switched off. */}
           <CasinoReviews casinoSlug={casino.slug} casinoName={casino.name} />
+          </div>
+          </div>
         </div>
       </main>
     </>

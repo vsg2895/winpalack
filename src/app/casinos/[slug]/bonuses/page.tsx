@@ -117,9 +117,9 @@ export default async function CasinoBonusesPage({ params }: Props) {
       <main className="py-12 px-4">
         <div className="container mx-auto max-w-3xl">
           <nav className="mb-6 text-sm text-zinc-400">
-            <Link href="/" className="inline-block py-1 -my-1 hover:text-emerald-600">Home</Link> /{' '}
-            <Link href="/casinos" className="inline-block py-1 -my-1 hover:text-emerald-600">Casinos</Link> /{' '}
-            <Link href={`/casinos/${slug}`} className="inline-block py-1 -my-1 hover:text-emerald-600">{casino.name}</Link> /{' '}
+            <Link href="/" className="inline-block -mx-1 px-1 py-3 -my-3 hover:text-emerald-600">Home</Link> /{' '}
+            <Link href="/casinos" className="inline-block -mx-1 px-1 py-3 -my-3 hover:text-emerald-600">Casinos</Link> /{' '}
+            <Link href={`/casinos/${slug}`} className="inline-block -mx-1 px-1 py-3 -my-3 hover:text-emerald-600">{casino.name}</Link> /{' '}
             <span className="text-zinc-600">Bonuses</span>
           </nav>
 
@@ -152,7 +152,7 @@ export default async function CasinoBonusesPage({ params }: Props) {
                   </a>
                   <Link
                     href={`/special-offers/${offer.slug}`}
-                    className="text-sm font-semibold text-emerald-700 underline underline-offset-4 hover:text-emerald-800"
+                    className="inline-flex min-h-11 items-center text-sm font-semibold text-emerald-700 underline underline-offset-4 hover:text-emerald-800"
                   >
                     Offer details
                   </Link>

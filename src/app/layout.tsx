@@ -6,6 +6,8 @@ import SubscribeModal from '@/components/SubscribeModal'
 import ToastProvider from '@/components/ToastProvider'
 import SocialIcons from '@/components/SocialIcons'
 import CookieConsent from '@/components/CookieConsent'
+import BonusMenu from '@/components/BonusMenu'
+import FooterBonusMenu from '@/components/FooterBonusMenu'
 import ConsentModeScript from '@/components/ConsentModeScript'
 import GaPageView from '@/components/GaPageView'
 import Script from 'next/script'
@@ -15,7 +17,8 @@ import CookieSettingsButton from '@/components/CookieSettingsButton'
 import Logo from '@/components/Logo'
 import SearchOverlay from '@/components/SearchOverlay'
 import MobileNav from '@/components/MobileNav'
-import { getSocialLinks, hasSpecialOffers, getSiteFeatures, getNavigation, getArticles } from '@/lib/api'
+import HeaderAccount from '@/components/forum/HeaderAccount'
+import { getSocialLinks, hasSpecialOffers, getSiteFeatures, getNavigation, getArticles, getNews, getBonusArea } from '@/lib/api'
 import { buildOrganizationSchema, buildWebSiteSchema, jsonLdScript } from '@/lib/seo'
 import { SITE_URL } from '@/lib/config'
 import { COPY } from '@/constants/copy'
@@ -26,6 +29,19 @@ import './globals.css'
 const inter = Inter({ variable: '--font-inter', subsets: ['latin'] })
 const fraunces = Fraunces({ variable: '--font-fraunces', subsets: ['latin'], style: ['normal', 'italic'] })
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] })
+
+/**
+ * Subscribe capture is switched OFF site-wide.
+ *
+ * One constant, gating BOTH entry points this site has: the newsletter form in
+ * the footer and the timed subscribe modal. The components, the /api/newsletter
+ * route and the backend double-opt-in flow are all untouched and still work;
+ * nothing is rendered, so nothing can be submitted.
+ *
+ * Flip this to `true` to bring the whole thing back. No other edit is needed,
+ * which is the point of doing it with a flag rather than by deleting markup.
+ */
+const SUBSCRIBE_ENABLED = false
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? 'Winpalack'
 
@@ -123,7 +139,7 @@ const NAV_LINKS = [
   { href: '/special-offers', label: COPY.nav.specialOffers },
   { href: '/categories', label: COPY.nav.categories },
   { href: '/countries', label: COPY.nav.countries },
-  { href: '/forum', label: COPY.nav.forum },
+  { href: '/reviews', label: COPY.nav.forum },
 ]
 
 function ShieldMark() {
@@ -156,15 +172,29 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const {
     countries_enabled: showCountries,
     guides_enabled: guidesEnabled,
+    news_enabled: newsEnabled,
+    bonus_enabled: bonusEnabled,
     // Set by the admin's Forum page screen, already ANDed with reviews_enabled
     // server-side, so the link cannot advertise a page that 404s.
     forum_enabled: showForum,
+    // The DISCUSSION BOARD, not the reviews feed above — two different flags.
+    community_forum_enabled: forumEnabled,
   } = await getSiteFeatures()
 
   // The guides link appears only once the section is actually open. Same
   // three-article threshold the /guides route itself enforces, so the nav can
   // never point at a 404 — and a section with one post never advertises itself.
   const showGuides = guidesEnabled && (await getArticles()).length >= 3
+
+  // News has no minimum — one post is a new feed, not an abandoned section — so
+  // the link appears as soon as there is something behind it. Still gated on
+  // something existing: a menu item leading to a 404 is worse than no item.
+  const showNews = newsEnabled && (await getNews()).length > 0
+
+  // The Bonus area drives BOTH the header dropdown and the home-page sections
+  // from one payload, so the menu can never point at a section that is not
+  // rendered. Categories with no visible offer are dropped server-side.
+  const bonusSections = bonusEnabled ? await getBonusArea() : []
 
   // Admin-managed menus, or null when this site has none configured.
   const navigation = await getNavigation()
@@ -175,6 +205,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     ...NAV_LINKS,
     // Appended rather than declared in NAV_LINKS: it is conditional on content
     // volume, not just a feature switch.
+    ...(showNews ? [{ href: '/news', label: COPY.nav.news }] : []),
     ...(showGuides ? [{ href: '/guides', label: COPY.nav.guides }] : []),
   ].filter(({ href }) => {
     if (href === '/special-offers') return showSpecialOffers
@@ -182,7 +213,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     // Unlike Special Offers, this is NOT gated on having content. An empty
     // forum has a real empty state that asks for the first review, so the link
     // is how that review gets written — dropping it would be the deadlock.
-    if (href === '/forum') return showForum
+    if (href === '/reviews') return showForum
     return true
   })
 
@@ -223,32 +254,49 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           }}
         />
         <header className="sticky top-0 z-40 border-b border-white/60 bg-white/70 backdrop-blur-xl">
-          <div className="container mx-auto max-w-6xl px-4 h-16 flex items-center justify-between gap-4">
+          {/* Same 90rem measure as the page sections and the footer, and the
+              padding sits OUTSIDE the measure so the logo lines up with the
+              content edge below it. A touch taller on desktop to match the
+              larger type everywhere else. */}
+          <div className="px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto flex h-16 max-w-[90rem] items-center justify-between gap-4 lg:h-[4.5rem]">
             <Logo />
-            {/* Desktop only. Below `sm` this bar fitted about two and a half
-                items and hid the rest behind a horizontal scroll nobody
-                discovers, so MobileNav takes over there. */}
-            <nav aria-label="Main navigation" className="hidden min-w-0 sm:block">
-              <ul className="flex items-center gap-0.5 sm:gap-1" role="list">
-                {headerLinks.map(({ href, label, external }) => (
-                  <li key={href}>
-                    {/* An absolute URL gets a plain <a>: next/link is for
-                        in-app routes and cannot prefetch another origin. */}
-                    {external || href.startsWith('http') ? (
-                      <a
-                        href={href}
-                        {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                        className="group relative flex min-h-11 items-center whitespace-nowrap rounded-full px-3 py-2 text-[15px] font-semibold tracking-tight transition-all duration-200 sm:px-4 sm:text-base after:absolute after:bottom-1 after:left-1/2 after:h-[2px] after:w-0 after:-translate-x-1/2 after:rounded-full after:transition-all after:duration-300 after:content-[''] hover:after:w-1/2 text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 after:bg-emerald-600"
-                      >
-                        {label}
-                      </a>
-                    ) : (
-                      <Link href={href} className="group relative flex min-h-11 items-center whitespace-nowrap rounded-full px-3 py-2 text-[15px] font-semibold tracking-tight transition-all duration-200 sm:px-4 sm:text-base after:absolute after:bottom-1 after:left-1/2 after:h-[2px] after:w-0 after:-translate-x-1/2 after:rounded-full after:transition-all after:duration-300 after:content-[''] hover:after:w-1/2 text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 after:bg-emerald-600">
-                        {label}
-                      </Link>
-                    )}
-                  </li>
-                ))}
+            {/* Desktop only. Seven items plus the logo and the icon cluster
+                need roughly 810px, so below `lg` (1024px) the bar overflowed
+                the viewport on tablets and at 200% zoom and MobileNav takes
+                over there. */}
+            <nav aria-label="Main navigation" className="hidden min-w-0 lg:block">
+              <ul className="flex items-center gap-1" role="list">
+                {headerLinks.map(({ href, label, external }) =>
+                  /* Special Offers becomes a CHILD of Bonus, so the Bonus parent takes
+                     the slot the editor gave Special Offers — replaced in place rather
+                     than appended, which would move it to the end of an arranged menu. */
+                  href === '/special-offers' && bonusSections.length > 0 ? (
+                    <BonusMenu
+                      key={href}
+                      label={COPY.nav.bonus}
+                      allLabel={COPY.nav.allOffers}
+                      href={href}
+                      items={bonusSections.map((section) => ({ slug: section.slug, name: section.name }))}
+                    />
+                  ) : (
+                    <li key={href}>
+                      {external || href.startsWith('http') ? (
+                        <a
+                          href={href}
+                          {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                          className="group relative flex min-h-11 items-center whitespace-nowrap rounded-full px-3 py-2 text-[15px] font-semibold tracking-tight transition-all duration-200 xl:px-4 xl:text-base after:absolute after:bottom-1 after:left-1/2 after:h-[2px] after:w-0 after:-translate-x-1/2 after:rounded-full after:transition-all after:duration-300 after:content-[''] hover:after:w-1/2 text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 after:bg-emerald-600"
+                        >
+                          {label}
+                        </a>
+                      ) : (
+                        <Link href={href} className="group relative flex min-h-11 items-center whitespace-nowrap rounded-full px-3 py-2 text-[15px] font-semibold tracking-tight transition-all duration-200 xl:px-4 xl:text-base after:absolute after:bottom-1 after:left-1/2 after:h-[2px] after:w-0 after:-translate-x-1/2 after:rounded-full after:transition-all after:duration-300 after:content-[''] hover:after:w-1/2 text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 after:bg-emerald-600">
+                          {label}
+                        </Link>
+                      )}
+                    </li>
+                  ),
+                )}
               </ul>
             </nav>
 
@@ -259,57 +307,102 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                   client-side. */}
               <SearchOverlay />
 
+              {/* Account control. A Server Component reading the session cookie,
+                  so the header shows the right state on first paint instead of
+                  flashing "Sign in" at every signed-in member. Gated on the
+                  forum switch: accounts exist for the forum, so a control with
+                  nowhere to go is worse than no control. */}
+              <HeaderAccount enabled={forumEnabled} />
+
               {/* The same links as the desktop bar, from the same source — an
                   admin-managed menu must not diverge between breakpoints. */}
-              <MobileNav links={headerLinks} />
+              <MobileNav
+                links={headerLinks}
+                bonusSections={bonusSections.map((section) => ({ slug: section.slug, name: section.name }))}
+                bonusLabel={COPY.nav.bonus}
+              />
             </div>
+          </div>
           </div>
         </header>
 
         <div className="flex-1">{children}</div>
 
         <footer className="mt-auto border-t border-slate-200/70 bg-white/60 backdrop-blur-xl">
-          <div className="container mx-auto max-w-6xl px-4 py-12">
-            {/* Newsletter — moved from the header strip into the footer */}
-            <div className="mb-10 rounded-2xl border border-slate-200/70 bg-white/60 p-6 shadow-sm">
-              <NewsletterForm />
-            </div>
+          {/* Same 90rem measure as the page sections above it, so the brand
+              column and the Explore column sit on the content's own edges. */}
+          <div className="px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+          <div className="mx-auto max-w-[90rem]">
+            {/* Newsletter — hidden while SUBSCRIBE_ENABLED is false. The card
+                wrapper is INSIDE the guard on purpose: left outside, it would
+                render as an empty bordered box at the top of the footer. */}
+            {SUBSCRIBE_ENABLED && (
+              <div className="mb-10 rounded-2xl border border-slate-200/70 bg-white/60 p-6 shadow-sm">
+                <NewsletterForm />
+              </div>
+            )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
-              <div>
+            {/* Two columns pushed to opposite edges (space-between), not a
+                2-col grid: the grid put "Explore" at the exact centre of the
+                footer with dead space to its right. The brand column keeps a
+                reading width; the link column hugs the right edge while its
+                own labels stay left-aligned inside it. */}
+            <div className="flex flex-col gap-10 sm:flex-row sm:justify-between">
+              <div className="max-w-md">
                 <div className="flex items-center gap-3">
                   <ShieldMark />
-                  <p className="font-display text-lg font-semibold text-slate-900">{SITE_NAME}</p>
+                  <p className="font-display text-lg font-semibold text-slate-900 lg:text-2xl">{SITE_NAME}</p>
                 </div>
-                <p className="mt-3 text-sm leading-relaxed text-slate-500">
+                <p className="mt-3 text-sm leading-relaxed text-slate-500 lg:text-base">
                   A curated, independent guide to the finest online casinos and exclusive offers.
                 </p>
                 {socialLinks.length > 0 && (
                   <div className="mt-5">
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-500">Follow us</p>
+                    <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-500 lg:text-sm">Follow us</p>
                     <SocialIcons links={socialLinks} />
                   </div>
                 )}
               </div>
 
-              <div className="sm:text-right">
-                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-500">Explore</p>
-                <ul className="flex flex-col gap-2">
-                  {footerLinks.map(({ href, label, external }) => (
-                    <li key={href}>
-                      {external || href.startsWith('http') ? (
-                        <a
-                          href={href}
-                          {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                          className="inline-block py-1.5 -my-1.5 text-sm text-slate-500 transition-colors hover:text-emerald-700"
-                        >
-                          {label}
-                        </a>
-                      ) : (
-                        <Link href={href} className="inline-block py-1.5 -my-1.5 text-sm text-slate-500 transition-colors hover:text-emerald-700">{label}</Link>
-                      )}
-                    </li>
-                  ))}
+              {/* LEFT-aligned, not `sm:text-right`.
+
+                  Right-aligning made every label start at a different x, so the
+                  column read as ragged — and the Bonus group's expanded children
+                  had no shared edge to line up against. A single left edge is
+                  what makes a vertical list scannable. */}
+              <div className="sm:shrink-0">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-500 lg:text-sm">Explore</p>
+                <ul className="flex flex-col gap-2 lg:gap-3">
+                  {footerLinks.map(({ href, label, external }) =>
+                    /* Special Offers is a CHILD of Bonus, so the Bonus group takes
+                       the slot it held. Unlike the header's floating dropdown this one
+                       expands IN FLOW — the links beneath it move down. A footer has
+                       room to grow and nothing below to obscure, whereas a panel
+                       floating upward would cover the list the reader is using. */
+                    href === '/special-offers' && bonusSections.length > 0 ? (
+                      <FooterBonusMenu
+                        key={href}
+                        label={COPY.nav.bonus}
+                        allLabel={COPY.nav.allOffers}
+                        href={href}
+                        items={bonusSections.map((section) => ({ slug: section.slug, name: section.name }))}
+                      />
+                    ) : (
+                      <li key={href}>
+                        {external || href.startsWith('http') ? (
+                          <a
+                            href={href}
+                            {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                            className="inline-block -mx-1 px-1 py-3 -my-3 text-sm font-semibold text-slate-600 transition-colors hover:text-emerald-700 lg:text-base"
+                          >
+                            {label}
+                          </a>
+                        ) : (
+                          <Link href={href} className="inline-block -mx-1 px-1 py-3 -my-3 text-sm font-semibold text-slate-600 transition-colors hover:text-emerald-700 lg:text-base">{label}</Link>
+                        )}
+                      </li>
+                    ),
+                  )}
                 </ul>
               </div>
             </div>
@@ -318,7 +411,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               <ul className="flex flex-wrap gap-x-5 gap-y-2">
                 {LEGAL_PAGES.map(({ slug, label }) => (
                   <li key={slug}>
-                    <Link href={`/${slug}`} className="inline-block py-1.5 -my-1.5 text-xs text-slate-400 transition-colors hover:text-emerald-700">{label}</Link>
+                    <Link href={`/${slug}`} className="inline-block -mx-1 px-1 py-3 -my-3 text-xs text-slate-400 transition-colors hover:text-emerald-700 lg:text-sm">{label}</Link>
                   </li>
                 ))}
                 <li>
@@ -341,10 +434,11 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             </div>
             <p className="mt-4 text-xs text-slate-400">{COPY.footer.disclaimer}</p>
           </div>
+          </div>
         </footer>
 
         <CookieConsent />
-        <SubscribeModal />
+        {SUBSCRIBE_ENABLED && <SubscribeModal />}
         {/* GA4 — unconditional. No consent gate, no environment gate, no
             interaction gate: these load on every page for every visitor.
             `afterInteractive` keeps them off the critical path, so nothing here

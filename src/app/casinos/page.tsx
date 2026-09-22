@@ -1,21 +1,32 @@
 import type { Metadata } from 'next'
-import { getCategories, getCategory } from '@/lib/api'
+import { getCategories, getCategory, getCountries } from '@/lib/api'
 import { buildItemListSchema, buildWebPageSchema, jsonLdScript } from '@/lib/seo'
 import { COPY } from '@/constants/copy'
 import CasinoCard from '@/components/CasinoCard'
 import CategoryNav from '@/components/CategoryNav'
+import CountryNav from '@/components/CountryNav'
 import Pagination from '@/components/Pagination'
 import type { Category } from '@shared/types/category'
 import { SITE_URL } from '@/lib/config'
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
 
-type Props = { searchParams: Promise<{ category?: string; page?: string }> }
+type Props = { searchParams: Promise<{ category?: string; page?: string; country?: string }> }
 
 async function resolve(searchParams: Props['searchParams']) {
   const sp = await searchParams
   const page = Math.max(1, Number(sp.page) || 1)
-  const categories = (await getCategories()).data
+
+  // Same country-then-category resolution as the home page: the country is the
+  // outer filter, so the category list is fetched scoped to it and a category
+  // that holds nothing in the chosen country never appears. A country that is
+  // not on offer falls back to "all countries" rather than an empty listing.
+  const continents = (await getCountries())?.data ?? []
+  const countries = continents.flatMap((c) => c.countries ?? []).filter((c) => (c.casinos_count ?? 0) > 0)
+  const country =
+    sp.country && countries.some((c) => c.slug === sp.country) ? sp.country : undefined
+
+  const categories = (await getCategories(country)).data
   // `requested` is the category the URL actually asked for; `selected` falls back
   // to the first category so the page always renders something. The two must stay
   // distinct: the canonical may only reflect what was requested, or the clean
@@ -23,7 +34,7 @@ async function resolve(searchParams: Props['searchParams']) {
   const requested =
     sp.category && categories.some((c) => c.slug === sp.category) ? sp.category : undefined
   const selected = requested ?? categories[0]?.slug
-  return { categories, requested, selected, page }
+  return { categories, requested, selected, page, continents, countries, country }
 }
 
 /**
@@ -49,7 +60,7 @@ function canonicalPathFor(selected: string | undefined, page: number): string {
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
-  const { selected, page } = await resolve(searchParams)
+  const { selected, page, country } = await resolve(searchParams)
   // Page 2+ gets its own title so paginated views are not reported as duplicate
   // titles, and so a searcher landing on one knows where they are.
   const title = page > 1 ? `${COPY.casinos.pageTitle} — Page ${page}` : COPY.casinos.pageTitle
@@ -62,32 +73,44 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     // behaviour) tells Google the deeper pages are duplicates of the first, so
     // the casinos listed only on those pages never get indexed.
     alternates: { canonical },
+    // A country-filtered view is a near-duplicate of the category page — keep
+    // it out of the index (follow kept, so the casinos still receive the links),
+    // exactly as /categories/<slug> treats its facets.
+    ...(country ? { robots: { index: false, follow: true } } : {}),
     openGraph: { type: 'website', url: canonical, siteName: SITE_NAME, title, description: COPY.casinos.pageDescription },
   }
 }
 
 export default async function CasinosPage({ searchParams }: Props) {
-  const { categories, selected, page } = await resolve(searchParams)
+  const { categories, selected, page, continents, countries, country } = await resolve(searchParams)
 
   if (!selected) {
     return (
-      <main className="px-4 py-16">
-        <div className="container mx-auto max-w-5xl">
+      <main className="px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-[90rem]">
           <h1 className="font-display text-4xl font-semibold text-slate-900">{COPY.casinos.pageTitle}</h1>
+          {/* The filter stays reachable on the empty state, or a country that
+              leaves no categories would be a dead end with no way back. */}
+          {countries.length > 0 && (
+            <div className="mt-8">
+              <CountryNav continents={continents} selected={country} basePath="/casinos" />
+            </div>
+          )}
           <p className="mt-4 text-slate-500">{COPY.casinos.noResults}</p>
         </div>
       </main>
     )
   }
 
-  const { category, casinos, meta } = (await getCategory(selected, page)).data
-  // Paginate on the canonical route so no internal link goes through the 301.
-  const basePath = `/categories/${selected}`
+  const { category, casinos, meta } = (await getCategory(selected, page, country)).data
+  // Paginate on the canonical route so no internal link goes through the 301;
+  // the country rides along so page 2 shows the same list as page 1.
+  const basePath = `/categories/${selected}${country ? `?country=${encodeURIComponent(country)}` : ''}`
   const cats = categories as Category[]
 
   const listSchema = buildItemListSchema(
     `${category.name} — ${COPY.casinos.pageTitle}`,
-    `${SITE_URL}${basePath}`,
+    `${SITE_URL}/categories/${selected}`,
     casinos.map((c, i) => ({ position: (meta.current_page - 1) * meta.per_page + i + 1, name: c.name, url: `${SITE_URL}/casinos/${c.slug}` })),
   )
 
@@ -103,15 +126,23 @@ export default async function CasinosPage({ searchParams }: Props) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(graph) }} />
-      <main className="px-4 py-16">
-        <div className="container mx-auto max-w-5xl">
+      <main className="px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-[90rem]">
           <header className="mb-8">
             <h1 className="font-display text-4xl font-semibold text-slate-900">{COPY.casinos.pageTitle}</h1>
             <p className="mt-2 text-slate-500">{COPY.casinos.pageDescription}</p>
           </header>
 
-          {/* Category menu — top of the casinos list */}
-          <div className="mb-8"><CategoryNav categories={cats} selected={selected} /></div>
+          {/* Country first, categories nested inside it — the same pair as the
+              home page. The country filter renders independently of the
+              categories so it stays reachable even when the chosen country
+              leaves no categories to show. */}
+          {countries.length > 0 && (
+            <div className="mb-4">
+              <CountryNav continents={continents} selected={country} basePath="/casinos" />
+            </div>
+          )}
+          <div className="mb-8"><CategoryNav categories={cats} selected={selected} country={country} /></div>
 
           <div className="mb-4 flex items-baseline justify-between">
             <h2 className="font-display text-2xl font-semibold text-slate-900">{category.name}</h2>
@@ -121,9 +152,10 @@ export default async function CasinosPage({ searchParams }: Props) {
           {casinos.length === 0 ? (
             <p className="text-slate-500">{COPY.casinos.noResults}</p>
           ) : (
-            <ol className="flex flex-col gap-4">
+            /* Same 90rem measure and `large` rows as the home-page list. */
+            <ol className="flex flex-col gap-4 lg:gap-5">
               {casinos.map((casino, i) => (
-                <CasinoCard key={casino.id} casino={casino} rank={(meta.current_page - 1) * meta.per_page + i + 1} />
+                <CasinoCard key={casino.id} casino={casino} rank={(meta.current_page - 1) * meta.per_page + i + 1} large />
               ))}
             </ol>
           )}

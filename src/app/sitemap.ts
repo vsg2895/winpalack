@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next'
-import { getArticles, getCasinos, getCategories, getCountries, getReviewFeed, getSpecialOffers } from '@/lib/api'
+import { getArticles, getNews, getCasinos, getCategories, getCountries, getForumIndex, getReviewFeed, getSiteFeatures, getSpecialOffers } from '@/lib/api'
 import { SITE_URL } from '@/lib/config'
 
 
@@ -10,13 +10,19 @@ function safeDate(value: string | null | undefined): Date {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [casinosRes, categoriesRes, offersRes, countriesRes, articlesRes, forumRes] = await Promise.allSettled([
+  const [casinosRes, categoriesRes, offersRes, countriesRes, articlesRes, newsRes, forumRes, communityRes, featuresRes] = await Promise.allSettled([
     getCasinos(),
     getCategories(),
     getSpecialOffers(),
     getCountries(),
     getArticles(),
+    getNews(),
     getReviewFeed(),
+    // The COMMUNITY forum — a different feature from getReviewFeed above, which
+    // is the review feed at /reviews. Its boards and discussions are indexable
+    // pages and were missing from the sitemap entirely.
+    getForumIndex(),
+    getSiteFeatures(),
   ])
 
   const casinoUrls: MetadataRoute.Sitemap =
@@ -80,6 +86,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ]
     : []
 
+
+  // News enters the sitemap as soon as a post exists — no threshold, because
+  // there is none on the route or in the nav either, and all three must agree or
+  // the sitemap advertises a URL that 404s.
+  const news = newsRes.status === 'fulfilled' ? newsRes.value : []
+  const newsUrls: MetadataRoute.Sitemap = news.length > 0
+    ? [
+        {
+          url: `${SITE_URL}/news`,
+          lastModified: safeDate(news[0]?.published_at ?? null),
+          changeFrequency: 'daily' as const,
+          priority: 0.7,
+        },
+        ...news.map((post) => ({
+          url: `${SITE_URL}/news/${post.slug}`,
+          lastModified: safeDate(post.updated_at ?? post.published_at),
+          changeFrequency: 'weekly' as const,
+          priority: 0.5,
+        })),
+      ]
+    : []
   // The hub now lists EVERY country, but a country with no casinos is a thin
   // page and must not be submitted for indexing — so the sitemap keeps the
   // stricter rule the hub dropped.
@@ -92,8 +119,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     }))
 
-  // The forum is submitted only once it holds a published review. Null means
-  // the site has reviews switched off and /forum 404s; zero threads means the
+  // The reviews feed is submitted only once it holds a published review. Null
+  // means the site has reviews switched off and /reviews 404s; zero threads means the
   // page renders nothing but its empty state, which is thin content. Same rule
   // the countries hub and the guides index follow.
   const forumHasThreads =
@@ -122,7 +149,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...(forumHasThreads
       ? ([
           {
-            url: `${SITE_URL}/forum`,
+            url: `${SITE_URL}/reviews`,
             lastModified: new Date(),
             changeFrequency: 'daily',
             priority: 0.7,
@@ -142,5 +169,36 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // They remain reachable and crawlable: every footer links to all eleven.
   const legalUrls: MetadataRoute.Sitemap = []
 
-  return [...staticUrls, ...casinoUrls, ...categoryUrls, ...countryUrls, ...offerUrls, ...articleUrls, ...legalUrls]
+  /*
+   * Community forum.
+   *
+   * Only when the feature is ON and a board actually holds a discussion — an
+   * empty board is thin content and submitting it asks Google to crawl a page
+   * that says "nothing here yet". Individual THREADS are not listed: they are
+   * reached from their board, they churn constantly, and a forum that submits
+   * every thread is how a sitemap stops being a signal.
+   */
+  const communityEnabled =
+    featuresRes.status === 'fulfilled' && featuresRes.value.forum_enabled === true
+
+  const forumSections =
+    communityEnabled && communityRes.status === 'fulfilled' ? communityRes.value.data.sections : []
+
+  const communityUrls: MetadataRoute.Sitemap = forumSections.length > 0
+    ? [
+        { url: `${SITE_URL}/forum`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
+        ...forumSections.flatMap((section) =>
+          section.categories
+            .filter((board) => board.articles_count > 0)
+            .map((board) => ({
+              url: `${SITE_URL}/forum/${board.slug}`,
+              lastModified: board.last_post?.at ? safeDate(board.last_post.at) : new Date(),
+              changeFrequency: 'daily' as const,
+              priority: 0.6,
+            })),
+        ),
+      ]
+    : []
+
+  return [...staticUrls, ...casinoUrls, ...categoryUrls, ...countryUrls, ...offerUrls, ...articleUrls, ...newsUrls, ...communityUrls, ...legalUrls]
 }

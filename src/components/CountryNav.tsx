@@ -36,12 +36,15 @@ export default function CountryNav({
   continents,
   selected,
   label = 'Country',
+  basePath = '/',
 }: {
   /** Continents with their countries. Countries with no casinos are ignored. */
   continents: Continent[]
   /** The selected country slug, or undefined for "all countries". */
   selected?: string
   label?: string
+  /** The listing the filter belongs to — "/" on the home page, "/casinos" on the listing. */
+  basePath?: string
 }) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -120,7 +123,7 @@ export default function CountryNav({
   // Selecting a country resets the category: one chosen under "all countries"
   // may hold nothing in the new one, and landing on an empty list reads as a
   // broken filter rather than an honest zero.
-  const href = (slug?: string) => (slug ? `/?country=${encodeURIComponent(slug)}` : '/')
+  const href = (slug?: string) => (slug ? `${basePath}?country=${encodeURIComponent(slug)}` : basePath)
 
   const Flag = ({ src, name }: { src: string | null; name: string }) => {
     const url = resolveImageUrl(src)
@@ -262,7 +265,7 @@ export default function CountryNav({
             <div key={continent.id} className="mt-1">
               {/* The continent is a LABEL, not an option — it is not selectable,
                   so it must not look like the rows beneath it. */}
-              <p className="px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-400">
+              <p className="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-[0.15em] text-slate-400">
                 {continent.name}
               </p>
 

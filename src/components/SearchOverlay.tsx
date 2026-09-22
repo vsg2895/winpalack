@@ -460,7 +460,7 @@ export default function SearchOverlay() {
                     {/* "Top casinos", not "hottest this week": the order is the
                         one an admin set for this site, and no popularity or
                         recency data exists to support a stronger claim. */}
-                    <p className="border-b border-slate-100 px-2 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-400">
+                    <p className="border-b border-slate-100 px-2 pb-2 pt-1 text-xs font-semibold uppercase tracking-[0.15em] text-slate-400">
                       Top casinos on this site
                     </p>
                     <ul className="flex gap-1 overflow-x-auto pt-3">
@@ -540,7 +540,7 @@ export default function SearchOverlay() {
                       {/* Section header only in "All" — in a single-section view
                           it would repeat the selected pill. */}
                       {section === null && (
-                        <p className="px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-400">
+                        <p className="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-[0.15em] text-slate-400">
                           {group.label}
                         </p>
                       )}
