@@ -28,7 +28,7 @@ export type MobileNavLink = { href: string; label: string; external?: boolean }
 export default function MobileNav({
   links,
   bonusSections = [],
-  bonusLabel = 'Bonus',
+  bonusLabel = 'Bonuses',
 }: {
   links: MobileNavLink[]
   /** Categories under Bonus. Empty means this site publishes no Bonus area. */

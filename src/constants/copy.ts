@@ -36,7 +36,7 @@ export const COPY = {
   nav: {
     casinos: 'Casinos',
     specialOffers: 'Special Offers',
-    bonus: 'Bonus',
+    bonus: 'Bonuses',
     // First entry in the Bonus dropdown — the parent's own destination.
     allOffers: 'All Offers',
     categories: 'Categories',
@@ -60,7 +60,7 @@ export const COPY = {
     featuredCasinos: 'See Verified Casinos',
     specialOffers: 'Offers With Fair Terms',
     // Heading for the Bonus area — the categories render beneath it.
-    bonus: 'Bonus',
+    bonus: 'Bonuses',
     // The home page's news block carries TWO headings, the same shape the Bonus
     // block above it uses: the section's own name, then what this particular
     // strip within it is. Without the first one the block announced itself as
