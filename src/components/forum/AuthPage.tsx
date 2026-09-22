@@ -22,7 +22,10 @@ export default async function AuthPage({
   mode: 'signin' | 'register'
   searchParams: Promise<{ next?: string }>
 }) {
-  const { community_forum_enabled: enabled } = await getSiteFeatures()
+  // Accounts, NOT the board. Signing up is worth offering before the first
+  // discussion exists, and gating it on the forum meant a site with no board
+  // had no way to let anybody in at all.
+  const { accounts_enabled: enabled } = await getSiteFeatures()
   if (!enabled) notFound()
 
   const { next } = await searchParams
@@ -35,7 +38,11 @@ export default async function AuthPage({
     redirect(safeNext ?? '/forum/account')
   }
 
-  const title = mode === 'signin' ? COPY.communityForum.signInPrompt : 'Create your account'
+  // NOT COPY.communityForum.signInPrompt ("Sign in to reply") — that belongs on
+  // a discussion, where replying is what the visitor was trying to do. Accounts
+  // are no longer tied to the board, so this page cannot promise a thread to
+  // reply to; it is the site's sign-in page and says so.
+  const title = mode === 'signin' ? 'Sign in' : 'Create your account'
   const body = mode === 'signin'
     ? COPY.communityForum.signInBody
     : 'Join the discussion — pick a name, add your email and you are in.'

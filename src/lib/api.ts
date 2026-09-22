@@ -130,6 +130,15 @@ export interface SiteFeatures {
   /** Whether this site publishes the Bonus menu and its home-page sections. */
   bonus_enabled: boolean
   /**
+   * Whether visitors may register and sign in — /login, /register and the
+   * header's account control.
+   *
+   * SEPARATE from `community_forum_enabled` on purpose: a site can collect
+   * members before its discussion board opens. The board implies accounts, so
+   * this is already true whenever the board is on.
+   */
+  accounts_enabled: boolean
+  /**
    * Whether the combined reviews feed at /reviews is published.
    *
    * Still named `forum_enabled` because that is the API field and the
@@ -173,6 +182,7 @@ export const getSiteFeatures = async (): Promise<SiteFeatures> => {
       guides_enabled: false,
       news_enabled: false,
       bonus_enabled: false,
+      accounts_enabled: false,
       forum_enabled: false,
       community_forum_enabled: false,
     }

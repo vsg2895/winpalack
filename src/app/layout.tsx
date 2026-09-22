@@ -179,6 +179,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     forum_enabled: showForum,
     // The DISCUSSION BOARD, not the reviews feed above — two different flags.
     community_forum_enabled: forumEnabled,
+    accounts_enabled: accountsEnabled,
   } = await getSiteFeatures()
 
   // The guides link appears only once the section is actually open. Same
@@ -312,7 +313,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                   flashing "Sign in" at every signed-in member. Gated on the
                   forum switch: accounts exist for the forum, so a control with
                   nowhere to go is worse than no control. */}
-              <HeaderAccount enabled={forumEnabled} />
+              <HeaderAccount enabled={accountsEnabled} />
 
               {/* The same links as the desktop bar, from the same source — an
                   admin-managed menu must not diverge between breakpoints. */}

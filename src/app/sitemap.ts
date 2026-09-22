@@ -134,6 +134,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const communityEnabled =
     featuresRes.status === 'fulfilled' && featuresRes.value.community_forum_enabled === true
 
+  // Accounts are their own switch: /register is a real, indexable page on a
+  // site that takes sign-ups before its board opens. The board URLs below still
+  // follow `communityEnabled`, because those genuinely do not exist without it.
+  const accountsEnabled =
+    featuresRes.status === 'fulfilled' && featuresRes.value.accounts_enabled === true
+
   const staticUrls: MetadataRoute.Sitemap = [
     { url: SITE_URL, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
     { url: `${SITE_URL}/casinos`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
@@ -152,9 +158,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           },
         ] satisfies MetadataRoute.Sitemap)
       : []),
-    // The join page — only while the community forum is switched on, since
-    // the page 404s otherwise. /login is noindex and deliberately absent.
-    ...(communityEnabled
+    // The join page — only while accounts are switched on, since the page 404s
+    // otherwise. /login is noindex and deliberately absent.
+    ...(accountsEnabled
       ? ([
           {
             url: `${SITE_URL}/register`,

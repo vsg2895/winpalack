@@ -30,7 +30,7 @@ export default async function ForumAccountPage({
 }: {
   searchParams: Promise<{ next?: string }>
 }) {
-  const { community_forum_enabled: enabled } = await getSiteFeatures()
+  const { accounts_enabled: enabled } = await getSiteFeatures()
   if (!enabled) notFound()
 
   const member = await getForumMember()
