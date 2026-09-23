@@ -266,6 +266,12 @@ export const COPY = {
     statPosts: 'Posts',
     statDiscussions: 'Discussions',
     statMembers: 'Members',
+    /**
+     * Unused: the "Online now" tile was removed from the forum index because
+     * it read 0 almost permanently. Kept because the API still returns the
+     * figure and restoring the tile should not also mean re-inventing its
+     * label.
+     */
     statOnline: 'Online now',
 
     noPostsYet: 'No posts yet',

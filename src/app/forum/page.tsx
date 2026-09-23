@@ -174,14 +174,19 @@ export default async function ForumIndexPage() {
             </div>
           </header>
 
-          {/* Supporting widgets, rendered only where the data genuinely exists.
-              "Online now" is a real bounded query over forum_users.last_seen_at,
-              not an invented figure. */}
-          <div className="mb-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {/* Three figures, not four. "Online now" was removed: it is a real
+              query over forum_users.last_seen_at, but on a forum this size it
+              reads 0 almost all the time, and a counter that is permanently
+              zero says "nobody is here" far louder than it says anything
+              useful. The other three describe the archive, which does not
+              evaporate between visits.
+
+              The API still returns `stats.online` — nothing server-side was
+              changed — so restoring it is one line. */}
+          <div className="mb-10 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <Stat value={stats.posts} label={COPY.communityForum.statPosts} />
             <Stat value={stats.articles} label={COPY.communityForum.statDiscussions} />
             <Stat value={stats.members} label={COPY.communityForum.statMembers} />
-            <Stat value={stats.online} label={COPY.communityForum.statOnline} />
           </div>
 
           {!hasBoards ? (
