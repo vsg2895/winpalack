@@ -10,6 +10,16 @@ export interface Article {
   site_id: number
   /** Which section this belongs to: evergreen guide, or dated news post. */
   type: 'guide' | 'news'
+  /**
+   * The publication this item's FACTS came from, when it was ingested from a
+   * feed rather than written in the admin. Null for everything hand-written.
+   *
+   * The copy itself is always original — only the facts are borrowed — so this
+   * is a credit and a provenance trail, not an authorship claim.
+   */
+  source_name: string | null
+  /** The original article, for the outbound credit link. */
+  source_url: string | null
   title: string
   slug: string
   excerpt: string | null

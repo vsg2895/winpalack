@@ -31,17 +31,15 @@ const fraunces = Fraunces({ variable: '--font-fraunces', subsets: ['latin'], sty
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] })
 
 /**
- * Subscribe capture is switched OFF site-wide.
+ * Subscribe capture, gating BOTH entry points this site has: the newsletter
+ * form in the footer and the timed subscribe modal.
  *
- * One constant, gating BOTH entry points this site has: the newsletter form in
- * the footer and the timed subscribe modal. The components, the /api/newsletter
- * route and the backend double-opt-in flow are all untouched and still work;
- * nothing is rendered, so nothing can be submitted.
- *
- * Flip this to `true` to bring the whole thing back. No other edit is needed,
- * which is the point of doing it with a flag rather than by deleting markup.
+ * The components, the /api/newsletter route and the backend double-opt-in flow
+ * are never touched by this — it only decides whether the two are rendered.
+ * That is the point of a flag rather than deleted markup: turning capture off
+ * and back on is one edit, and nothing has to be rebuilt from memory.
  */
-const SUBSCRIBE_ENABLED = false
+const SUBSCRIBE_ENABLED = true
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? 'Winpalack'
 
@@ -349,9 +347,9 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               column and the Explore column sit on the content's own edges. */}
           <div className="px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
           <div className="mx-auto max-w-[90rem]">
-            {/* Newsletter — hidden while SUBSCRIBE_ENABLED is false. The card
-                wrapper is INSIDE the guard on purpose: left outside, it would
-                render as an empty bordered box at the top of the footer. */}
+            {/* Newsletter. The card wrapper is INSIDE the guard on purpose:
+                left outside, it would render as an empty bordered box at the
+                top of the footer whenever capture is switched off. */}
             {SUBSCRIBE_ENABLED && (
               <div className="mb-10 rounded-2xl border border-slate-200/70 bg-white/60 p-6 shadow-sm">
                 <NewsletterForm />

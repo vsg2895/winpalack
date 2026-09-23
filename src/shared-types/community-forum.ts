@@ -72,10 +72,22 @@ export interface ForumArticle {
 }
 
 export interface ForumPostAuthor {
+  /** A member's chosen name, or the site's team name on an editorial reply. */
   display_name: string
-  slug: string
+  /**
+   * Null on an editorial reply: the editorial team has no member profile to
+   * link to, no avatar and no post tally that would mean anything.
+   */
+  slug: string | null
   avatar_path: string | null
-  posts_count: number
+  posts_count: number | null
+  /**
+   * Written by the editorial team rather than by a registered member.
+   *
+   * Sent explicitly so a reader can be shown which replies are staff, rather
+   * than the frontend having to infer it from a missing slug.
+   */
+  is_team: boolean
 }
 
 export interface ForumPost {

@@ -90,10 +90,20 @@ function PostBody({ post, now, isComment = false }: { post: ForumPost; now: numb
       <div className="min-w-0 flex-1">
         <p className="flex flex-wrap items-baseline gap-x-2 text-sm">
           <span className="font-semibold text-slate-900">{name}</span>
-          {post.author && (
-            <span className="text-xs tabular-nums text-slate-400">
-              {COPY.communityForum.replies(post.author.posts_count)}
+          {/* A staff reply is badged instead of carrying a post tally: the
+              editorial team has no member profile, and a count of its replies
+              would say nothing a reader wants. Members keep the tally they
+              have always had. */}
+          {post.author?.is_team ? (
+            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">
+              {COPY.communityForum.teamBadge}
             </span>
+          ) : (
+            post.author?.posts_count !== null && post.author !== undefined && (
+              <span className="text-xs tabular-nums text-slate-400">
+                {COPY.communityForum.replies(post.author.posts_count as number)}
+              </span>
+            )
           )}
           {post.created_at && (
             <time dateTime={post.created_at} className="text-xs text-slate-400">
@@ -176,7 +186,12 @@ export default async function ForumArticlePage({ params, searchParams }: Props) 
       url: pageUrl,
       ...(doc.excerpt ? { description: doc.excerpt } : {}),
       ...(doc.published_at ? { datePublished: doc.published_at } : {}),
-      ...(doc.author?.name ? { author: { '@type': 'Person', name: doc.author.name } } : {}),
+      /* Organization, not Person. A discussion's author comes from the ADMIN
+         users table and the API publishes it as the editorial team's name
+         rather than an individual's, so a Person claim here would assert a
+         named human who is not being named. Replies below stay Person: those
+         are real members posting under their own display names. */
+      ...(doc.author?.name ? { author: { '@type': 'Organization', name: doc.author.name } } : {}),
       interactionStatistic: {
         '@type': 'InteractionCounter',
         interactionType: 'https://schema.org/CommentAction',
@@ -187,7 +202,16 @@ export default async function ForumArticlePage({ params, searchParams }: Props) 
         '@id': `${pageUrl}#post-${post.id}`,
         ...(post.body ? { text: post.body.slice(0, 500) } : {}),
         ...(post.created_at ? { dateCreated: post.created_at } : {}),
-        ...(post.author ? { author: { '@type': 'Person', name: post.author.display_name } } : {}),
+        /* Organization for a staff reply, Person for a member's — the same
+           distinction the discussion's own author claim makes. */
+        ...(post.author
+          ? {
+              author: {
+                '@type': post.author.is_team ? 'Organization' : 'Person',
+                name: post.author.display_name,
+              },
+            }
+          : {}),
       })),
     },
   ]

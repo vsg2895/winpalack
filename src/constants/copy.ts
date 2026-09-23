@@ -187,6 +187,13 @@ export const COPY = {
     pageTitle: 'News',
     pageDescription:
       'Licensing decisions, operator changes and offer updates — what changed, when, and what it means for players.',
+    /**
+     * Precedes the outbound credit on an item whose facts came from a feed.
+     *
+     * "Reported first by" rather than "Source", because it says the true thing:
+     * the words are ours, the reporting was theirs.
+     */
+    sourceCredit: 'Reported first by',
     // Shown on every post. A post may link to an operator, and a reader is
     // entitled to know how the site is paid.
     affiliateDisclosure:
@@ -273,6 +280,8 @@ export const COPY = {
     // Category page
     pinned: 'Pinned',
     locked: 'Locked',
+    /** Badge on a reply written by the editorial team rather than a member. */
+    teamBadge: 'Editorial team',
     startedBy: 'Started by',
     noDiscussions: 'No discussions in this board yet.',
     noDiscussionsBody: 'Our editors open the topics here. Check back shortly, or browse another board.',

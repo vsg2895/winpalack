@@ -161,6 +161,30 @@ export default async function NewsPostPage({ params }: Props) {
             <div className="prose prose-zinc mt-8 max-w-none lg:prose-lg" dangerouslySetInnerHTML={{ __html: article.body }} />
           )}
 
+          {/* Where the FACTS came from, when they came from somewhere.
+              
+              The words above are this site's own — only the facts are
+              borrowed, which is what makes the piece original. Crediting the
+              publication that reported them first is the honest way to say so,
+              and it gives a reader who wants the original a way to reach it.
+              
+              `nofollow` because it is an attribution, not an endorsement, and
+              `noopener` because it opens elsewhere. Absent entirely on anything
+              written here, so a hand-written post carries no stray credit. */}
+          {article.source_name && article.source_url && (
+            <p className="mt-8 text-sm text-zinc-500">
+              {COPY.news.sourceCredit}{' '}
+              <a
+                href={article.source_url}
+                target="_blank"
+                rel="nofollow noopener noreferrer"
+                className="font-semibold text-emerald-700 underline underline-offset-4 hover:text-emerald-800"
+              >
+                {article.source_name}
+              </a>
+            </p>
+          )}
+
           {/* Affiliate disclosure, unconditional. A post may link to an operator
               and the reader is entitled to know how this site is paid — the
               layout's 18+ and responsible-gambling links stay in place around it. */}
