@@ -6,6 +6,17 @@ export interface SpecialOffer {
   id: number
   casino_id: number
   casino?: Casino
+  /**
+   * Which section of the Bonus area this offer appears in. Null is valid —
+   * an uncategorised offer still shows on the Special Offers page, it just
+   * has no section on the home page.
+   *
+   * SpecialOfferResource has always returned this; the type simply never declared
+   * it, so the admin's edit form had no way to know the field existed and
+   * quietly dropped it on every load — which then posted null back and
+   * detached the offer on the next save.
+   */
+  bonus_category_id: number | null
   title: string
   slug: string
   image_path: string | null

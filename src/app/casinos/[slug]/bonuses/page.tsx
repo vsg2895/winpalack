@@ -140,19 +140,37 @@ export default async function CasinoBonusesPage({ params }: Props) {
                 {offer.terms && <BonusTerms terms={offer.terms} />}
 
                 <div className="mt-4 flex flex-wrap items-center gap-4">
-                  {/* Through /go, so the destination stays admin-editable and
-                      the click is counted — same as every other CTA. */}
-                  <a
-                    href={`/go/${casino.slug}?offer=${offer.slug}`}
-                    target="_blank"
-                    rel="nofollow sponsored noopener"
-                    className="rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
-                  >
-                    {COPY.specialOffers.claim}
-                  </a>
+                  {/* No link, no CTA.
+                
+                      An offer with no affiliate URL is informational — the
+                      terms are worth reading, but there is nothing to claim.
+                      Showing the button anyway would be worse than useless
+                      here: /go falls back to the CASINO's generic link when an
+                      offer has none, so the visitor would be sent somewhere
+                      that has nothing to do with the bonus they clicked.
+                
+                      Where a link does exist the CTA goes through /go, so the
+                      destination stays admin-editable and the click is
+                      counted — same as every other CTA on the site. */}
+                  {offer.affiliate_url && (
+                    <a
+                      href={`/go/${casino.slug}?offer=${offer.slug}`}
+                      target="_blank"
+                      rel="nofollow sponsored noopener"
+                      className="rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+                    >
+                      {COPY.specialOffers.claim}
+                    </a>
+                  )}
+                  {/* Promoted to the primary control when it is the only one,
+                      so the row does not read as a disabled button. */}
                   <Link
                     href={`/special-offers/${offer.slug}`}
-                    className="inline-flex min-h-11 items-center text-sm font-semibold text-emerald-700 underline underline-offset-4 hover:text-emerald-800"
+                    className={
+                      offer.affiliate_url
+                        ? 'inline-flex min-h-11 items-center text-sm font-semibold text-emerald-700 underline underline-offset-4 hover:text-emerald-800'
+                        : 'inline-flex min-h-11 items-center rounded-xl border border-emerald-200 bg-emerald-50 px-6 py-2.5 text-sm font-semibold text-emerald-700 transition-colors hover:border-emerald-300 hover:bg-emerald-100'
+                    }
                   >
                     Offer details
                   </Link>

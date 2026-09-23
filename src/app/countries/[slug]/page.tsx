@@ -40,13 +40,29 @@ function canonicalPathFor(slug: string, page: number): string {
  * off: there is nothing to pre-render, and the route 404s anyway.
  */
 export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
-  const res = await getCountries()
+  /*
+   * Fails CLOSED to an empty list.
+   *
+   * This runs per request for a slug that was not prerendered, and
+   * publicFetch throws on any non-200. Unguarded, a single blip on one
+   * endpoint turned the whole route into a 500 — including for slugs that
+   * simply do not exist, which should be a plain 404.
+   *
+   * Returning [] means "nothing is prerendered": the page still renders,
+   * still fetches its own data, and still calls notFound() when the record
+   * is missing. A build with no params is a slower first hit, not an outage.
+   */
+  try {
+    const res = await getCountries()
 
-  if (res === null) return []
+    if (res === null) return []
 
-  return res.data.flatMap((continent) =>
-    (continent.countries ?? []).map((country) => ({ slug: country.slug })),
-  )
+    return res.data.flatMap((continent) =>
+      (continent.countries ?? []).map((country) => ({ slug: country.slug })),
+    )
+  } catch {
+    return []
+  }
 }
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {

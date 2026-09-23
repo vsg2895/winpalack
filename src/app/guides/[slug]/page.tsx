@@ -24,8 +24,24 @@ type Props = { params: Promise<{ slug: string }> }
  */
 
 export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
-  const articles = await getArticles()
-  return articles.map((a) => ({ slug: a.slug }))
+  /*
+   * Fails CLOSED to an empty list.
+   *
+   * This runs per request for a slug that was not prerendered, and
+   * publicFetch throws on any non-200. Unguarded, a single blip on one
+   * endpoint turned the whole route into a 500 — including for slugs that
+   * simply do not exist, which should be a plain 404.
+   *
+   * Returning [] means "nothing is prerendered": the page still renders,
+   * still fetches its own data, and still calls notFound() when the record
+   * is missing. A build with no params is a slower first hit, not an outage.
+   */
+  try {
+    const articles = await getArticles()
+    return articles.map((a) => ({ slug: a.slug }))
+  } catch {
+    return []
+  }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

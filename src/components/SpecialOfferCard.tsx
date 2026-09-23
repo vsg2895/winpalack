@@ -20,8 +20,21 @@ export default function SpecialOfferCard({ offer, compact = false }: { offer: Sp
         <h3 className={`font-display font-semibold leading-tight text-slate-900 ${compact ? 'text-base' : 'text-lg'}`}>{offer.title}</h3>
         {offer.bonuses && <p className={`inline-block rounded-lg bg-emerald-50 px-2.5 py-1 font-semibold text-emerald-700 ${compact ? 'text-xs' : 'text-sm'}`}>{offer.bonuses}</p>}
         <span className="text-xs text-amber-400" aria-label={`${offer.rating} out of 5`}>{'★'.repeat(offer.rating)}<span className="text-slate-200">{'★'.repeat(5 - offer.rating)}</span></span>
+        {/* An offer with no affiliate URL has nothing to claim, so the card
+            offers only its details — and that link takes the primary treatment
+            rather than sitting alone as a pale outline button, which reads as
+            a disabled CTA rather than the one thing there is to do. */}
         <div className="mt-auto flex gap-2 pt-2">
-          <Link href={`/special-offers/${offer.slug}`} className="flex min-h-11 flex-1 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-sm font-semibold text-slate-700 transition-colors hover:border-emerald-300 hover:text-emerald-700">Details</Link>
+          <Link
+            href={`/special-offers/${offer.slug}`}
+            className={`flex min-h-11 flex-1 items-center justify-center rounded-xl px-3 py-2 text-center text-sm font-semibold transition-colors ${
+              offer.affiliate_url
+                ? 'border border-slate-200 bg-white text-slate-700 hover:border-emerald-300 hover:text-emerald-700'
+                : 'border border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100'
+            }`}
+          >
+            Details
+          </Link>
           {offer.affiliate_url && (
             <a href={offer.affiliate_url} target="_blank" rel="nofollow sponsored noopener" className="flex min-h-11 flex-1 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 px-3 py-2 text-center text-sm font-semibold text-white shadow-md shadow-emerald-500/30 transition-transform hover:scale-[1.03]">Claim</a>
           )}
