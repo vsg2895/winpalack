@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { getCasinos, getCasino } from '@/lib/api'
+import { getCasino } from '@/lib/api'
 import { buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript } from '@/lib/seo'
 import BonusTerms from '@/components/BonusTerms'
 import { COPY } from '@/constants/copy'
@@ -30,24 +30,26 @@ function qualifies(offers: unknown[], intro: string | null | undefined): boolean
   return offers.length >= MIN_OFFERS && (intro ?? '').trim() !== ''
 }
 
-export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
-  const res = await getCasinos()
-
-  // The listing payload carries neither offers nor the intro, so each candidate
-  // is checked individually. The casino count here is dozens, not thousands.
-  const checked = await Promise.all(
-    res.data.map(async (c) => {
-      try {
-        const { data: casino } = await getCasino(c.slug)
-        return qualifies(casino.special_offers ?? [], casino.bonuses_intro) ? c.slug : null
-      } catch {
-        return null
-      }
-    }),
-  )
-
-  return checked.filter((slug): slug is string => slug !== null).map((slug) => ({ slug }))
-}
+/*
+ * NO generateStaticParams, deliberately — this route renders on demand.
+ *
+ * Next classifies a dynamic route from what that function RETURNS: a non-empty
+ * list builds `f` (dynamic), an EMPTY list builds a fully static route. A
+ * static render then throws DYNAMIC_SERVER_USAGE, because the root layout
+ * reads the session cookie for the header's account control and a static
+ * render may not touch cookies — taking the whole route down with a 500 for
+ * every slug, valid or not.
+ *
+ * Not hypothetical: that is exactly how /special-offers/[slug] broke on the
+ * one site with no visible offers. It was reachable here too, because the
+ * params lookup failed CLOSED to an empty list, so one API blip was enough to
+ * change the build shape.
+ *
+ * Removing the function pins the route dynamic whatever the data does.
+ * `force-dynamic` is deliberately NOT used: it would also downgrade fetchCache
+ * to no-store and send every request to the API, where this leaves the
+ * existing per-fetch cache and its tags exactly as they were.
+ */
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params

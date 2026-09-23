@@ -13,31 +13,25 @@ const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
 
 type Props = { params: Promise<{ slug: string }> }
 
-/**
- * Rendered per request, never prerendered.
+/*
+ * NO generateStaticParams, deliberately — this route renders on demand.
  *
- * ── Why this is here ────────────────────────────────────────────────────────
+ * Next classifies a dynamic route from what that function RETURNS: a non-empty
+ * list builds `f` (dynamic), an EMPTY list builds a fully static route. A
+ * static render then throws DYNAMIC_SERVER_USAGE, because the root layout
+ * reads the session cookie for the header's account control and a static
+ * render may not touch cookies — taking the whole route down with a 500 for
+ * every slug, valid or not.
  *
- * Next classified this route from what generateStaticParams RETURNED: with
- * offers to list it built `ƒ` (dynamic), with an empty list it built `●`
- * (fully static). Production had no visible offers, so the one site with an
- * empty list got the static build — and serving it threw DYNAMIC_SERVER_USAGE,
- * because the root layout reads the session cookie for the header's account
- * control and a static render may not touch cookies. The whole route then 500d
- * for EVERY slug, valid or not, on exactly one site; the five with offers kept
- * their dynamic build and were unaffected.
+ * Not hypothetical: that is exactly how this route broke in production on the
+ * one site with no visible offers.
  *
- * `dynamic = 'force-dynamic'` alone did NOT fix it — measured: with
- * generateStaticParams still present and returning [], the build kept marking
- * the route `●`. Removing that function is what actually pins it to `ƒ`, and
- * with force-dynamic set it had nothing left to contribute anyway: a
- * force-dynamic route is never prerendered, so there are no params to generate.
- *
- * The cost is that offer pages are no longer prerendered. They were already
- * fetched per request behind a 3600s cache tag, so this trades a warm first
- * hit for a route whose build no longer changes shape with the data.
+ * `force-dynamic` was tried and is NOT the fix — measured: with the function
+ * still present and returning [], the build kept marking the route static.
+ * Removing the function is what pins it, and it avoids force-dynamic's side
+ * effect of downgrading fetchCache to no-store, which would send every request
+ * straight to the API.
  */
-export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
