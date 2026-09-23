@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { getSpecialOffers, getSpecialOffer } from '@/lib/api'
+import { getSpecialOffer } from '@/lib/api'
 import { buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript } from '@/lib/seo'
 import { resolveImageUrl } from '@/lib/images'
 import BonusTerms from '@/components/BonusTerms'
@@ -13,26 +13,31 @@ const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
 
 type Props = { params: Promise<{ slug: string }> }
 
-export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
-  /*
-   * Fails CLOSED to an empty list.
-   *
-   * This runs per request for a slug that was not prerendered, and
-   * publicFetch throws on any non-200. Unguarded, a single blip on one
-   * endpoint turned the whole route into a 500 — including for slugs that
-   * simply do not exist, which should be a plain 404.
-   *
-   * Returning [] means "nothing is prerendered": the page still renders,
-   * still fetches its own data, and still calls notFound() when the record
-   * is missing. A build with no params is a slower first hit, not an outage.
-   */
-  try {
-    const res = await getSpecialOffers()
-    return res.data.map((o) => ({ slug: o.slug }))
-  } catch {
-    return []
-  }
-}
+/**
+ * Rendered per request, never prerendered.
+ *
+ * ── Why this is here ────────────────────────────────────────────────────────
+ *
+ * Next classified this route from what generateStaticParams RETURNED: with
+ * offers to list it built `ƒ` (dynamic), with an empty list it built `●`
+ * (fully static). Production had no visible offers, so the one site with an
+ * empty list got the static build — and serving it threw DYNAMIC_SERVER_USAGE,
+ * because the root layout reads the session cookie for the header's account
+ * control and a static render may not touch cookies. The whole route then 500d
+ * for EVERY slug, valid or not, on exactly one site; the five with offers kept
+ * their dynamic build and were unaffected.
+ *
+ * `dynamic = 'force-dynamic'` alone did NOT fix it — measured: with
+ * generateStaticParams still present and returning [], the build kept marking
+ * the route `●`. Removing that function is what actually pins it to `ƒ`, and
+ * with force-dynamic set it had nothing left to contribute anyway: a
+ * force-dynamic route is never prerendered, so there are no params to generate.
+ *
+ * The cost is that offer pages are no longer prerendered. They were already
+ * fetched per request behind a 3600s cache tag, so this trades a warm first
+ * hit for a route whose build no longer changes shape with the data.
+ */
+export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
