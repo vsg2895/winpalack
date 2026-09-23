@@ -51,20 +51,10 @@ export default function FooterBonusMenu({
   // pushes the footer's other links down for no reason the reader remembers.
   useEffect(() => setOpen(false), [pathname])
 
-  // A parent with no children is a dead control — render the plain link so the
-  // destination never disappears from the footer.
-  if (items.length === 0) {
-    return (
-      <li>
-        <Link
-          href={href}
-          className="inline-block -mx-1 px-1 py-3 -my-3 text-sm font-semibold text-slate-600 transition-colors hover:text-emerald-700 lg:text-base"
-        >
-          {label}
-        </Link>
-      </li>
-    )
-  }
+  // No category has a visible offer, so there is no bonus content to send a
+  // reader to. The entry comes out of the footer entirely rather than becoming
+  // a link to an empty listing — the header does the same.
+  if (items.length === 0) return null
 
   return (
     <li>

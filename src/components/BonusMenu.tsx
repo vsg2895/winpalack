@@ -22,9 +22,12 @@ export interface BonusMenuItem {
  * against the header rather than the viewport and collapse. Absolute inside the
  * item is unaffected by that, and is what a menu wants anyway.
  *
- * Renders nothing when there are no categories. The server already drops
- * categories with no visible offers, so an empty list means there is no Bonus
- * area on this site — and a parent with no children is a dead control.
+ * Renders NOTHING when no category qualifies. The children are filtered
+ * server-side — BonusController drops any category with no visible offer on
+ * this site — so an empty list means the site has no bonus content at all right
+ * now, and the whole entry comes out of the menu rather than degrading to a
+ * link. Hiding the last visible offer therefore removes its category on the
+ * next revalidate, and hiding the last offer anywhere removes Bonuses itself.
  */
 export default function BonusMenu({
   label,

@@ -271,8 +271,22 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                 {headerLinks.map(({ href, label, external }) =>
                   /* Special Offers becomes a CHILD of Bonus, so the Bonus parent takes
                      the slot the editor gave Special Offers — replaced in place rather
-                     than appended, which would move it to the end of an arranged menu. */
-                  href === '/special-offers' && bonusSections.length > 0 ? (
+                     than appended, which would move it to the end of an arranged menu.
+                
+                     Keyed on the FEATURE SWITCH here, and on CONTENT inside BonusMenu,
+                     which renders nothing when no category has a visible offer. Three
+                     states, and they are deliberately not the same:
+
+                       feature off              -> the plain link the editor authored
+                       feature on, no content   -> nothing at all
+                       feature on, content      -> the Bonuses dropdown
+
+                     The middle one is the point: with every offer hidden there is no
+                     bonus content to send anyone to, so the entry leaves the menu
+                     rather than pointing at an empty listing. Hiding the last visible
+                     offer in a category removes that category; hiding the last one
+                     anywhere removes Bonuses itself. */
+                  href === '/special-offers' && bonusEnabled ? (
                     <BonusMenu
                       key={href}
                       label={COPY.nav.bonus}
@@ -321,6 +335,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                 links={headerLinks}
                 bonusSections={bonusSections.map((section) => ({ slug: section.slug, name: section.name }))}
                 bonusLabel={COPY.nav.bonus}
+                bonusEnabled={bonusEnabled}
               />
             </div>
           </div>
@@ -380,7 +395,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                        expands IN FLOW — the links beneath it move down. A footer has
                        room to grow and nothing below to obscure, whereas a panel
                        floating upward would cover the list the reader is using. */
-                    href === '/special-offers' && bonusSections.length > 0 ? (
+                    href === '/special-offers' && bonusEnabled ? (
                       <FooterBonusMenu
                         key={href}
                         label={COPY.nav.bonus}

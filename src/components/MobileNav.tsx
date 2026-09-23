@@ -28,11 +28,16 @@ export type MobileNavLink = { href: string; label: string; external?: boolean }
 export default function MobileNav({
   links,
   bonusSections = [],
+  bonusEnabled = false,
   bonusLabel = 'Bonuses',
 }: {
   links: MobileNavLink[]
-  /** Categories under Bonus. Empty means this site publishes no Bonus area. */
+  /** Categories under Bonus, already filtered server-side to those holding at
+   *  least one visible offer. Empty means the whole entry is dropped. */
   bonusSections?: { slug: string; name: string }[]
+  /** Whether this site publishes the Bonus area at all. With it off the menu
+   *  keeps whatever link the editor authored instead. */
+  bonusEnabled?: boolean
   bonusLabel?: string
 }) {
   const [open, setOpen] = useState(false)
@@ -128,7 +133,8 @@ export default function MobileNav({
                          footer. Expanded inline rather than behind another tap: this panel
                          already scrolls, and burying two links behind an accordion inside a
                          menu the reader has just opened is a tap for nothing. */
-                      href === '/special-offers' && bonusSections.length > 0 ? (
+                      href === '/special-offers' && bonusEnabled ? (
+                        bonusSections.length === 0 ? null : (
                         <li key={href}>
                           <Link href={href} onClick={close} className="flex min-h-12 items-center rounded-xl px-4 text-[17px] font-semibold tracking-tight text-slate-700 transition-colors hover:bg-emerald-50 hover:text-emerald-700 focus-visible:bg-emerald-50 focus-visible:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
                             {bonusLabel}
@@ -147,6 +153,7 @@ export default function MobileNav({
                             ))}
                           </ul>
                         </li>
+                        )
                       ) : (
                         <li key={href}>
                           {external || href.startsWith('http') ? (
