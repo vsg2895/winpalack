@@ -84,13 +84,23 @@ export interface CategoryWithCasinos {
   meta: CategoryCasinosMeta
 }
 
+/**
+ * One page of a category's casinos.
+ *
+ * `perPage` is optional and omitted by default, so the server's own page size
+ * applies — which is what every listing here except the home page wants. The
+ * home page passes its own size; see app/page.tsx.
+ */
 export const getCategory = (
   slug: string,
   page = 1,
   country?: string,
+  perPage?: number,
 ): Promise<ApiResponse<CategoryWithCasinos>> =>
   publicFetch(
-    `/categories/${slug}?page=${page}${country ? `&country=${encodeURIComponent(country)}` : ''}`,
+    `/categories/${slug}?page=${page}` +
+      `${country ? `&country=${encodeURIComponent(country)}` : ''}` +
+      `${perPage ? `&per_page=${perPage}` : ''}`,
     [`category:${slug}`],
   )
 

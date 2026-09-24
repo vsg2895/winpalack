@@ -152,13 +152,6 @@ export default async function GuidePage({ params }: Props) {
             <div className="prose prose-zinc mt-8 max-w-none" dangerouslySetInnerHTML={{ __html: article.body }} />
           )}
 
-          {/* Affiliate disclosure, unconditional. A guide may link to an operator
-              and the reader is entitled to know how this site is paid — the
-              layout's 18+ and responsible-gambling links stay in place around it. */}
-          <p className="mt-10 rounded-xl bg-zinc-50 px-4 py-3 text-xs text-zinc-500">
-            {COPY.guides.affiliateDisclosure}
-          </p>
-
           <p className="mt-8 text-sm">
             <Link href="/guides" className="font-semibold text-emerald-700 underline underline-offset-4 hover:text-emerald-800">
               {COPY.guides.backToIndex}

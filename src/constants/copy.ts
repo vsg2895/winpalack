@@ -194,10 +194,6 @@ export const COPY = {
      * the words are ours, the reporting was theirs.
      */
     sourceCredit: 'Reported first by',
-    // Shown on every post. A post may link to an operator, and a reader is
-    // entitled to know how the site is paid.
-    affiliateDisclosure:
-      'Some links on this page are affiliate links. If you sign up through one we may be paid a commission, at no cost to you. It never changes which casinos we list or what we say about them.',
     backToIndex: 'All news',
     latest: 'Latest',
     // The rail beside the feed. It is the editor's PICK, not a measured count —
@@ -217,10 +213,6 @@ export const COPY = {
     pageTitle: 'Guides',
     pageDescription:
       'Plain explanations of the terms that decide what a bonus is actually worth, and what to check before you deposit.',
-    // Shown on every guide. A guide may link to an operator, and a reader is
-    // entitled to know how the site is paid.
-    affiliateDisclosure:
-      'Some links on this page are affiliate links. If you sign up through one we may be paid a commission, at no cost to you. It never changes which casinos we list or what we say about them.',
     backToIndex: 'All guides',
   },
   // The forum — every published player review on the site, grouped by casino.
@@ -389,7 +381,7 @@ export const COPY = {
     // used in the email templates.
     postalAddress: '25 Regent Street, London SW1Y 4PH, United Kingdom',
     disclaimer:
-      'Gambling should stay entertainment, never a way to make money. Strictly 18+. Set a limit before you play and walk away when you reach it. Some links on this site earn us a commission, which never influences a safety score.',
+      'Gambling should stay entertainment, never a way to make money. Strictly 18+. Set a limit before you play and walk away when you reach it.',
   },
   errors: {
     notFound: 'That page does not exist.',

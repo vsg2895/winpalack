@@ -63,19 +63,48 @@ export default function CasinoFilters({ facets }: { facets: Facet[] }) {
             >
               {facet.label}
             </label>
-            <select
-              id={`facet-${facet.facet}`}
-              value={params.get(facet.facet) ?? ''}
-              onChange={(e) => apply(facet.facet, e.target.value)}
-              className="min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-            >
-              <option value="">Any</option>
-              {facet.values.map((v) => (
-                <option key={v.value} value={v.value}>
-                  {v.label} ({v.count})
-                </option>
-              ))}
-            </select>
+            {/*
+              * `appearance-none` is load-bearing, not decoration.
+              *
+              * Safari renders a native <select> with its own OS chrome and
+              * ignores border-radius, background and border on it, so this
+              * control came out as a grey system dropdown in the middle of a
+              * white card while the identical classes looked correct in
+              * Chrome. Resetting the appearance is what lets any of the
+              * styling below apply.
+              *
+              * Removing the appearance also removes the native arrow, so the
+              * chevron is drawn here. It is `pointer-events-none`, which keeps
+              * the whole control clickable through it, and `pr-9` reserves the
+              * space so a long country name cannot run underneath it.
+              */}
+            <div className="relative">
+              <select
+                id={`facet-${facet.facet}`}
+                value={params.get(facet.facet) ?? ''}
+                onChange={(e) => apply(facet.facet, e.target.value)}
+                className="min-h-11 w-full appearance-none rounded-xl border border-slate-200 bg-white py-2 pl-3 pr-9 text-sm text-slate-700 transition-colors focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+              >
+                <option value="">Any</option>
+                {facet.values.map((v) => (
+                  <option key={v.value} value={v.value}>
+                    {v.label} ({v.count})
+                  </option>
+                ))}
+              </select>
+              <svg
+                aria-hidden
+                viewBox="0 0 20 20"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+              >
+                <path d="M6 8l4 4 4-4" />
+              </svg>
+            </div>
           </div>
         ))}
 

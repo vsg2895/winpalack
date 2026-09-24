@@ -89,9 +89,20 @@ function BoardRow({ board, now }: { board: ForumIndexResponse['sections'][number
         <div className="shrink-0 sm:w-56 sm:text-right">
           {last?.article_slug ? (
             <>
+              {/*
+                * `truncate`, NOT `line-clamp-1`, because of the `py-3 -my-3`
+                * tap-target trick on the same element.
+                *
+                * line-clamp works by `overflow: hidden` on a -webkit-box, and
+                * overflow clips at the PADDING box — so the 12px of padding
+                * exposed the top of the clamped second line, which then
+                * painted straight over the date/author row below. `truncate`
+                * sets `white-space: nowrap`, so there is no second line to
+                * leak in the first place, and the tap target is preserved.
+                */}
               <Link
                 href={`/forum/${board.slug}/${last.article_slug}`}
-                className="line-clamp-1 py-3 -my-3 text-sm font-semibold text-slate-700 transition-colors hover:text-emerald-700"
+                className="block truncate py-3 -my-3 text-sm font-semibold text-slate-700 transition-colors hover:text-emerald-700"
               >
                 {last.article_title}
               </Link>

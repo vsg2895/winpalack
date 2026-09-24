@@ -7,6 +7,7 @@ import { buildItemListSchema, buildWebPageSchema, jsonLdScript, buildFaqSchema }
 import { COPY } from '@/constants/copy'
 import { FAQ_ITEMS } from '@/constants/faq'
 import CasinoCard from '@/components/CasinoCard'
+import Pagination from '@/components/Pagination'
 import CategoryNav from '@/components/CategoryNav'
 import CountryNav from '@/components/CountryNav'
 import SpecialOfferCard from '@/components/SpecialOfferCard'
@@ -34,7 +35,19 @@ function faqSpan(i: number): string {
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
 const YEAR = new Date().getFullYear()
 
-type Props = { searchParams: Promise<{ category?: string; country?: string }> }
+/**
+ * Casinos shown in the home page's category section.
+ *
+ * This surface only. The server's own page size still governs /casinos,
+ * /categories/[slug] and the other five sites — it is a shared constant, so
+ * changing it there would have moved every listing in the network.
+ *
+ * "See more" below the list keeps working off the meta totals, so a category
+ * holding more than this still leads the visitor to the full catalog.
+ */
+const HOME_CASINOS_PER_PAGE = 10
+
+type Props = { searchParams: Promise<{ category?: string; country?: string; page?: string }> }
 
 /**
  * Resolve the country, then the category WITHIN it.
@@ -66,7 +79,12 @@ async function resolveFilters(searchParams: Props['searchParams']) {
       ? sp.category
       : categories[0]?.slug
 
-  return { categories: categories as Category[], selected, continents, countries, country }
+  // A page number that is absent, zero, negative or not a number at all falls
+  // back to 1 — a hand-edited or stale link must land on the first page rather
+  // than on an empty section.
+  const page = Math.max(1, Number.parseInt(sp.page ?? '1', 10) || 1)
+
+  return { categories: categories as Category[], selected, continents, countries, country, page }
 }
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -82,10 +100,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage({ searchParams }: Props) {
-  const { categories, selected, continents, countries, country } = await resolveFilters(searchParams)
+  const { categories, selected, continents, countries, country, page } = await resolveFilters(searchParams)
 
   const [categoryRes, offersRes, anyOffersRes, bestNewsRes, bonusRes] = await Promise.allSettled([
-    selected ? getCategory(selected, 1, country) : Promise.resolve(null),
+    selected ? getCategory(selected, page, country, HOME_CASINOS_PER_PAGE) : Promise.resolve(null),
     getSpecialOffers(selected, 6),
     // Site-wide, unfiltered, limit 1 — just "does a visible offer exist at all?".
     // Runs alongside the others, so it costs no extra round-trip of latency, and
@@ -105,7 +123,29 @@ export default async function HomePage({ searchParams }: Props) {
   // "See More" is only an affordance when there is actually more: compare the
   // category's full count against the rows this page received, rather than
   // hard-coding the page size on both sides where the two could drift apart.
-  const hasMoreCasinos = (catData?.meta?.total ?? 0) > casinos.length
+  // Pagination for the section. Read from the RESPONSE rather than recomputed
+  // from HOME_CASINOS_PER_PAGE, so the numbering cannot drift from what the
+  // server actually paginated by (it clamps the requested size).
+  const casinoPage = catData?.meta?.current_page ?? 1
+  const casinoLastPage = catData?.meta?.last_page ?? 1
+  const casinoPerPage = catData?.meta?.per_page ?? HOME_CASINOS_PER_PAGE
+  // Ranks continue across pages: the first card on page 2 is #11, not #1.
+  const rankOffset = (casinoPage - 1) * casinoPerPage
+
+  /**
+   * Base URL for the paginator, carrying the current category and country.
+   *
+   * Without them, paging would silently reset the visitor's filters — the
+   * chips would still read "Free Spins" while the list showed Most Popular.
+   * Pagination appends its own `page`, and picks the right separator.
+   */
+  const casinosBasePath = (() => {
+    const qs = new URLSearchParams()
+    if (selected) qs.set('category', selected)
+    if (country) qs.set('country', country)
+    const query = qs.toString()
+    return query ? `/?${query}` : '/'
+  })()
   // Offers are already scoped to the selected category and capped by the backend (?category=&limit=).
   const topOffers: SpecialOffer[] = offersRes.status === 'fulfilled' ? offersRes.value.data : []
   const bonusSections: BonusSection[] = bonusRes.status === 'fulfilled' ? bonusRes.value : []
@@ -128,7 +168,7 @@ export default async function HomePage({ searchParams }: Props) {
   const listSchema = buildItemListSchema(
     activeCategory ? `${activeCategory.name} — ${COPY.home.topCasinosTitle}` : COPY.home.topCasinosTitle,
     selected ? `${SITE_URL}/categories/${selected}` : `${SITE_URL}/casinos`,
-    casinos.map((c, i) => ({ position: i + 1, name: c.name, url: `${SITE_URL}/casinos/${c.slug}` })),
+    casinos.map((c, i) => ({ position: rankOffset + i + 1, name: c.name, url: `${SITE_URL}/casinos/${c.slug}` })),
   )
 
   const graph = [
@@ -207,17 +247,16 @@ export default async function HomePage({ searchParams }: Props) {
               <p className="text-slate-500">{COPY.casinos.noResults}</p>
             ) : (
               <ol className="flex flex-col gap-4 lg:gap-5">
-                {casinos.map((casino, i) => <CasinoCard key={casino.id} casino={casino} rank={i + 1} large />)}
+                {casinos.map((casino, i) => <CasinoCard key={casino.id} casino={casino} rank={rankOffset + i + 1} large />)}
               </ol>
             )}
 
-            {activeCategory && hasMoreCasinos && (
-              <div className="mt-8 text-center">
-                <Link href={`/categories/${selected}`} aria-label={`See all ${activeCategory.name} casinos`} className="inline-flex rounded-full border border-slate-300 bg-white/70 px-6 py-3 text-sm font-semibold text-slate-700 backdrop-blur transition-colors hover:border-emerald-300 hover:text-emerald-700">
-                  See More →
-                </Link>
-              </div>
-            )}
+            {/* Replaces the old "See More" button, whose condition was exactly
+                "there is more than one page" — the paginator now owns that,
+                and showing both put two different ways forward under one list.
+                The section heading still carries "View All →" for anyone who
+                wants the full filterable catalog instead. */}
+            <Pagination basePath={casinosBasePath} current={casinoPage} last={casinoLastPage} />
           </div>
         </section>
 

@@ -16,11 +16,6 @@ export const FAQ_ITEMS = [
       "Before an operator is listed we confirm its licence is current, check the withdrawal limits published in its terms, and look for deposit limits, reality checks and self-exclusion tools. Anything failing those checks is not listed.",
   },
   {
-    question: "Do you make money if I sign up?",
-    answer:
-      "Yes, some links earn us a commission. It has no bearing on whether an operator passes our checks. Payment cannot buy a listing, and it cannot stop us removing one.",
-  },
-  {
     question: "How do you handle complaints about an operator?",
     answer:
       "We track complaint history around slow or refused withdrawals. A pattern of unresolved complaints gets an operator removed from the list, and we explain why.",
