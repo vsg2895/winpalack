@@ -78,3 +78,50 @@ export async function getForumMember(): Promise<ForumMember | null> {
     return null
   }
 }
+
+/** One of the member's own posts, as the account page shows it. */
+export interface MyForumPost {
+  id: number
+  body: string
+  status: string
+  /** True only while the post is still awaiting a moderator. */
+  editable: boolean
+  created_at: string | null
+  edited_at: string | null
+  article: { title: string; slug: string; category: string | null; board: string | null } | null
+}
+
+/**
+ * The signed-in member's own posts — every status, pending included.
+ *
+ * Server-side only, and never cached: it reads the session cookie, so a cached
+ * copy would be one member's posts served to the next visitor.
+ *
+ * Returns [] on any failure, for the same reason getForumMember returns null:
+ * the account page must still render.
+ */
+export async function getMyForumPosts(): Promise<MyForumPost[]> {
+  if (!KEY || !SITE || !API) return []
+
+  const token = (await cookies()).get(FORUM_COOKIE)?.value
+  if (!token) return []
+
+  try {
+    const res = await fetch(`${API}/sites/${SITE}/forum/members/me/posts`, {
+      headers: {
+        'X-Site-Key': KEY,
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
+      cache: 'no-store',
+    })
+
+    if (!res.ok) return []
+
+    const json = (await res.json()) as { data?: MyForumPost[] }
+
+    return json.data ?? []
+  } catch {
+    return []
+  }
+}

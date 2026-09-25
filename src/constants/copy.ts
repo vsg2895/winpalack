@@ -300,8 +300,11 @@ export const COPY = {
     newerReplies: 'Newer replies',
     reportPost: 'Report',
 
+    // "Every post", not "your first few": there is no threshold to clear any
+    // more, so promising one would be untrue — a member would wait for posts
+    // to start appearing instantly and they never will.
     premoderationNotice:
-      'Your first few posts are checked by a moderator before they appear. This stops the spam that an open gambling forum attracts on day one.',
+      'A moderator reviews every post before it appears. This stops the spam that an open gambling forum attracts on day one.',
   },
 
   forum: {

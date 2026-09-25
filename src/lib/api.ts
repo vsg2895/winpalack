@@ -329,6 +329,68 @@ export const verifyEmail = async (token: string): Promise<VerifyResult> => {
   return { ok: true, bonusEmailExpected: data.bonus_email_expected === true }
 }
 
+/**
+ * Confirm a forum member's address.
+ *
+ * The emailed link lands on /register/verify, which calls this. The signature was
+ * computed by Laravel over the API URL AND its query string, so the URL is
+ * rebuilt here exactly as it was signed: `expires` then `signature`, nothing
+ * added, nothing reordered. Appending so much as a cache-buster would make
+ * every confirmation link fail.
+ *
+ * POST, because the route is POST-only so that a mail client prefetching a
+ * GET cannot confirm an address nobody clicked.
+ */
+export const verifyForumMember = async (
+  member: string,
+  expires: string,
+  signature: string,
+): Promise<{ ok: boolean; expired: boolean }> => {
+  const id = encodeURIComponent(member)
+  const qs = `expires=${encodeURIComponent(expires)}&signature=${encodeURIComponent(signature)}`
+
+  const res = await fetch(`${API}/sites/${SITE}/forum/members/${id}/verify?${qs}`, {
+    method: 'POST',
+    headers: { 'X-Site-Key': KEY as string, Accept: 'application/json' },
+    cache: 'no-store',
+  })
+
+  // 403 is what a tampered OR time-expired signature returns, and the two are
+  // worth telling apart on screen: one is "ask for a new link", the other is
+  // "something is wrong". The API cannot distinguish them, so the page says
+  // the recoverable thing.
+  return { ok: res.ok, expired: res.status === 403 }
+}
+
+/** A discussion a member may post into — the account page's picker. */
+export interface ForumDiscussionOption {
+  id: number
+  title: string
+  slug: string
+  board: { name: string; slug: string } | null
+}
+
+/**
+ * Open discussions, for the "which discussion?" picker.
+ *
+ * Public and cacheable — it is the same list for everybody, and it changes
+ * only when an editor opens or locks a discussion. Tagged with the forum so a
+ * revalidation clears it.
+ */
+export const getForumDiscussions = async (): Promise<ForumDiscussionOption[]> => {
+  try {
+    const res = await fetch(`${API}/sites/${SITE}/forum-discussions`, {
+      headers: { 'X-Site-Key': KEY as string, Accept: 'application/json' },
+      next: { revalidate: 600, tags: [`site:${SITE}`, 'forum'] },
+    })
+    if (!res.ok) return []
+    const json = (await res.json()) as { data?: ForumDiscussionOption[] }
+    return json.data ?? []
+  } catch {
+    return []
+  }
+}
+
 // ── CMS / Legal pages (site-scoped, published only) ──────────────────
 export const getPage = async (slug: string): Promise<CmsPage | null> => {
   const res = await fetch(`${API}/sites/${SITE}/pages/${slug}`, {

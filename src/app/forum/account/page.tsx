@@ -1,11 +1,13 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
-import { getSiteFeatures } from '@/lib/api'
-import { getForumMember } from '@/lib/forumSession'
+import { getSiteFeatures, getForumDiscussions } from '@/lib/api'
+import { getForumMember, getMyForumPosts } from '@/lib/forumSession'
 import { COPY } from '@/constants/copy'
 import Breadcrumbs from '@/components/forum/Breadcrumbs'
 import SignOutButton from '@/components/forum/SignOutButton'
+import MyPosts from '@/components/forum/MyPosts'
+import NewPostForm from '@/components/forum/NewPostForm'
 
 /**
  * The member's own page. Signing in and registering live at /login and
@@ -40,6 +42,13 @@ export default async function ForumAccountPage({
     redirect(`/login?next=${encodeURIComponent(safeNext)}`)
   }
 
+  // Both are per-visitor and uncached; the discussion list is public and
+  // cached. Fetched together so the page costs one round trip, not three.
+  const [posts, discussions] = await Promise.all([
+    getMyForumPosts(),
+    member.verified ? getForumDiscussions() : Promise.resolve([]),
+  ])
+
   const crumbs = [
     { name: 'Home', href: '/' },
     { name: COPY.communityForum.title, href: '/forum' },
@@ -48,7 +57,7 @@ export default async function ForumAccountPage({
 
   return (
     <main className="px-4 py-10 sm:py-14">
-      <div className="container mx-auto max-w-md">
+      <div className="container mx-auto max-w-2xl">
         <Breadcrumbs crumbs={crumbs} />
 
         <div className="rounded-2xl border border-slate-200 bg-white p-6">
@@ -81,6 +90,28 @@ export default async function ForumAccountPage({
               <SignOutButton />
             </div>
           </div>
+
+        {/* Writing is gated on a CONFIRMED address, the same condition the API
+            enforces. Showing the composer to an unconfirmed member would offer
+            a form whose every submission is refused. */}
+        {member.verified && (
+          <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
+            <h2 className="font-display text-lg font-semibold text-slate-900">Write a post</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Your post is reviewed by a moderator before it appears in the forum.
+            </p>
+            <NewPostForm discussions={discussions} />
+          </section>
+        )}
+
+        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
+          <h2 className="font-display text-lg font-semibold text-slate-900">My posts</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Posts awaiting review can still be edited. Once published they become part of the
+            discussion and are fixed.
+          </p>
+          <MyPosts posts={posts} />
+        </section>
       </div>
     </main>
   )

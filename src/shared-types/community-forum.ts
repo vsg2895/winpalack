@@ -201,6 +201,44 @@ export interface ForumModerationPost {
   article: { id: number; title: string; slug: string; category: string | null } | null
 }
 
+/**
+ * One member-authored post on the admin's Member Posts screen.
+ *
+ * Close to ForumModerationPost but not the same shape, and deliberately its
+ * own type: that one describes a TRIAGE row (it carries `ip_address` and
+ * `depth` because a moderator judging spam needs them), this one describes a
+ * BROWSE row, where when a post was edited and when it was published is what
+ * the screen is actually for.
+ */
+export interface ForumMemberPost {
+  id: number
+  body: string
+  status: ForumPostStatus
+  is_comment: boolean
+  created_at: string | null
+  edited_at: string | null
+  approved_at: string | null
+  deleted_at: string | null
+  open_reports_count: number
+  site_id: number
+  author: {
+    id: number
+    display_name: string
+    email: string
+    status: ForumMemberStatus
+    posts_count: number
+    approved_posts_count: number
+    registered_at: string | null
+  } | null
+  article: {
+    id: number
+    title: string
+    slug: string
+    category: string | null
+    board: string | null
+  } | null
+}
+
 export type ForumModerationAction = 'approve' | 'reject' | 'spam' | 'delete' | 'restore'
 
 export interface ForumModerationCounts {
