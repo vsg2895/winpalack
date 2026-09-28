@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { getCasinoFacets, getCategory, getFilteredCasinos } from '@/lib/api'
+import { getCategory, getCountries } from '@/lib/api'
 import { buildItemListSchema, buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript } from '@/lib/seo'
 import { COPY } from '@/constants/copy'
 import CasinoCard from '@/components/CasinoCard'
-import CasinoFilters from '@/components/CasinoFilters'
+import CountryNav from '@/components/CountryNav'
 import Pagination from '@/components/Pagination'
 import { SITE_URL } from '@/lib/config'
 
@@ -55,10 +55,11 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   const { slug } = await params
   const sp = await searchParams
   const page = Math.max(1, Number(sp.page) || 1)
-  // Any facet param means this is a filtered view.
-  const isFiltered = ['country', 'licence', 'payment_method', 'provider'].some((k) => sp[k])
+  // Country is the only filter this listing offers, so it is the only thing
+  // that can make this a filtered view.
+  const isFiltered = Boolean(sp.country)
   try {
-    const { data } = await getCategory(slug, page)
+    const { data } = await getCategory(slug, page, sp.country)
     // Distinct title per page so paginated views are never reported as duplicates.
     const title = page > 1 ? `${data.category.name} Casinos — Page ${page}` : `${data.category.name} Casinos`
     // Was `Best <name> casinos reviewed by <brand>.` — only ~50 characters and
@@ -69,9 +70,9 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 
     return {
       title,
-      // Filtered views stay OUT of the index: the combinations are
-      // near-duplicates of the category page. `follow` is kept so the
-      // casinos they link to still receive the links.
+      // A country-filtered view stays OUT of the index: it is a near-duplicate
+      // of the category page. `follow` is kept so the casinos it links to still
+      // receive the links. Same treatment /casinos gives its own country facet.
       ...(isFiltered ? { robots: { index: false, follow: true } } : {}),
       description,
       // Self-referencing canonical: this route is now the canonical home of a
@@ -89,35 +90,36 @@ export default async function CategoryDetailPage({ params, searchParams }: Props
   const sp = await searchParams
   const page = Math.max(1, Number(sp.page) || 1)
 
+  /*
+   * COUNTRY IS THE ONLY FILTER HERE, and it filters WITHIN the category.
+   *
+   * This page used to carry four facet dropdowns (country, licence, payment
+   * method, game provider) driven by /casinos/facets, and filtering through
+   * them abandoned pagination: the whole matching set came back at once and the
+   * paginator was hidden, so page numbers silently stopped meaning anything.
+   *
+   * The category endpoint already takes a `country`, which is what the home
+   * page and /casinos filter with — so the filter is now the same control, over
+   * the same parameter, and the result is still a real page of a category:
+   * /categories/most-popular?country=monaco is Most Popular in Monaco, page by
+   * page, ranks continuing across pages.
+   *
+   * An unknown or empty country falls back to the unfiltered category rather
+   * than an empty list, so a stale link degrades instead of breaking.
+   */
+  const continents = (await getCountries())?.data ?? []
+  const countries = continents.flatMap((c) => c.countries ?? []).filter((c) => (c.casinos_count ?? 0) > 0)
+  const country = sp.country && countries.some((c) => c.slug === sp.country) ? sp.country : undefined
+
   let payload
   try {
-    payload = (await getCategory(slug, page)).data
+    payload = (await getCategory(slug, page, country)).data
   } catch {
     notFound()
   }
 
   const { category, meta } = payload
-
-  // Facets, minus `category` — this page IS a category, so offering it again
-  // would let a visitor select a second one and expect both.
-  const facets = (await getCasinoFacets()).filter((f) => f.facet !== 'category')
-
-  // Which facet values the URL is asking for.
-  const selected: Record<string, string> = {}
-  for (const facet of facets) {
-    const value = sp[facet.facet]
-    if (value) selected[facet.facet] = value
-  }
-  const isFiltered = Object.keys(selected).length > 0
-
-  // Unfiltered, the paginated category payload is used as-is — same request,
-  // same cache entry, no behaviour change. Filtered, the full filtered set is
-  // fetched instead: combining server-side pagination with facets would need a
-  // paginated filter endpoint, and the honest interim is to filter within the
-  // category rather than pretend the page numbers still mean the same thing.
-  const casinos = isFiltered
-    ? (await getFilteredCasinos({ ...selected, category: slug })).data
-    : payload.casinos
+  const casinos = payload.casinos
   // Position continues across pages so the ItemList reflects the real ranking
   // rather than restarting at 1 on every page.
   const offset = ((meta?.current_page ?? page) - 1) * (meta?.per_page ?? casinos.length)
@@ -155,31 +157,45 @@ export default async function CategoryDetailPage({ params, searchParams }: Props
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(graph) }} />
 
       <main className="py-12 px-4 sm:px-6 lg:px-8">
-        {/* Same 90rem measure and `large` rows as /casinos. */}
+        {/* Same 90rem measure and the same card blocks as /casinos. */}
         <div className="mx-auto max-w-[90rem]">
           <nav className="mb-6 text-sm text-zinc-400">
             <Link href="/" className="inline-block -mx-1 px-1 py-3 -my-3 hover:text-emerald-600">Home</Link> / <Link href="/categories" className="inline-block -mx-1 px-1 py-3 -my-3 hover:text-emerald-600">Categories</Link> / <span className="text-zinc-600">{category.name}</span>
           </nav>
           <h1 className="text-3xl font-bold text-zinc-900">{category.name} Casinos</h1>
 
-          {/* Only rendered when this site actually has facets with values, so a
-              category page never shows an empty control strip. */}
-          <div className="mt-6">
-            <CasinoFilters facets={facets} />
-          </div>
+          {/* The SAME control as the home page and /casinos — one pill-shaped
+              dropdown with flags, grouped by continent and searchable — rather
+              than this page's own native <select>. `basePath` is this category,
+              so choosing a country narrows the category instead of leaving it.
+
+              Rendered only when some country actually has casinos: a filter
+              whose every option returns the same list is noise. */}
+          {countries.length > 0 && (
+            <div className="mt-6 mb-8">
+              <CountryNav continents={continents} selected={country} basePath={`/categories/${slug}`} />
+            </div>
+          )}
 
           {casinos.length === 0 ? (
             <p className="mt-6 text-zinc-500">{COPY.casinos.noResults}</p>
           ) : (
-            <ol className="mt-8 flex flex-col gap-4 lg:gap-5">
-              {casinos.map((casino, i) => <CasinoCard key={casino.id} casino={casino} rank={offset + i + 1} large />)}
+            /* The same blocks as the home page and /casinos: two compact cards
+               per row from `md` up, one below it. A category page is the same
+               kind of list, so it should not be a different kind of card. */
+            <ol className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-5">
+              {casinos.map((casino, i) => <CasinoCard key={casino.id} casino={casino} rank={offset + i + 1} compact />)}
             </ol>
           )}
-          {/* Pagination applies to the unfiltered category only — see above for
-              why a filtered view returns the whole matching set. */}
-          {!isFiltered && (
-            <Pagination basePath={`/categories/${slug}`} current={meta?.current_page ?? 1} last={meta?.last_page ?? 1} />
-          )}
+          {/* Paginates under the filter too, because the filter is now part of
+              the same paginated request. The country rides along in basePath so
+              page 2 continues the list page 1 showed rather than dropping back
+              to every country. */}
+          <Pagination
+            basePath={`/categories/${slug}${country ? `?country=${encodeURIComponent(country)}` : ''}`}
+            current={meta?.current_page ?? 1}
+            last={meta?.last_page ?? 1}
+          />
         </div>
       </main>
     </>

@@ -11,6 +11,18 @@ import { SITE_URL } from '@/lib/config'
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
 
+/**
+ * Casinos per page on this listing.
+ *
+ * Passed explicitly rather than left to the server's own size, exactly as the
+ * home page does: this surface shows the same two-up card blocks, and ten fills
+ * five rows of them. The server clamps anything above 24, and the OTHER five
+ * sites are untouched — `per_page` is a request parameter, not a shared
+ * constant, so nothing here changes what /categories/<slug> or the sibling
+ * domains paginate by.
+ */
+const CASINOS_PER_PAGE = 10
+
 type Props = { searchParams: Promise<{ category?: string; page?: string; country?: string }> }
 
 async function resolve(searchParams: Props['searchParams']) {
@@ -102,10 +114,28 @@ export default async function CasinosPage({ searchParams }: Props) {
     )
   }
 
-  const { category, casinos, meta } = (await getCategory(selected, page, country)).data
-  // Paginate on the canonical route so no internal link goes through the 301;
-  // the country rides along so page 2 shows the same list as page 1.
-  const basePath = `/categories/${selected}${country ? `?country=${encodeURIComponent(country)}` : ''}`
+  const { category, casinos, meta } = (await getCategory(selected, page, country, CASINOS_PER_PAGE)).data
+  /*
+   * Paginate on THIS route.
+   *
+   * These links used to point at `/categories/<slug>?page=N`, so clicking "2"
+   * on /casinos silently moved the visitor to a different URL — they asked for
+   * the next page of the list they were reading and got a different page
+   * instead. A listing paginates itself; that is the whole contract of a
+   * paginator.
+   *
+   * `category` is deliberately NOT in the query string: next.config 301s
+   * /casinos?category=<slug> to /categories/<slug>, so putting it back would
+   * reintroduce the same jump through a redirect. Bare /casinos renders the
+   * default category, and `page` and `country` are both carried, so page 2
+   * shows the continuation of exactly the list page 1 showed.
+   *
+   * The SEO consolidation is untouched: `canonicalPathFor` still points every
+   * page of this view at /categories/<slug>, which is what stops the two URLs
+   * competing. rel=canonical is the right tool for that — moving the visitor
+   * was never part of it.
+   */
+  const basePath = `/casinos${country ? `?country=${encodeURIComponent(country)}` : ''}`
   const cats = categories as Category[]
 
   const listSchema = buildItemListSchema(
@@ -152,10 +182,12 @@ export default async function CasinosPage({ searchParams }: Props) {
           {casinos.length === 0 ? (
             <p className="text-slate-500">{COPY.casinos.noResults}</p>
           ) : (
-            /* Same 90rem measure and `large` rows as the home-page list. */
-            <ol className="flex flex-col gap-4 lg:gap-5">
+            /* The home page's blocks: two compact cards per row from `md` up,
+               one below it. `compact` is what makes a half-width card stay the
+               height of a full-width one — see CasinoCard. */
+            <ol className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-5">
               {casinos.map((casino, i) => (
-                <CasinoCard key={casino.id} casino={casino} rank={(meta.current_page - 1) * meta.per_page + i + 1} large />
+                <CasinoCard key={casino.id} casino={casino} rank={(meta.current_page - 1) * meta.per_page + i + 1} compact />
               ))}
             </ol>
           )}
