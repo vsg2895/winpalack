@@ -45,7 +45,7 @@ const YEAR = new Date().getFullYear()
  * "See more" below the list keeps working off the meta totals, so a category
  * holding more than this still leads the visitor to the full catalog.
  */
-const HOME_CASINOS_PER_PAGE = 10
+const HOME_CASINOS_PER_PAGE = 14
 
 type Props = { searchParams: Promise<{ category?: string; country?: string; page?: string }> }
 
@@ -129,7 +129,7 @@ export default async function HomePage({ searchParams }: Props) {
   const casinoPage = catData?.meta?.current_page ?? 1
   const casinoLastPage = catData?.meta?.last_page ?? 1
   const casinoPerPage = catData?.meta?.per_page ?? HOME_CASINOS_PER_PAGE
-  // Ranks continue across pages: the first card on page 2 is #11, not #1.
+  // Ranks continue across pages: the first card on page 2 is #15, not #1.
   const rankOffset = (casinoPage - 1) * casinoPerPage
 
   /**
@@ -243,11 +243,23 @@ export default async function HomePage({ searchParams }: Props) {
               </div>
             )}
 
+            {/* TWO per row from lg up. One card per full 90rem row left a wide
+                empty band between the bonus and the buttons — the content is the
+                same, so the fix is to give it half the width rather than to
+                invent something to fill it.
+
+                `large` is deliberately NOT passed to CasinoCard any more: that
+                variant exists for a full-width row (bigger logo, more padding,
+                taller minimum) and at half the measure it reads as padding for
+                its own sake. The default is the variant built for a narrower
+                column — the same one the listing pages use. */}
             {casinos.length === 0 ? (
               <p className="text-slate-500">{COPY.casinos.noResults}</p>
             ) : (
-              <ol className="flex flex-col gap-4 lg:gap-5">
-                {casinos.map((casino, i) => <CasinoCard key={casino.id} casino={casino} rank={rankOffset + i + 1} large />)}
+              <ol className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-5">
+                {casinos.map((casino, i) => (
+                  <CasinoCard key={casino.id} casino={casino} rank={rankOffset + i + 1} compact />
+                ))}
               </ol>
             )}
 

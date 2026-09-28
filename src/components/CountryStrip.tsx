@@ -94,7 +94,14 @@ export default function CountryStrip({
 
   return withHeading(
     <span
-      className="flex h-[22px] items-center gap-2"
+      /* WRAPS, and has no fixed height, because of the half-width card on the
+         home page: in a 320px viewport the text column is ~128px and this strip
+         wants ~140px, so a single nowrap row put the "+74" pill off-screen
+         entirely — clipped by the body, so not even reachable by scrolling.
+         Wrapping costs one extra line at the very narrowest widths and changes
+         nothing from ~360px up, where the row has always fit. min-h keeps the
+         card height identical to the Worldwide pill's in the common case. */
+      className="flex min-h-[22px] flex-wrap items-center gap-x-2 gap-y-1"
       role="img"
       aria-label={COPY.casinos.countriesAria(countries.length, shown.map((c) => c.name))}
     >
@@ -104,7 +111,7 @@ export default function CountryStrip({
           low-contrast blocks of colour, and at 18px an overlap turned five of
           them into one indistinct smear. A 4px gap costs a few pixels of width
           and makes each one readable. */}
-      <span className="flex items-center gap-1" aria-hidden>
+      <span className="flex flex-wrap items-center gap-1" aria-hidden>
         {shown.map((country) => {
           const flag = resolveImageUrl(country.image_path)
 
