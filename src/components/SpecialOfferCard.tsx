@@ -13,8 +13,14 @@ export default function SpecialOfferCard({ offer, compact = false }: { offer: Sp
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-2xl border border-white/70 bg-white/80 shadow-[0_8px_30px_-12px_rgba(79,70,229,0.25)] backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-12px_rgba(79,70,229,0.35)]">
+      {/* NO object-fit on the banner, deliberately.
+          `fill` already stretches the image to the box, so the browser's own
+          default — `fill` — is what applies: the whole banner is shown, edge to
+          edge, with nothing cropped away. `object-cover` used to trim whatever
+          did not match the 16:9 box, which took the edges off banners that were
+          designed to be read whole. */}
       <Link href={`/special-offers/${offer.slug}`} className="relative block aspect-video overflow-hidden bg-slate-100">
-        {preview && <Image src={preview} alt={offer.title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" sizes={compact ? '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 340px' : '(max-width: 768px) 100vw, 400px'} />}
+        {preview && <Image src={preview} alt={offer.title} fill className="transition-transform duration-300 group-hover:scale-105" sizes={compact ? '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 340px' : '(max-width: 768px) 100vw, 400px'} />}
       </Link>
       <div className={`flex flex-1 flex-col gap-2 ${compact ? 'p-4' : 'p-5'}`}>
         <h3 className={`font-display font-semibold leading-tight text-slate-900 ${compact ? 'text-base' : 'text-lg'}`}>{offer.title}</h3>
