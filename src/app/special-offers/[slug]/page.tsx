@@ -6,6 +6,7 @@ import { getSpecialOffer } from '@/lib/api'
 import { buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript } from '@/lib/seo'
 import { resolveImageUrl } from '@/lib/images'
 import BonusTerms from '@/components/BonusTerms'
+import { CLAIMABLE_BONUS_CATEGORY } from '@/components/SpecialOfferCard'
 import { COPY } from '@/constants/copy'
 import { SITE_URL } from '@/lib/config'
 
@@ -90,6 +91,8 @@ export default async function SpecialOfferDetailPage({ params }: Props) {
   }
 
   const banner = resolveImageUrl(offer.banner_image ?? offer.image_path)
+  // The same rule the cards use: Claim is a property of the bonus TYPE.
+  const claimable = offer.bonus_category_slug === CLAIMABLE_BONUS_CATEGORY
   const pageUrl = `${SITE_URL}/special-offers/${slug}`
   const breadcrumb = buildBreadcrumbSchema(
     [
@@ -160,7 +163,17 @@ export default async function SpecialOfferDetailPage({ params }: Props) {
               </Link>
             </p>
           ) : (
-            offer.affiliate_url && (
+            // Claim belongs to the Special Offers bonus type, matching the
+            // cards — see CLAIMABLE_BONUS_CATEGORY in SpecialOfferCard. A
+            // bonus of another type still shows its terms and its operator
+            // link in the rail below; what it does not show is a Claim button,
+            // which on this site means "this is a Special Offer".
+            //
+            // Still requires a link HERE, unlike the card: the card's Claim
+            // falls back to this page, and a button on this page leading to
+            // this page would lead nowhere. The operator link in the rail is
+            // the route onward when the offer carries no URL of its own.
+            claimable && offer.affiliate_url && (
               <a href={offer.affiliate_url} target="_blank" rel="nofollow sponsored noopener" className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-xl bg-emerald-600 px-8 py-3.5 font-semibold text-white hover:bg-emerald-700 transition-colors">
                 {COPY.specialOffers.claim}
               </a>

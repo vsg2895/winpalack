@@ -17,6 +17,14 @@ export interface SpecialOffer {
    * detached the offer on the next save.
    */
   bonus_category_id: number | null
+  /**
+   * The bonus type's slug — "special-offers", "free-spins", …
+   *
+   * The front end decides which bonuses carry a Claim call to action from this,
+   * never from the id: ids differ between environments, the slug does not.
+   * Null when the offer is filed under no type.
+   */
+  bonus_category_slug: string | null
   title: string
   slug: string
   image_path: string | null

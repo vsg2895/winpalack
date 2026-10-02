@@ -50,6 +50,9 @@ function SectionIcon({ section }: { section: string }) {
   const paths: Record<string, React.ReactNode> = {
     casinos: <path d="M4 7h16v10H4z M9 7v10 M15 7v10" />,
     special_offers: <path d="M4 9h16v11H4z M2 5h20v4H2z M12 5v15 M12 5c-2-3-6-2-6 0 M12 5c2-3 6-2 6 0" />,
+    // A tag, for the bonus TYPE — deliberately not the gift above it (an
+    // offer you can claim) nor the grid below (a casino category).
+    bonus_categories: <path d="M3 12V5a2 2 0 0 1 2-2h7l9 9-9 9z M7.5 7.5h.01" />,
     categories: <path d="M4 4h7v7H4z M13 4h7v7h-7z M4 13h7v7H4z M13 13h7v7h-7z" />,
     pages: <path d="M6 3h8l4 4v14H6z M14 3v4h4" />,
     forum: <path d="M4 5h16v10H8l-4 4z" />,

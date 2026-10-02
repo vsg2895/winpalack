@@ -64,6 +64,21 @@ export default function CategoryNav({
         // 0.625rem is Tailwind's gap-2.5, inlined with the rest so the layout
         // has ONE source rather than half a rule here and half in a stylesheet.
         gap: '0.625rem',
+        /*
+         * EVERY ROW THE SAME HEIGHT.
+         *
+         * Grid already stretches items within a row, so a chip whose label
+         * wraps — "Online Casinos" is the one that does — pulled only its own
+         * row taller and left the rows above and below it short. At 412px that
+         * read as two 62px chips sitting above three 44px ones, which looks
+         * like a rendering fault rather than a layout.
+         *
+         * `1fr` on the implicit rows sizes them all to the tallest, so the
+         * whole set matches at every width whatever any label does. It is the
+         * wrap-proof version of the fix: tightening the padding or forbidding
+         * the wrap would hold only until the next long category name.
+         */
+        gridAutoRows: '1fr',
       }}
     >
       {categories.map((c) => {
@@ -83,9 +98,13 @@ export default function CategoryNav({
             // `flex` + centring rather than the old inline box: the chip is now
             // as wide as its grid track, so its contents have to be placed
             // inside that width instead of defining it.
+            // The active chip carries a TRANSPARENT border purely so its box model
+            // matches the inactive ones, which are bordered. Without it the selected
+            // chip is 2px shorter — invisible while chips share a row and are
+            // stretched to match, obvious the moment they wrap to one per row.
             className={`flex min-h-11 items-center justify-center rounded-full px-5 py-2.5 text-center text-sm font-bold transition-all ${
               active
-                ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-lg shadow-emerald-500/30'
+                ? 'border border-transparent bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-lg shadow-emerald-500/30'
                 : 'border border-slate-200 bg-white/70 text-slate-600 backdrop-blur hover:border-emerald-300 hover:text-emerald-700'
             }`}
           >
