@@ -23,6 +23,7 @@ const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
  */
 const CASINOS_PER_PAGE = 10
 
+
 type Props = { searchParams: Promise<{ category?: string; page?: string; country?: string }> }
 
 async function resolve(searchParams: Props['searchParams']) {

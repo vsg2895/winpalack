@@ -288,7 +288,11 @@ export default async function CasinoDetailPage({ params }: Props) {
                     {COPY.casinos.countriesHeading}
                   </dt>
                   <dd className="mt-1.5">
-                    <CountryStrip countries={casino.countries} showHeading={false} />
+                    {/* EVERY country, not the card's ten. This panel is the
+                        casino's own record, and "accepts players from" is one
+                        of the facts a visitor opened the page to read — a "+6"
+                        here hides the answer behind a number. */}
+                    <CountryStrip countries={casino.countries} showHeading={false} limit={null} />
                   </dd>
                 </div>
               )}

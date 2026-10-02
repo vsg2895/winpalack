@@ -27,10 +27,19 @@ export default function CasinoCard({
   rank,
   large = false,
   compact = false,
+  flagsShown,
 }: {
   casino: CasinoWithAttachment
   rank?: number
   large?: boolean
+  /**
+   * Country flags to show before the rest collapse into "+N", or `null` for all.
+   *
+   * Undefined on every card surface, which means CountryStrip's own default of
+   * ten — the home strip, the listing and a category page all show the same
+   * card, so they show the same number.
+   */
+  flagsShown?: number | null
   /**
    * The card is in a NARROW column — the home page's two-up grid, where a card
    * is about half the measure it gets on a listing page.
@@ -158,7 +167,7 @@ export default function CasinoCard({
             the flags already say here. */}
         {compact && (
           <div className="mt-2">
-            <CountryStrip countries={casino.countries ?? []} showHeading={false} />
+            <CountryStrip countries={casino.countries ?? []} showHeading={false} limit={flagsShown} />
           </div>
         )}
       </div>
@@ -174,7 +183,7 @@ export default function CasinoCard({
           above): at half the width the row cannot carry four columns. */}
       {! compact && (
         <div className="@[600px]:flex-shrink-0 @[600px]:pr-2">
-          <CountryStrip countries={casino.countries ?? []} />
+          <CountryStrip countries={casino.countries ?? []} limit={flagsShown} />
         </div>
       )}
 

@@ -3,8 +3,15 @@ import { resolveImageUrl } from '@/lib/images'
 import { COPY } from '@/constants/copy'
 import type { Country } from '@shared/types/country'
 
-/** How many flags are shown before the rest collapse into a counter. */
-const FLAGS_SHOWN = 5
+/**
+ * How many flags a CARD shows before the rest collapse into a counter.
+ *
+ * Ten, everywhere a casino card appears — the home strip, the listing and a
+ * category page all render the same card, and a visitor comparing operators is
+ * reading the same thing in each place. A card is a summary, so there is still
+ * a cap; `limit={null}` lifts it for the one surface that is not a summary.
+ */
+const FLAGS_SHOWN = 10
 
 /**
  * Where a casino accepts players, as a compact strip of flags.
@@ -35,8 +42,18 @@ const FLAGS_SHOWN = 5
 export default function CountryStrip({
   countries,
   showHeading = true,
+  limit = FLAGS_SHOWN,
 }: {
   countries: Country[]
+  /**
+   * Flags to render before the rest become "+N", or `null` for all of them.
+   *
+   * A number is clamped to at least one — a strip of nothing but a counter says
+   * less than one flag and a counter does. `null` is for the casino's own page,
+   * where the full list is the answer the visitor came for rather than a
+   * summary, and there is room to print it.
+   */
+  limit?: number | null
   /**
    * Off where the surrounding markup already labels it — the casino page puts
    * this inside a <dl>, where a <p> caption would be invalid HTML and the <dt>
@@ -89,7 +106,7 @@ export default function CountryStrip({
     )
   }
 
-  const shown = countries.slice(0, FLAGS_SHOWN)
+  const shown = limit === null ? countries : countries.slice(0, Math.max(1, limit))
   const remaining = countries.length - shown.length
 
   return withHeading(
