@@ -43,6 +43,17 @@ export default function SpecialOfferCard({ offer, compact = false }: { offer: Sp
         {preview && <Image src={preview} alt={offer.title} fill className="transition-transform duration-300 group-hover:scale-105" sizes={compact ? '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 340px' : '(max-width: 768px) 100vw, 400px'} />}
       </Link>
       <div className={`flex flex-1 flex-col gap-2 ${compact ? 'p-4' : 'p-5'}`}>
+        {/* WHOSE bonus this is, above its name.
+        The title says what the offer gives; a card in a grid of twenty does
+        not say who gives it, which is the first thing someone comparing
+        offers needs. Bold and in the brand accent so it reads as a byline
+        rather than a second heading competing with the title below.
+        Rendered only when the casino is loaded — the relation is eager
+        loaded on every endpoint that feeds these cards, and a card without
+        it simply omits the line rather than printing a blank. */}
+        {offer.casino?.name && (
+          <p className="text-sm font-bold text-emerald-700">{offer.casino.name}</p>
+        )}
         <h3 className={`font-display font-semibold leading-tight text-slate-900 ${compact ? 'text-base' : 'text-lg'}`}>{offer.title}</h3>
         {offer.bonuses && <p className={`inline-block rounded-lg bg-emerald-50 px-2.5 py-1 font-semibold text-emerald-700 ${compact ? 'text-xs' : 'text-sm'}`}>{offer.bonuses}</p>}
         <span className="text-xs text-amber-400" aria-label={`${offer.rating} out of 5`}>{'★'.repeat(offer.rating)}<span className="text-slate-200">{'★'.repeat(5 - offer.rating)}</span></span>
