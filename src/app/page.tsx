@@ -47,6 +47,17 @@ const YEAR = new Date().getFullYear()
  */
 const HOME_CASINOS_PER_PAGE = 14
 
+/**
+ * Bonuses shown under each heading in the home page's Bonus area.
+ *
+ * Sixteen — four full rows of the four-up grid. The server's own cap is lower
+ * and exists to stop one heading swallowing the page; this says what THIS
+ * layout wants rather than inheriting a number chosen for no particular
+ * surface. "See all bonuses" still leads to the full listing, which lifts the
+ * cap entirely.
+ */
+const HOME_BONUSES_PER_CATEGORY = 16
+
 type Props = { searchParams: Promise<{ category?: string; country?: string; page?: string }> }
 
 /**
@@ -113,7 +124,7 @@ export default async function HomePage({ searchParams }: Props) {
     // page down with it — the strip simply does not render.
     getBestNews(),
     // Drives the Bonus sections below, and the header dropdown above.
-    getBonusArea(),
+    getBonusArea({ limit: HOME_BONUSES_PER_CATEGORY }),
   ])
 
   const catData =

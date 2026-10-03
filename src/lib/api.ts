@@ -577,12 +577,20 @@ export interface BonusSection {
  * Fails CLOSED like the other feature fetches: an empty array means "this site
  * publishes no Bonus area", and both surfaces render nothing.
  */
-export const getBonusArea = async (options: { full?: boolean } = {}): Promise<BonusSection[]> => {
+export const getBonusArea = async (
+  options: { full?: boolean; limit?: number } = {},
+): Promise<BonusSection[]> => {
   try {
-    // `full` lifts the per-section cap for the offers LISTING; the home page
-    // takes the default strip. Separate cache tags are unnecessary — the query
-    // string is part of the fetch key, so the two variants cache apart.
-    const query = options.full ? '?limit=0' : ''
+    /*
+     * `full` lifts the per-section cap for the offers LISTING. `limit` sets it
+     * explicitly, which is what the home page does — how many bonuses a heading
+     * shows there is a layout decision belonging to that page, not a server
+     * default it silently inherits.
+     *
+     * Separate cache tags are unnecessary: the query string is part of the
+     * fetch key, so every variant caches apart.
+     */
+    const query = options.full ? '?limit=0' : options.limit ? `?limit=${options.limit}` : ''
     const res = await publicFetch<ApiResponse<BonusSection[]>>(`/bonus${query}`, ['bonus', 'special-offers'])
     return res.data
   } catch {
