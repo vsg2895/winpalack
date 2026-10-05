@@ -43,6 +43,14 @@ export interface Article {
   active: boolean
   /** Promoted to the home page's Best News strip. */
   featured: boolean
+  /**
+   * Picked for the news page's "Most Popular" rail.
+   *
+   * Separate from `featured`, which drives the home page strip. The two were
+   * one flag and could not be curated apart: promoting a post to the home page
+   * silently put it in the rail as well.
+   */
+  to_be_most_popular: boolean
   /** Editorial section. Null is valid — the post publishes without a badge. */
   news_category_id: number | null
   news_category?: { id: number; name: string; slug: string } | null
@@ -64,6 +72,7 @@ export interface UpsertArticlePayload {
   position?: number
   active?: boolean
   featured?: boolean
+  to_be_most_popular?: boolean
   news_category_id?: number | null
   meta_title?: string | null
   meta_description?: string | null

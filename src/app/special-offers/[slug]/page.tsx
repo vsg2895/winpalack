@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
-import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getSpecialOffer } from '@/lib/api'
 import { buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript } from '@/lib/seo'
 import { resolveImageUrl } from '@/lib/images'
 import BonusTerms from '@/components/BonusTerms'
+import OfferBanner from '@/components/OfferBanner'
 import { CLAIMABLE_BONUS_CATEGORY } from '@/components/SpecialOfferCard'
 import { COPY } from '@/constants/copy'
 import { SITE_URL } from '@/lib/config'
@@ -126,11 +126,12 @@ export default async function SpecialOfferDetailPage({ params }: Props) {
             <Link href="/" className="inline-block -mx-1 px-1 py-3 -my-3 hover:text-emerald-600">Home</Link> / <Link href="/special-offers" className="inline-block -mx-1 px-1 py-3 -my-3 hover:text-emerald-600">Special Offers</Link> / <span className="text-zinc-600">{offer.title}</span>
           </nav>
 
-          {/* No object-fit — see SpecialOfferCard. The banner fills its box and
-              nothing is cropped off its edges. */}
+          {/* Whole banner on the shared bonus backdrop — the same treatment the
+              cards give it, so the artwork a visitor clicked is the artwork
+              that opens. See OfferBanner. */}
           {banner && (
             <div className="relative mb-6 aspect-[16/6] overflow-hidden rounded-2xl bg-zinc-100">
-              <Image src={banner} alt={offer.title} fill sizes="(max-width: 1024px) 100vw, 1440px" priority />
+              <OfferBanner src={banner} alt={offer.title} sizes="(max-width: 1024px) 100vw, 1440px" priority />
             </div>
           )}
 

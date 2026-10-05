@@ -107,7 +107,10 @@ export default async function CategoryDetailPage({ params, searchParams }: Props
    * An unknown or empty country falls back to the unfiltered category rather
    * than an empty list, so a stale link degrades instead of breaking.
    */
-  const continents = (await getCountries())?.data ?? []
+  // Counts scoped to THIS category — see getCountries. Without the scope the
+  // dropdown offered "Austria 3" inside Free Spins and then showed two casinos,
+  // or none at all, which is the same broken promise the chips used to make.
+  const continents = (await getCountries(slug))?.data ?? []
   const countries = continents.flatMap((c) => c.countries ?? []).filter((c) => (c.casinos_count ?? 0) > 0)
   const country = sp.country && countries.some((c) => c.slug === sp.country) ? sp.country : undefined
 

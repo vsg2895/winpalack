@@ -203,8 +203,18 @@ export const getSiteFeatures = async (): Promise<SiteFeatures> => {
 // The whole grid arrives in ONE response: continents in order, each with its
 // countries. Null means this site has the feature switched off.
 
-export const getCountries = (): Promise<ApiResponse<Continent[]> | null> =>
-  optionalFetch('/countries', ['countries'])
+export const getCountries = (
+  // Scopes every COUNT to one category, for the dropdown on /categories/<slug>:
+  // there the category is the outer filter, so "Austria 3" has to mean three
+  // casinos in THIS category or choosing it lands the visitor on "No casinos".
+  // Omitted everywhere else, where the country is the outer filter and the
+  // site-wide number is the honest one.
+  category?: string,
+): Promise<ApiResponse<Continent[]> | null> =>
+  optionalFetch(
+    `/countries${category ? `?category=${encodeURIComponent(category)}` : ''}`,
+    ['countries', ...(category ? [`category:${category}`] : [])],
+  )
 
 export interface CountryWithCasinos {
   country: Country

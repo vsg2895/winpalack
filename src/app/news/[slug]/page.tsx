@@ -145,14 +145,12 @@ export default async function NewsPostPage({ params }: Props) {
           <p className="mt-3 text-sm text-slate-500">
             {author && <span className="font-semibold text-slate-700">{author.name}</span>}
             {author && article.published_at && ' · '}
+            {/* "11 days ago", the same wording the listings use. The exact
+                instant stays in `dateTime` for crawlers and for anyone who
+                needs it; `relativeTime` degrades to an absolute date once
+                relative time stops telling a reader anything. */}
             {article.published_at && (
-              <time dateTime={article.published_at}>
-                {new Date(article.published_at).toLocaleDateString('en-GB', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                })}
-              </time>
+              <time dateTime={article.published_at}>{relativeTime(article.published_at)}</time>
             )}
           </p>
 

@@ -17,6 +17,7 @@ import type { SpecialOffer } from '@shared/types/specialOffer'
 import type { Article } from '@shared/types/article'
 import type { BonusSection } from '@/lib/api'
 import { SITE_URL } from '@/lib/config'
+import { relativeTime } from '@/lib/relativeTime'
 
 /**
  * Grid placement for the FAQ cards. The grid is 2-up on tablets and 3-up on
@@ -45,7 +46,7 @@ const YEAR = new Date().getFullYear()
  * "See more" below the list keeps working off the meta totals, so a category
  * holding more than this still leads the visitor to the full catalog.
  */
-const HOME_CASINOS_PER_PAGE = 14
+const HOME_CASINOS_PER_PAGE = 22
 
 /**
  * Bonuses shown under each heading in the home page's Bonus area.
@@ -140,7 +141,7 @@ export default async function HomePage({ searchParams }: Props) {
   const casinoPage = catData?.meta?.current_page ?? 1
   const casinoLastPage = catData?.meta?.last_page ?? 1
   const casinoPerPage = catData?.meta?.per_page ?? HOME_CASINOS_PER_PAGE
-  // Ranks continue across pages: the first card on page 2 is #15, not #1.
+  // Ranks continue across pages: the first card on page 2 is #23, not #1.
   const rankOffset = (casinoPage - 1) * casinoPerPage
 
   /**
@@ -366,11 +367,12 @@ export default async function HomePage({ searchParams }: Props) {
                         <div className="flex flex-1 flex-col p-4">
                           <h3 className="font-display text-base font-bold leading-snug text-slate-900">{post.title}</h3>
                           {post.excerpt && <p className="mt-1.5 line-clamp-2 text-sm text-slate-500">{post.excerpt}</p>}
+                          {/* "11 days ago", matching every other place a news
+                              card appears. This strip was the one surface still
+                              printing an absolute date. */}
                           {post.published_at && (
                             <p className="mt-auto pt-3 text-xs text-slate-400">
-                              <time dateTime={post.published_at}>
-                                {new Date(post.published_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
-                              </time>
+                              <time dateTime={post.published_at}>{relativeTime(post.published_at)}</time>
                             </p>
                           )}
                         </div>

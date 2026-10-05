@@ -21,7 +21,7 @@ const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
  * constant, so nothing here changes what /categories/<slug> or the sibling
  * domains paginate by.
  */
-const CASINOS_PER_PAGE = 10
+const CASINOS_PER_PAGE = 22
 
 
 type Props = { searchParams: Promise<{ category?: string; page?: string; country?: string }> }

@@ -7,6 +7,11 @@ import { buildItemListSchema, buildWebPageSchema, jsonLdScript } from '@/lib/seo
 import { resolveImageUrl } from '@/lib/images'
 import { COPY } from '@/constants/copy'
 import { SITE_URL } from '@/lib/config'
+// ONE implementation of "11 days ago", shared with the article page and the
+// home page's news strip. This file carried its own copy with a different
+// ladder, so the same post could read "2 months ago" here and "5 Sept 2026"
+// two clicks away.
+import { relativeTime } from '@/lib/relativeTime'
 import type { Article } from '@shared/types/article'
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
@@ -35,28 +40,6 @@ export const revalidate = 3600
 
 type Props = { searchParams: Promise<{ category?: string }> }
 
-function formatDate(value: string): string {
-  return new Date(value).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
-}
-
-/**
- * "6 days ago" for anything recent, an absolute date after that.
- *
- * Relative time is useful while it is short and becomes useless quickly —
- * "14 months ago" tells a reader less than the month would. The <time> element
- * carries the machine-readable value either way.
- */
-function relativeTime(value: string): string {
-  const then = new Date(value).getTime()
-  const days = Math.floor((Date.now() - then) / 86_400_000)
-
-  if (days < 1) return 'today'
-  if (days === 1) return 'yesterday'
-  if (days < 30) return `${days} days ago`
-  if (days < 60) return 'last month'
-  if (days < 365) return `${Math.floor(days / 30)} months ago`
-  return formatDate(value)
-}
 
 function Badge({ post }: { post: Article }) {
   if (!post.news_category) return null
@@ -119,7 +102,26 @@ export default async function NewsPage({ searchParams }: Props) {
   const { posts: allPosts } = category ? await getNewsFeed() : { posts }
   if (allPosts.length === 0) notFound()
 
-  const [leadA, leadB, ...rest] = posts
+  /*
+   * The two big cards are the NEWEST published posts, not the first two of the
+   * feed.
+   *
+   * The feed is ordered `position, published_at DESC`, so the leads used to be
+   * whichever two an editor had pushed to the top with `position` — which meant
+   * a page headed "News" could open with something from last month while
+   * today's story sat below the fold. The hero is the one place recency is the
+   * whole promise, so it takes the two most recent and the rest keeps the
+   * editor's arrangement.
+   *
+   * Sorted on a COPY: `posts` is reused below for the JSON-LD item list, which
+   * should keep reflecting the feed's own order.
+   */
+  const newest = [...posts]
+    .sort((a, b) => (b.published_at ?? '').localeCompare(a.published_at ?? ''))
+    .slice(0, 2)
+  const [leadA, leadB] = newest
+  const leadIds = new Set(newest.map((p) => p.id))
+  const rest = posts.filter((post) => !leadIds.has(post.id))
   const activeTopic = categories.find((topic) => topic.slug === category)
 
   const graph = [
