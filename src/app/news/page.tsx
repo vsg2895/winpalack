@@ -103,22 +103,16 @@ export default async function NewsPage({ searchParams }: Props) {
   if (allPosts.length === 0) notFound()
 
   /*
-   * The two big cards are the NEWEST published posts, not the first two of the
-   * feed.
+   * The two big cards are simply the first two of the feed.
    *
-   * The feed is ordered `position, published_at DESC`, so the leads used to be
-   * whichever two an editor had pushed to the top with `position` — which meant
-   * a page headed "News" could open with something from last month while
-   * today's story sat below the fold. The hero is the one place recency is the
-   * whole promise, so it takes the two most recent and the rest keeps the
-   * editor's arrangement.
-   *
-   * Sorted on a COPY: `posts` is reused below for the JSON-LD item list, which
-   * should keep reflecting the feed's own order.
+   * They used to be re-sorted here, because the feed was ordered
+   * `position, published_at DESC` and an editor's `position` could put last
+   * month's story above today's — on the one surface where recency is the whole
+   * promise. `position` is gone: the API now returns news strictly newest
+   * first, so the first two ARE the newest two and sorting them again would
+   * only be a second opinion about an order the server already settled.
    */
-  const newest = [...posts]
-    .sort((a, b) => (b.published_at ?? '').localeCompare(a.published_at ?? ''))
-    .slice(0, 2)
+  const newest = posts.slice(0, 2)
   const [leadA, leadB] = newest
   const leadIds = new Set(newest.map((p) => p.id))
   const rest = posts.filter((post) => !leadIds.has(post.id))

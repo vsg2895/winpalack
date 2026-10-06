@@ -38,7 +38,6 @@ export interface Article {
    * future-dated article at all.
    */
   published_at: string | null
-  position: number
   /** Shown on the site. Separate from published_at, which is the date. */
   active: boolean
   /** Promoted to the home page's Best News strip. */
@@ -69,7 +68,6 @@ export interface UpsertArticlePayload {
   body?: string | null
   hero_image_path?: string | null
   published_at?: string | null
-  position?: number
   active?: boolean
   featured?: boolean
   to_be_most_popular?: boolean

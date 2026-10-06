@@ -214,6 +214,11 @@ export const COPY = {
     pageDescription:
       'Plain explanations of the terms that decide what a bonus is actually worth, and what to check before you deposit.',
     backToIndex: 'All guides',
+    // The card's eyebrow and its read affordance. Here rather than inline in
+    // the JSX for the same reason every other repeated string is: one place to
+    // change the word, and no risk of the listing and a future card disagreeing.
+    cardEyebrow: 'Guide',
+    cardCta: 'Read guide',
   },
   // The forum — every published player review on the site, grouped by casino.
   //

@@ -21,6 +21,10 @@ import Image from 'next/image'
  * Rendered even when a bonus has no artwork at all, so an offer awaiting its
  * banner sits in the same frame as the rest instead of in an empty grey box.
  *
+ * CARDS ONLY. The single-bonus page shows its banner on nothing — there is no
+ * set for it to belong to there, and the gold ground would only compete with
+ * the one piece of artwork the page exists to show.
+ *
  * Drop it into any `relative overflow-hidden` box: the box owns the aspect
  * ratio, this owns what happens inside it.
  */
