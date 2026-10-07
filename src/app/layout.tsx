@@ -20,7 +20,7 @@ import MobileNav from '@/components/MobileNav'
 import HeaderAccount from '@/components/forum/HeaderAccount'
 import { getSocialLinks, hasSpecialOffers, getSiteFeatures, getNavigation, getArticles, getNews, getBonusArea } from '@/lib/api'
 import { buildOrganizationSchema, buildWebSiteSchema, jsonLdScript } from '@/lib/seo'
-import { SITE_URL } from '@/lib/config'
+import { NEWSLETTER_ANCHOR, SITE_URL, SUBSCRIBE_ENABLED } from '@/lib/config'
 import { COPY } from '@/constants/copy'
 import { LEGAL_PAGES } from '@/constants/legalPages'
 import type { SocialLink } from '@shared/types/socialLink'
@@ -30,16 +30,6 @@ const inter = Inter({ variable: '--font-inter', subsets: ['latin'] })
 const fraunces = Fraunces({ variable: '--font-fraunces', subsets: ['latin'], style: ['normal', 'italic'] })
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] })
 
-/**
- * Subscribe capture, gating BOTH entry points this site has: the newsletter
- * form in the footer and the timed subscribe modal.
- *
- * The components, the /api/newsletter route and the backend double-opt-in flow
- * are never touched by this — it only decides whether the two are rendered.
- * That is the point of a flag rather than deleted markup: turning capture off
- * and back on is one edit, and nothing has to be rebuilt from memory.
- */
-const SUBSCRIBE_ENABLED = true
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? 'Winpalack'
 
@@ -240,7 +230,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const siteGraph = [buildOrganizationSchema(socialLinks), buildWebSiteSchema()]
 
   return (
-    <html lang="en" className={`${inter.variable} ${fraunces.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang="en" className={`${inter.variable} ${fraunces.variable} ${geistMono.variable} h-full antialiased motion-safe:scroll-smooth`}>
       <body className="min-h-full flex flex-col text-slate-900">
         {/* FIRST thing in the body, before anything that could load gtag.js.
             Grants every Consent Mode storage type — see ConsentModeScript. */}
@@ -333,6 +323,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                 links={headerLinks}
                 bonusSections={bonusSections.map((section) => ({ slug: section.slug, name: section.name }))}
                 bonusLabel={COPY.nav.bonus}
+                bonusAllLabel={COPY.nav.allOffers}
                 bonusEnabled={bonusEnabled}
               />
             </div>
@@ -351,7 +342,12 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                 left outside, it would render as an empty bordered box at the
                 top of the footer whenever capture is switched off. */}
             {SUBSCRIBE_ENABLED && (
-              <div className="mb-10 rounded-2xl border border-slate-200/70 bg-white/60 p-6 shadow-sm">
+              /* The hero links here. `scroll-mt` clears the sticky header, or
+                 the jump lands with the form's heading hidden behind it. */
+              <div
+                id={NEWSLETTER_ANCHOR}
+                className="mb-10 scroll-mt-24 rounded-2xl border border-slate-200/70 bg-white/60 p-6 shadow-sm"
+              >
                 <NewsletterForm />
               </div>
             )}

@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
+import GoogleSignInButton from '@/components/forum/GoogleSignInButton'
 import { COPY } from '@/constants/copy'
 
 /**
@@ -177,6 +178,12 @@ export default function AccountForm({ next, initialMode = 'signin' }: { next?: s
           {busy ? 'Working…' : mode === 'signin' ? 'Sign in' : 'Create account'}
         </button>
       </form>
+
+      {/* Both modes, deliberately: with Google there is no difference between
+          signing in and creating an account — the first press makes one, every
+          press after it signs the same person in. Renders nothing when the site
+          has no client id configured. */}
+      <GoogleSignInButton next={next} />
     </div>
   )
 }

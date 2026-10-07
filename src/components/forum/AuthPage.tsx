@@ -47,9 +47,25 @@ export default async function AuthPage({
     ? COPY.communityForum.signInBody
     : 'Join the discussion — pick a name, add your email and you are in.'
 
+  /*
+   * The forum crumb appears only for someone who CAME from the forum.
+   *
+   * `?next=` is the evidence, and it is already reliable: the header's account
+   * menu links to /login and /register bare, while every forum entry point —
+   * the reply prompt on a discussion, the member account page — redirects with
+   * the forum path in `next`. So a visitor who opened the form from the header
+   * gets "Home / Sign in" and is not told they are somewhere in a section they
+   * never visited.
+   *
+   * Accounts are not owned by the forum any more (they gate replies, reviews
+   * and the account page alike), which is why this had to stop being a fixed
+   * trail in the first place.
+   */
+  const fromForum = safeNext?.startsWith('/forum') ?? false
+
   const crumbs = [
     { name: 'Home', href: '/' },
-    { name: COPY.communityForum.title, href: '/forum' },
+    ...(fromForum ? [{ name: COPY.communityForum.title, href: '/forum' }] : []),
     { name: mode === 'signin' ? 'Sign in' : 'Create account', href: mode === 'signin' ? '/login' : '/register' },
   ]
 

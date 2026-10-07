@@ -18,7 +18,11 @@ export default function Logo({ className = '' }: { className?: string }) {
     >
       <svg
         viewBox="0 0 680 260"
-        className="h-9 w-auto sm:h-10"
+        /* 44px on a phone, 48 from `sm`. The header is 64px tall there (72 at
+           `lg`), so this is as large as the mark can go while keeping air above
+           and below it — and the wordmark's small ".com" line needs the height
+           to stay legible at all. */
+        className="h-11 w-auto sm:h-12"
         aria-hidden="true"
         focusable="false"
         xmlns="http://www.w3.org/2000/svg"

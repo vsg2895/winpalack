@@ -81,3 +81,25 @@ function resolveSiteUrl(): string {
 }
 
 export const SITE_URL: string = resolveSiteUrl()
+
+/**
+ * Subscribe capture, gating every entry point this site has: the newsletter
+ * form in the footer, the timed subscribe modal, and the hero's jump link to
+ * the form.
+ *
+ * The components, the /api/newsletter route and the backend double-opt-in flow
+ * are never touched by this — it only decides whether they are rendered. That
+ * is the point of a flag rather than deleted markup: turning capture off and
+ * back on is one edit, and nothing has to be rebuilt from memory.
+ *
+ * It lives HERE rather than in the layout because the home page needs it as
+ * well: a hero button scrolling to a form that was not rendered is a link to
+ * nowhere, and the two must be decided by the same value.
+ */
+export const SUBSCRIBE_ENABLED = true
+
+/**
+ * The id the footer's newsletter card carries, and the hero's jump link target.
+ * Named once so the anchor and the element it points at cannot drift apart.
+ */
+export const NEWSLETTER_ANCHOR = 'newsletter'

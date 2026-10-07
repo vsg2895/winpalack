@@ -55,6 +55,14 @@ export const COPY = {
     heroHighlight: 'plays fair',
     heroSubtitle:
       'Licence, withdrawal limits and safer-play tools are verified before a casino earns a place on this list.',
+    // The three checks the sentence above names, as a row under the buttons.
+    // Wording only — no counts, no scores: these are what the review covers,
+    // not a measurement anybody took.
+    // The hero's third control: a jump to the footer's sign-up form, not a
+    // page of its own. "Subscribe" rather than "Newsletter" — the word names
+    // the action the button performs, which is what the reader is deciding.
+    heroSubscribe: 'Subscribe',
+    heroChecks: ['Licence verified', 'Withdrawal limits listed', 'Safer-play tools checked'],
     topCasinosTitle: 'Verified Casinos',
     topCasinosSubtitle: 'Each one cleared our licensing and payout checks. Filter them by category.',
     featuredCasinos: 'See Verified Casinos',

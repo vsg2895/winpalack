@@ -16,7 +16,7 @@ import type { CasinoWithAttachment } from '@shared/types/casino'
 import type { SpecialOffer } from '@shared/types/specialOffer'
 import type { Article } from '@shared/types/article'
 import type { BonusSection } from '@/lib/api'
-import { SITE_URL } from '@/lib/config'
+import { NEWSLETTER_ANCHOR, SITE_URL, SUBSCRIBE_ENABLED } from '@/lib/config'
 import { relativeTime } from '@/lib/relativeTime'
 
 /**
@@ -202,25 +202,141 @@ export default async function HomePage({ searchParams }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(graph) }} />
 
       <main>
-        {/* Hero */}
-        <section className="relative overflow-hidden px-4 py-24">
-          <div className="container mx-auto max-w-4xl text-center">
-            <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white/70 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-600 backdrop-blur">
+        {/* Hero.
+            Vertical rhythm is deliberately tight on a phone: py-10 there and
+            py-24 at `lg`. A hero that eats the whole first screen on a 375px
+            device is a hero nobody scrolls past, and the casino list below it is
+            what visitors came for. */}
+        <section className="relative isolate overflow-hidden px-4 py-10 sm:px-6 sm:py-16 lg:py-24">
+          {/* Atmosphere: concentric rings and faint spokes radiating from behind
+              the headline, with an emerald bloom over them. All three are pure
+              CSS gradients — no image to download, nothing announced to a screen
+              reader. The masks are what keep them from reading as a texture laid
+              flat over the page: each fades to nothing well before the section's
+              edges, so the eye sees light behind the words rather than a
+              pattern. */}
+          <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+            <div className="absolute left-1/2 top-1/2 h-[64rem] w-[64rem] max-w-[200%] -translate-x-1/2 -translate-y-1/2 bg-[repeating-radial-gradient(circle,rgba(15,23,42,0.055)_0px,rgba(15,23,42,0.055)_1px,transparent_1px,transparent_58px)] [mask-image:radial-gradient(circle,#000_20%,rgba(0,0,0,0.55)_45%,transparent_72%)]" />
+            <div className="absolute left-1/2 top-1/2 h-[64rem] w-[64rem] max-w-[200%] -translate-x-1/2 -translate-y-1/2 bg-[repeating-conic-gradient(from_0deg_at_50%_50%,rgba(15,23,42,0.05)_0deg,rgba(15,23,42,0.05)_0.3deg,transparent_0.3deg,transparent_7.5deg)] [mask-image:radial-gradient(circle,transparent_14%,#000_40%,transparent_70%)]" />
+            <div className="absolute left-1/2 top-[-14%] h-[32rem] w-[56rem] max-w-[150%] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.22),rgba(13,148,136,0.08)_45%,transparent_70%)] blur-2xl" />
+          </div>
+
+          <div className="mx-auto max-w-5xl text-center">
+            <p className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-700 shadow-[0_6px_20px_-8px_rgba(15,23,42,0.25)] ring-1 ring-slate-200/70 sm:px-5 sm:text-xs sm:tracking-[0.2em]">
+              <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" aria-hidden />
               {COPY.home.heroEyebrow}
             </p>
-            <h1 className="font-display text-4xl font-semibold leading-[1.1] tracking-tight text-slate-900 sm:text-6xl">
+
+            {/* A NARROWER measure than the section, so the headline breaks into
+                two balanced lines instead of one very long one — at this size a
+                single line would run past 1,000px and lose the reader between
+                "Play" and "fair". */}
+            <h1 className="mx-auto mt-6 max-w-3xl font-display text-[2.25rem] font-semibold leading-[1.06] tracking-tight text-balance text-slate-900 sm:mt-8 sm:text-5xl lg:text-[4rem] xl:text-[4.5rem]">
               {COPY.home.heroHeadline}{' '}
-              <span className="bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text italic text-transparent">{COPY.home.heroHighlight}</span>
+              {/* Two things this span has to survive: `inline-block` so the
+                  gradient fill is never split across a line break — a clipped
+                  background on a wrapped inline element restarts, and the second
+                  line came out pale; and the padding, because `bg-clip-text`
+                  paints only INSIDE the element's box. At this leading the box
+                  ends above the italic `y`'s tail, so the descender in "plays"
+                  was being sliced off. The negative margin gives the paint room
+                  back without moving the line. */}
+              <span className="inline-block bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text pb-[0.22em] align-baseline italic text-transparent -mb-[0.22em]">
+                {COPY.home.heroHighlight}
+              </span>
             </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-500">
+
+            <p className="mx-auto mt-5 max-w-xl text-pretty text-base leading-relaxed text-slate-500 sm:mt-7 sm:max-w-2xl sm:text-lg">
               {COPY.home.heroSubtitle}
             </p>
-            <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
-              <Link href="/casinos" className="rounded-full bg-gradient-to-r from-emerald-600 to-teal-500 px-8 py-4 font-semibold text-white shadow-lg shadow-emerald-500/30 transition-transform hover:scale-105">{COPY.home.featuredCasinos}</Link>
+
+            {/* Buttons: full width on a phone, where two half-width pills are
+                two cramped targets, and side by side from `sm`. */}
+            <div className="mt-7 flex flex-col items-stretch justify-center gap-3 sm:mt-10 sm:flex-row sm:items-center">
+              <Link
+                href="/casinos"
+                className="group inline-flex min-h-12 items-center justify-center gap-2.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-500 px-8 py-3.5 font-semibold text-white shadow-lg shadow-emerald-600/25 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-emerald-600/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+              >
+                {COPY.home.featuredCasinos}
+                {/* Decorative: the label already says where this goes. */}
+                <span aria-hidden className="transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none">&rarr;</span>
+              </Link>
               {anyOffersVisible && (
-                <Link href="/special-offers" className="rounded-full border border-slate-300 bg-white/70 px-8 py-4 font-semibold text-slate-700 backdrop-blur transition-colors hover:border-emerald-300 hover:text-emerald-700">{COPY.home.specialOffers}</Link>
+                <Link
+                  href="/special-offers"
+                  className="inline-flex min-h-12 items-center justify-center rounded-full bg-white px-8 py-3.5 font-semibold text-slate-700 shadow-[0_6px_20px_-10px_rgba(15,23,42,0.35)] ring-1 ring-slate-200 transition-colors hover:text-emerald-700 hover:ring-emerald-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
+                >
+                  {COPY.home.specialOffers}
+                </Link>
+              )}
+
+              {/* Third control, and deliberately the quietest of the three: it
+                  does not leave the page, it scrolls to the sign-up form at the
+                  bottom of it. A plain <a>, not <Link> — Next's router has
+                  nothing to do for a same-page fragment, and an anchor is what
+                  makes the browser's own jump (and `motion-safe:scroll-smooth`)
+                  work. Rendered only when capture is switched on, or it would
+                  point at an element the footer never wrote.
+
+                  Arrow DOWN, because that is the direction the page moves. */}
+              {SUBSCRIBE_ENABLED && (
+                <a
+                  href={`#${NEWSLETTER_ANCHOR}`}
+                  className="group inline-flex min-h-12 items-center justify-center gap-2.5 rounded-full bg-emerald-50 py-3 pl-7 pr-3 font-semibold text-emerald-700 ring-1 ring-emerald-200 transition-all hover:-translate-y-0.5 hover:bg-emerald-100 hover:ring-emerald-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                >
+                  {COPY.home.heroSubscribe}
+                  {/* The arrow sits in its own disc, which is what makes this
+                      read as a button rather than a link that happens to carry a
+                      glyph. A drawn arrow, not the `↓` character: that glyph's
+                      weight and height change with the font, so it never quite
+                      matched the label beside it. */}
+                  <span
+                    aria-hidden
+                    className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-600 text-white shadow-sm transition-transform group-hover:translate-y-0.5 motion-reduce:transition-none"
+                  >
+                    <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M10 4.5v11M5.5 11l4.5 4.5 4.5-4.5" />
+                    </svg>
+                  </span>
+                </a>
               )}
             </div>
+
+            {/* What "verified" covers, on its own card — the three checks the
+                sentence above names. Wording only: a count or a score here would
+                be a measurement nobody took.
+
+                The card is what stops this reading as three loose captions under
+                the buttons. It stacks on a phone (no dividers, nothing to
+                squeeze) and becomes one row with hairline dividers from `sm`.
+
+                On a PHONE the card is mint rather than white: against the pale
+                hero a white panel reads as another empty surface, while the
+                site's verified-green says what the three lines are about before
+                any of them is read. From `sm` it goes back to white — there it
+                is one wide strip under the buttons, and tinting the full width
+                would weigh more than the words on it.
+
+                The phone layout is a single-column GRID of `max-content`, not a
+                flex column: that makes every row as wide as the WIDEST label, so
+                the three ticks share one left edge while the block stays centred
+                in the card. Centring each row on its own left three ragged
+                starts. */}
+            <ul className="mx-auto mt-8 grid w-full max-w-3xl grid-cols-[max-content] justify-center gap-3 rounded-2xl bg-emerald-50 px-5 py-4 text-base font-medium text-emerald-950 shadow-[0_10px_30px_-18px_rgba(6,78,59,0.35)] ring-1 ring-emerald-200/80 backdrop-blur sm:mt-12 sm:flex sm:bg-white/90 sm:text-slate-700 sm:shadow-[0_10px_30px_-18px_rgba(15,23,42,0.45)] sm:ring-slate-200/70 sm:w-auto sm:flex-row sm:items-center sm:gap-0 sm:px-2" role="list">
+              {COPY.home.heroChecks.map((check, i) => (
+                <li
+                  key={check}
+                  className={`flex items-center gap-2.5 sm:px-5 ${i > 0 ? 'sm:border-l sm:border-slate-200' : ''}`}
+                >
+                  <span aria-hidden className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-emerald-600 text-white">
+                    <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 10.5l3.5 3.5L15 6.5" />
+                    </svg>
+                  </span>
+                  {check}
+                </li>
+              ))}
+            </ul>
           </div>
         </section>
 
