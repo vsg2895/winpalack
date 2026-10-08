@@ -117,7 +117,21 @@ export default function CasinoCard({
             {rank}
           </span>
         )}
-        <div className="flex-shrink-0">
+        {/* The logo opens the review, exactly as "Read Safety Review" does.
+            It is the first thing a reader aims at on a card, and it led
+            nowhere.
+
+            `aria-hidden` + `tabIndex={-1}`: the casino name below is a link to
+            the same page, so this would otherwise be a second tab stop and a
+            second announcement of one destination. Hidden from the keyboard and
+            from assistive tech, live for the pointer — the standard treatment
+            for a card image that duplicates its title link. */}
+        <Link
+          href={`/casinos/${casino.slug}`}
+          aria-hidden
+          tabIndex={-1}
+          className="block flex-shrink-0"
+        >
           {image ? (
             // Directly-sized image (NO `fill`) → renders at exactly 160×96.
             <Image
@@ -134,7 +148,7 @@ export default function CasinoCard({
               {casino.name.charAt(0).toUpperCase()}
             </span>
           )}
-        </div>
+        </Link>
       </div>
 
       {/* The three things that matter */}
@@ -149,7 +163,16 @@ export default function CasinoCard({
             {COPY.casinos.featuredBadge}
           </p>
         )}
-        <h3 className={`font-display text-lg font-bold leading-tight text-slate-900 sm:text-xl ${large ? 'lg:text-2xl' : ''}`}>{casino.name}</h3>
+        {/* The name is the card's real link to the review — the one a keyboard
+            reaches and a screen reader announces. */}
+        <h3 className={`font-display text-lg font-bold leading-tight text-slate-900 sm:text-xl ${large ? 'lg:text-2xl' : ''}`}>
+          <Link
+            href={`/casinos/${casino.slug}`}
+            className="rounded transition-colors hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+          >
+            {casino.name}
+          </Link>
+        </h3>
         {/* WRAPS. In a compact card on a 320px screen the text column is ~100px
             and the stars alone are 88px, so "5.0" beside them had nowhere to go
             and left the card — invisible, because the body clips rather than
