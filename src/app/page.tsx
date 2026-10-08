@@ -11,7 +11,6 @@ import Pagination from '@/components/Pagination'
 import CategoryNav from '@/components/CategoryNav'
 import CountryNav from '@/components/CountryNav'
 import SpecialOfferCard from '@/components/SpecialOfferCard'
-import MobileMoreList from '@/components/MobileMoreList'
 import type { Category } from '@shared/types/category'
 import type { CasinoWithAttachment } from '@shared/types/casino'
 import type { SpecialOffer } from '@shared/types/specialOffer'
@@ -50,13 +49,21 @@ const YEAR = new Date().getFullYear()
 const HOME_CASINOS_PER_PAGE = 20
 
 /**
- * How many of those a PHONE shows before asking.
+ * How many of those a PHONE shows per page.
  *
- * Twenty cards is a reasonable desktop page and a very long scroll on a phone.
- * The page size itself stays 20 for everyone: it is a server-side slice, and
- * cutting it to 10 on mobile would put items 11-20 on no page at all, since
- * page 2 starts at 21. So all twenty are rendered and the tail is collapsed —
- * see MobileMoreList.
+ * Twenty cards is a reasonable desktop page and a very long scroll on a phone,
+ * so a phone paginates in tens: 25 casinos is 2 pages on a desktop (20 + 5) and
+ * 3 on a phone (10 + 10 + 5).
+ *
+ * The SERVER page size stays 20 for everyone — it is one slice, one fetch, one
+ * cache entry. Each server page simply holds two phone pages, and which of them
+ * a phone shows is a CSS rule chosen by the `half` parameter. Nothing is hidden
+ * from the crawler, and nothing is unreachable: every phone page has its own
+ * address.
+ *
+ * It must divide HOME_CASINOS_PER_PAGE. The derivation below reads the page
+ * size back from the response rather than assuming it, because the server
+ * clamps what it is asked for.
  */
 const HOME_CASINOS_ON_MOBILE = 10
 
@@ -79,7 +86,7 @@ const HOME_BONUSES_PER_CATEGORY = 4
 /** Of those four, how many a phone shows. The rest are hidden below `sm`. */
 const HOME_BONUSES_ON_MOBILE = 2
 
-type Props = { searchParams: Promise<{ category?: string; country?: string; page?: string }> }
+type Props = { searchParams: Promise<{ category?: string; country?: string; page?: string; half?: string }> }
 
 /**
  * Resolve the country, then the category WITHIN it.
@@ -116,7 +123,21 @@ async function resolveFilters(searchParams: Props['searchParams']) {
   // than on an empty section.
   const page = Math.max(1, Number.parseInt(sp.page ?? '1', 10) || 1)
 
-  return { categories: categories as Category[], selected, continents, countries, country, page }
+  /*
+   * Which HALF of the server page a phone is looking at.
+   *
+   * The casino list is sliced by the server in twenties, which is a desktop
+   * page. A phone shows ten, so each server page is two phone pages, and this
+   * says which one. Anything other than "2" is the first half, so a hand-edited
+   * value degrades to the top of the page rather than to an empty list.
+   *
+   * It is a URL parameter rather than component state on purpose: the phone
+   * paginator is then made of real links, the markup is identical before and
+   * after hydration, and a visitor can share or reload the page they are on.
+   */
+  const half = sp.half === '2' ? 2 : 1
+
+  return { categories: categories as Category[], selected, continents, countries, country, page, half }
 }
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -132,7 +153,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage({ searchParams }: Props) {
-  const { categories, selected, continents, countries, country, page } = await resolveFilters(searchParams)
+  const { categories, selected, continents, countries, country, page, half } = await resolveFilters(searchParams)
 
   const [categoryRes, offersRes, anyOffersRes, bestNewsRes, bonusRes] = await Promise.allSettled([
     selected ? getCategory(selected, page, country, HOME_CASINOS_PER_PAGE) : Promise.resolve(null),
@@ -161,8 +182,40 @@ export default async function HomePage({ searchParams }: Props) {
   const casinoPage = catData?.meta?.current_page ?? 1
   const casinoLastPage = catData?.meta?.last_page ?? 1
   const casinoPerPage = catData?.meta?.per_page ?? HOME_CASINOS_PER_PAGE
-  // Ranks continue across pages: the first card on page 2 is #23, not #1.
+  // Ranks continue across pages: the first card on page 2 is #21, not #1.
   const rankOffset = (casinoPage - 1) * casinoPerPage
+
+  /*
+   * THE PHONE'S OWN PAGINATION, derived from the server's.
+   *
+   * The server slices in twenties; a phone shows ten. So each server page is
+   * two phone pages, and the phone's paginator counts in tens over the whole
+   * total: 25 casinos is 2 server pages (20 + 5) and 3 phone pages (10, 10, 5).
+   *
+   * Nothing is fetched twice for this. The twenty rows of the current server
+   * page are rendered once, and which ten of them a phone shows is a CSS rule
+   * chosen by `half` — so the phone paginator is links over markup that is
+   * already there, and every card stays in the HTML for the crawler and for the
+   * ItemList schema.
+   *
+   * `pagesPerServerPage` is computed rather than assumed to be 2: the server
+   * clamps the requested size, so the only honest source for it is the `meta`
+   * that came back.
+   */
+  const casinoTotal = catData?.meta?.total ?? casinos.length
+  /*
+   * A server page whose rows do not fill two phone pages has only a first half.
+   * No link ever asks for the second one, but a hand-edited or stale `half=2`
+   * would otherwise hide every card on the last page and show an empty list —
+   * the same failure the country and category guards above exist to prevent.
+   */
+  const casinoHalf = half === 2 && casinos.length > HOME_CASINOS_ON_MOBILE ? 2 : 1
+  const pagesPerServerPage = Math.max(1, Math.ceil(casinoPerPage / HOME_CASINOS_ON_MOBILE))
+  const casinoMobileLastPage = Math.max(1, Math.ceil(casinoTotal / HOME_CASINOS_ON_MOBILE))
+  const casinoMobilePage = Math.min(
+    casinoMobileLastPage,
+    (casinoPage - 1) * pagesPerServerPage + casinoHalf,
+  )
 
   /**
    * Base URL for the paginator, carrying the current category and country.
@@ -178,6 +231,22 @@ export default async function HomePage({ searchParams }: Props) {
     const query = qs.toString()
     return query ? `/?${query}` : '/'
   })()
+  /**
+   * Link for one PHONE page of the casino list.
+   *
+   * Maps a page counted in tens back onto the server page that contains it,
+   * plus which half of that page to show. `half=1` is the default, so it is
+   * left out of the URL and the first phone page of a server page is the same
+   * address the desktop paginator already uses.
+   */
+  const casinoMobileHref = (mobilePage: number): string => {
+    const serverPage = Math.ceil(mobilePage / pagesPerServerPage)
+    const whichHalf = mobilePage - (serverPage - 1) * pagesPerServerPage
+    const separator = casinosBasePath.includes('?') ? '&' : '?'
+
+    return `${casinosBasePath}${separator}page=${serverPage}${whichHalf > 1 ? `&half=${whichHalf}` : ''}`
+  }
+
   // Offers are already scoped to the selected category and capped by the backend (?category=&limit=).
   const topOffers: SpecialOffer[] = offersRes.status === 'fulfilled' ? offersRes.value.data : []
   const bonusSections: BonusSection[] = bonusRes.status === 'fulfilled' ? bonusRes.value : []
@@ -404,28 +473,45 @@ export default async function HomePage({ searchParams }: Props) {
             {casinos.length === 0 ? (
               <p className="text-slate-500">{COPY.casinos.noResults}</p>
             ) : (
-              /* All twenty are rendered; a phone shows the first ten and asks
-                 before the rest. The nth-child rule is a literal so Tailwind
-                 generates it — a computed class name would never be scanned. */
-              <MobileMoreList
-                className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-5"
-                collapsedClassName="max-sm:[&>*:nth-child(n+11)]:hidden"
-                hiddenCount={Math.max(0, casinos.length - HOME_CASINOS_ON_MOBILE)}
-                moreLabel={COPY.home.showMoreCasinos}
-                lessLabel={COPY.home.showFewerCasinos}
+              /* All twenty rows of the server page are rendered; below `sm` a
+                 CSS rule shows the ten belonging to the phone page, and the
+                 phone paginator below swaps which ten by changing `half`.
+                 Both rules are written out as literals because Tailwind scans
+                 source text — a class name assembled at runtime is never
+                 generated. */
+              <ol
+                className={`grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-5 ${
+                  casinoHalf === 2 ? 'max-sm:[&>*:nth-child(-n+10)]:hidden' : 'max-sm:[&>*:nth-child(n+11)]:hidden'
+                }`}
               >
                 {casinos.map((casino, i) => (
                   <CasinoCard key={casino.id} casino={casino} rank={rankOffset + i + 1} compact />
                 ))}
-              </MobileMoreList>
+              </ol>
             )}
 
-            {/* Replaces the old "See More" button, whose condition was exactly
-                "there is more than one page" — the paginator now owns that,
-                and showing both put two different ways forward under one list.
-                The section heading still carries "View All →" for anyone who
-                wants the full filterable catalog instead. */}
-            <Pagination basePath={casinosBasePath} current={casinoPage} last={casinoLastPage} />
+            {/* Two paginators, one per breakpoint, because the two sizes of a
+                page are genuinely different: twenty on a desktop, ten on a
+                phone. 25 casinos is "1 2" here and "1 2 3" below.
+
+                Replaces the old "See More" button, whose condition was exactly
+                "there is more than one page" — the paginator owns that, and
+                showing both put two different ways forward under one list. The
+                section heading still carries "View All →" for anyone who wants
+                the full filterable catalog instead. */}
+            <Pagination
+              basePath={casinosBasePath}
+              current={casinoPage}
+              last={casinoLastPage}
+              className="max-sm:hidden"
+            />
+            <Pagination
+              basePath={casinosBasePath}
+              current={casinoMobilePage}
+              last={casinoMobileLastPage}
+              hrefFor={casinoMobileHref}
+              className="sm:hidden"
+            />
           </div>
         </section>
 
@@ -481,24 +567,36 @@ export default async function HomePage({ searchParams }: Props) {
                     <div className="grid grid-cols-1 gap-5 max-sm:[&>*:nth-child(n+3)]:hidden sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                       {section.offers.map((offer) => <SpecialOfferCard key={offer.id} offer={offer} compact />)}
                     </div>
-                    {/* Only when the preview is actually hiding something. */}
-                    {section.offers.length > HOME_BONUSES_ON_MOBILE && (
-                      <div className="mt-5 sm:hidden">
-                        <Link
-                          href={`/bonuses/${section.slug}`}
-                          className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-slate-300 bg-white/70 px-6 py-3 text-sm font-semibold text-slate-700 backdrop-blur transition-colors hover:border-emerald-300 hover:text-emerald-700"
-                        >
-                          {COPY.home.allIn} {section.name} →
-                        </Link>
-                      </div>
-                    )}
+                    {/* Every category block ends the same way it begins: a link
+                        into that category's own page. The heading is the one a
+                        reader clicks on the way in, this is the one they reach
+                        after reading the cards, and both go to the same place —
+                        four cards is a preview, and the page behind them holds
+                        the rest, eight at a time.
+
+                        Full width on a phone, where it is also the control that
+                        gets past the two visible cards; inline on a desktop,
+                        where it is a quiet way on. */}
+                    <div className="mt-5">
+                      <Link
+                        href={`/bonuses/${section.slug}`}
+                        aria-label={`${COPY.home.seeMore} — ${section.name}`}
+                        className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-slate-300 bg-white/70 px-6 py-3 text-sm font-semibold text-slate-700 backdrop-blur transition-colors hover:border-emerald-300 hover:text-emerald-700 sm:w-auto"
+                      >
+                        {COPY.home.seeMore} →
+                      </Link>
+                    </div>
                   </div>
                 ))}
               </div>
         
               <div className="mt-10 text-center">
-                <Link href="/special-offers" aria-label="See all special offers" className="inline-flex min-h-11 items-center rounded-full border border-slate-300 bg-white/70 px-6 py-3 text-sm font-semibold text-slate-700 backdrop-blur transition-colors hover:border-emerald-300 hover:text-emerald-700">
-                  See More →
+                {/* Named for where it goes. "See More" sat under six blocks
+                    that each now have their own "See more", and the two meant
+                    different things: those lead into one category, this one
+                    leads to every bonus on the site. */}
+                <Link href="/special-offers" aria-label={COPY.home.seeAllBonuses} className="inline-flex min-h-11 items-center rounded-full border border-slate-300 bg-white/70 px-6 py-3 text-sm font-semibold text-slate-700 backdrop-blur transition-colors hover:border-emerald-300 hover:text-emerald-700">
+                  {COPY.home.seeAllBonuses} →
                 </Link>
               </div>
             </div>

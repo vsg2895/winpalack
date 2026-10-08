@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import OfferBanner from '@/components/OfferBanner'
 import { resolveImageUrl } from '@/lib/images'
@@ -27,6 +28,10 @@ export const CLAIMABLE_BONUS_CATEGORY = 'special-offers'
 export default function SpecialOfferCard({ offer, compact = false }: { offer: SpecialOffer; compact?: boolean }) {
   // Full-bleed banner across the top of the card (prefer the wide banner image).
   const preview = resolveImageUrl(offer.banner_image ?? offer.image_path)
+  // The operator's own mark, shown small beside its name. Same source and same
+  // fallback order as CasinoCard — the "Image" (logo), and only then the wide
+  // banner — so one casino cannot wear two different faces on one page.
+  const casinoLogo = resolveImageUrl(offer.casino?.image_path ?? offer.casino?.banner_image)
   // Claim is a property of the bonus TYPE, not of whether a link happens to be
   // filled in. See CLAIMABLE_BONUS_CATEGORY.
   const claimable = offer.bonus_category_slug === CLAIMABLE_BONUS_CATEGORY
@@ -55,7 +60,32 @@ export default function SpecialOfferCard({ offer, compact = false }: { offer: Sp
         loaded on every endpoint that feeds these cards, and a card without
         it simply omits the line rather than printing a blank. */}
         {offer.casino?.name && (
-          <p className="text-sm font-bold text-emerald-700">{offer.casino.name}</p>
+          <p className="flex items-center gap-2">
+            {/* The operator's name is the biggest thing in the card's body.
+                Someone comparing twenty bonuses is scanning for WHO first and
+                what the offer gives second, and at `text-sm` the name read as a
+                caption under the artwork. The offer title below carries the
+                detail, so it keeps the quieter weight. */}
+            <span className={`font-display font-bold leading-tight text-emerald-700 ${compact ? 'text-lg' : 'text-xl'}`}>
+              {offer.casino.name}
+            </span>
+            {casinoLogo && (
+              /* A chip, not a second banner: `contain` inside a fixed square so
+                 a tall logo and a wide one occupy the same space and the line
+                 never changes height. Decorative — the name it sits beside is
+                 the accessible text, so announcing the logo too would just
+                 repeat it. */
+              <Image
+                src={casinoLogo}
+                alt=""
+                aria-hidden
+                width={64}
+                height={64}
+                sizes="44px"
+                className={`shrink-0 rounded-md bg-white object-contain p-0.5 ring-1 ring-slate-200 ${compact ? 'h-10 w-10' : 'h-11 w-11'}`}
+              />
+            )}
+          </p>
         )}
         <h3 className={`font-display font-semibold leading-tight text-slate-900 ${compact ? 'text-base' : 'text-lg'}`}>{offer.title}</h3>
         {offer.bonuses && <p className={`inline-block rounded-lg bg-emerald-50 px-2.5 py-1 font-semibold text-emerald-700 ${compact ? 'text-xs' : 'text-sm'}`}>{offer.bonuses}</p>}

@@ -78,12 +78,12 @@ export const COPY = {
     bestNews: 'Most Popular',
     bestNewsAll: 'All news',
     viewAll: 'View All',
-    // Phone-only controls. The casino list collapses to its first ten and the
-    // Bonus strips to their first two, so each needs a way forward that says
-    // what is behind it rather than a bare "More".
-    showMoreCasinos: 'Show more casinos',
-    showFewerCasinos: 'Show fewer casinos',
-    allIn: 'All',
+    // Under each Bonus category's four cards, leading into that category's own
+    // page — the same destination as its heading.
+    seeMore: 'See more',
+    // And under all of them, leading to the full listing. Named for where it
+    // goes, so it cannot be read as another "see more" of the block above it.
+    seeAllBonuses: 'See All Bonuses',
     // Leads the home <title>; the year and brand are appended in page.tsx.
     homeTitle: 'Verified Casinos & Safer Play',
     faqTitle: 'Questions About Safer Play',
