@@ -80,7 +80,7 @@ export const COPY = {
     viewAll: 'View All',
     // Leads the home <title>; the year and brand are appended in page.tsx.
     homeTitle: 'Verified Casinos & Safer Play',
-    faqTitle: 'Questions about safer play',
+    faqTitle: 'Questions About Safer Play',
     metaDescription:
       'Online casinos checked for licensing, fair withdrawal limits and responsible-play tools before we recommend them to anyone.',
   },
@@ -167,7 +167,7 @@ export const COPY = {
     otherOffers: 'More Offers',
   },
   categories: {
-    pageTitle: 'Browse by Category',
+    pageTitle: 'Browse By Category',
     pageDescription:
       'Compare licensed casinos grouped by payout speed, game type and the player-protection features they offer.',
     // Meta-description tail for a single category page. Category records are
@@ -283,7 +283,7 @@ export const COPY = {
 
     // Day one is an EMPTY forum, so this is a real state the page must handle
     // well rather than an afterthought.
-    emptyTitle: 'The forum opens soon',
+    emptyTitle: 'The Forum Opens Soon',
     emptyBody:
       'We are setting up the first discussions. In the meantime, the player reviews on our casino pages are where the conversation is happening.',
     emptyCta: 'Read player reviews',
@@ -355,7 +355,7 @@ export const COPY = {
       `${avg.toFixed(1)} out of 5 from ${total} ${total === 1 ? 'review' : 'reviews'}`,
   },
   newsletter: {
-    title: 'Stay on the safe side',
+    title: 'Stay On The Safe Side',
     subtitle: 'Occasional updates on verified casinos and offers with terms worth reading.',
     placeholder: 'Your email address',
     button: 'Subscribe',

@@ -20,6 +20,8 @@ const SITE_DOMAINS: Record<string, string> = {
   viglinksi: 'https://viglinksi.com',
   nongambles: 'https://nongambles.com',
   crogambline: 'https://crogambline.com',
+  partnerplaypro: 'https://partnerplaypro.com',
+  luckysevenhub: 'https://luckysevenhub.com',
 }
 // Ports each site's dev server actually runs on. Kept in step with the
 // revalidation URLs registered against each site in the admin — if these drift,
@@ -31,6 +33,8 @@ const SITE_DEV_PORTS: Record<string, string> = {
   viglinksi: '3004',
   nongambles: '3005',
   crogambline: '3006',
+  partnerplaypro: '3007',
+  luckysevenhub: '3008',
 }
 
 export const API_URL: string = process.env.API_URL ?? `${API_ORIGIN}/api/v1/public`
