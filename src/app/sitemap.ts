@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next'
-import { getArticles, getNews, getCasinos, getCategories, getCountries, getForumIndex, getReviewFeed, getSiteFeatures, getSpecialOffers } from '@/lib/api'
+import { getArticles, getBonusArea, getNews, getCasinos, getCategories, getCountries, getForumIndex, getReviewFeed, getSiteFeatures, getSpecialOffers } from '@/lib/api'
 import { SITE_URL } from '@/lib/config'
 
 
@@ -10,7 +10,7 @@ function safeDate(value: string | null | undefined): Date {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [casinosRes, categoriesRes, offersRes, countriesRes, articlesRes, newsRes, forumRes, communityRes, featuresRes] = await Promise.allSettled([
+  const [casinosRes, categoriesRes, offersRes, countriesRes, articlesRes, newsRes, forumRes, communityRes, featuresRes, bonusRes] = await Promise.allSettled([
     getCasinos(),
     getCategories(),
     getSpecialOffers(),
@@ -23,6 +23,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // pages and were missing from the sitemap entirely.
     getForumIndex(),
     getSiteFeatures(),
+    // The Bonus categories. Each one now has its own paginated page, so each is
+    // an indexable URL — and a new indexable route that no sitemap names is the
+    // usual reason a section takes months to be discovered. Only categories
+    // holding at least one visible offer come back, so the sitemap can never
+    // list a page that renders empty.
+    getBonusArea(),
   ])
 
   const casinoUrls: MetadataRoute.Sitemap =
@@ -222,5 +228,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ]
     : []
 
-  return [...staticUrls, ...casinoUrls, ...categoryUrls, ...countryUrls, ...offerUrls, ...articleUrls, ...newsUrls, ...communityUrls, ...legalUrls]
+  const bonusUrls: MetadataRoute.Sitemap =
+    bonusRes.status === 'fulfilled'
+      ? bonusRes.value.map((section) => ({
+          url: `${SITE_URL}/bonuses/${section.slug}`,
+          lastModified: new Date(),
+          changeFrequency: 'daily' as const,
+          // Below /special-offers (0.9), which is the whole area, and level with
+          // a category listing: these are the sections that area is made of.
+          priority: 0.8,
+        }))
+      : []
+
+  return [...staticUrls, ...casinoUrls, ...categoryUrls, ...countryUrls, ...offerUrls, ...bonusUrls, ...articleUrls, ...newsUrls, ...communityUrls, ...legalUrls]
 }

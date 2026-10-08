@@ -587,6 +587,39 @@ export interface BonusSection {
  * Fails CLOSED like the other feature fetches: an empty array means "this site
  * publishes no Bonus area", and both surfaces render nothing.
  */
+/** One Bonus category with a page of its offers. */
+export interface BonusCategoryPage {
+  category: { id: number; name: string; slug: string; description: string | null; position: number }
+  offers: SpecialOffer[]
+  meta: { current_page: number; last_page: number; per_page: number; total: number }
+}
+
+/**
+ * A single Bonus category, paginated — what /bonuses/[slug] renders.
+ *
+ * The menu used to point at `/#bonus-<slug>` anchors on the home page, so a
+ * category had no address of its own and showed only the handful of cards the
+ * home strip previews. This is that category's page: the SAME selection the
+ * strip makes, eight at a time, all of it reachable.
+ *
+ * Returns null rather than throwing on a 404 so the route can render
+ * `notFound()` for an unknown or unpublished slug instead of a 500.
+ */
+export const getBonusCategory = async (
+  slug: string,
+  page = 1,
+): Promise<BonusCategoryPage | null> => {
+  try {
+    const res = await publicFetch<ApiResponse<BonusCategoryPage>>(
+      `/bonus/${slug}?page=${page}`,
+      ['bonus', 'special-offers', `bonus:${slug}`],
+    )
+    return res.data
+  } catch {
+    return null
+  }
+}
+
 export const getBonusArea = async (
   options: { full?: boolean; limit?: number } = {},
 ): Promise<BonusSection[]> => {

@@ -11,6 +11,7 @@ import Pagination from '@/components/Pagination'
 import CategoryNav from '@/components/CategoryNav'
 import CountryNav from '@/components/CountryNav'
 import SpecialOfferCard from '@/components/SpecialOfferCard'
+import MobileMoreList from '@/components/MobileMoreList'
 import type { Category } from '@shared/types/category'
 import type { CasinoWithAttachment } from '@shared/types/casino'
 import type { SpecialOffer } from '@shared/types/specialOffer'
@@ -46,18 +47,37 @@ const YEAR = new Date().getFullYear()
  * "See more" below the list keeps working off the meta totals, so a category
  * holding more than this still leads the visitor to the full catalog.
  */
-const HOME_CASINOS_PER_PAGE = 22
+const HOME_CASINOS_PER_PAGE = 20
+
+/**
+ * How many of those a PHONE shows before asking.
+ *
+ * Twenty cards is a reasonable desktop page and a very long scroll on a phone.
+ * The page size itself stays 20 for everyone: it is a server-side slice, and
+ * cutting it to 10 on mobile would put items 11-20 on no page at all, since
+ * page 2 starts at 21. So all twenty are rendered and the tail is collapsed —
+ * see MobileMoreList.
+ */
+const HOME_CASINOS_ON_MOBILE = 10
 
 /**
  * Bonuses shown under each heading in the home page's Bonus area.
  *
- * Sixteen — four full rows of the four-up grid. The server's own cap is lower
- * and exists to stop one heading swallowing the page; this says what THIS
- * layout wants rather than inheriting a number chosen for no particular
- * surface. "See all bonuses" still leads to the full listing, which lifts the
- * cap entirely.
+ * Four — one full row of the four-up grid, and a PREVIEW rather than a listing:
+ * every category now has its own paginated page, reached from the heading and
+ * from the Bonus menu, so the strip's job is to show what a section is like and
+ * get out of the way. It used to be sixteen, which made the home page four
+ * screens of bonus cards before the news strip.
+ *
+ * A phone shows the first two of those four — the grid is one column there, so
+ * four cards is four full screens of scrolling for one heading. The other two
+ * are hidden in CSS rather than dropped from the payload: nothing is lost,
+ * because the heading links to the category's own page where all of them are.
  */
-const HOME_BONUSES_PER_CATEGORY = 16
+const HOME_BONUSES_PER_CATEGORY = 4
+
+/** Of those four, how many a phone shows. The rest are hidden below `sm`. */
+const HOME_BONUSES_ON_MOBILE = 2
 
 type Props = { searchParams: Promise<{ category?: string; country?: string; page?: string }> }
 
@@ -384,11 +404,20 @@ export default async function HomePage({ searchParams }: Props) {
             {casinos.length === 0 ? (
               <p className="text-slate-500">{COPY.casinos.noResults}</p>
             ) : (
-              <ol className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-5">
+              /* All twenty are rendered; a phone shows the first ten and asks
+                 before the rest. The nth-child rule is a literal so Tailwind
+                 generates it — a computed class name would never be scanned. */
+              <MobileMoreList
+                className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-5"
+                collapsedClassName="max-sm:[&>*:nth-child(n+11)]:hidden"
+                hiddenCount={Math.max(0, casinos.length - HOME_CASINOS_ON_MOBILE)}
+                moreLabel={COPY.home.showMoreCasinos}
+                lessLabel={COPY.home.showFewerCasinos}
+              >
                 {casinos.map((casino, i) => (
                   <CasinoCard key={casino.id} casino={casino} rank={rankOffset + i + 1} compact />
                 ))}
-              </ol>
+              </MobileMoreList>
             )}
 
             {/* Replaces the old "See More" button, whose condition was exactly
@@ -426,14 +455,43 @@ export default async function HomePage({ searchParams }: Props) {
                   /* id is what the header dropdown links to (/#bonus-slug), and
                      scroll-mt clears the sticky header so the heading is not hidden
                      under it on arrival. */
+                  /* The id stays: /#bonus-<slug> links are in the wild, and
+                     scroll-mt clears the sticky header on arrival. The menu no
+                     longer uses them — every entry now opens the category's own
+                     page, which is what this heading links to as well. */
                   <div key={section.id} id={`bonus-${section.slug}`} className="scroll-mt-24">
                     <div className="mb-5">
-                      <h3 className="font-display text-xl font-semibold text-slate-900">{section.name}</h3>
+                      <h3 className="font-display text-xl font-semibold text-slate-900">
+                        {/* The heading IS the way into the section. A title that
+                            names a category and leads nowhere is the thing a
+                            reader tries to click first. */}
+                        <Link
+                          href={`/bonuses/${section.slug}`}
+                          className="inline-flex items-center gap-1.5 rounded-lg transition-colors hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                        >
+                          {section.name}
+                          <span aria-hidden className="text-base text-emerald-600">→</span>
+                        </Link>
+                      </h3>
                       {section.description && <p className="mt-1 text-slate-500">{section.description}</p>}
                     </div>
-                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {/* A phone shows the first two of the four; the rest are in
+                        the markup but hidden, and the heading above leads to the
+                        page that holds every one of them. */}
+                    <div className="grid grid-cols-1 gap-5 max-sm:[&>*:nth-child(n+3)]:hidden sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                       {section.offers.map((offer) => <SpecialOfferCard key={offer.id} offer={offer} compact />)}
                     </div>
+                    {/* Only when the preview is actually hiding something. */}
+                    {section.offers.length > HOME_BONUSES_ON_MOBILE && (
+                      <div className="mt-5 sm:hidden">
+                        <Link
+                          href={`/bonuses/${section.slug}`}
+                          className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-slate-300 bg-white/70 px-6 py-3 text-sm font-semibold text-slate-700 backdrop-blur transition-colors hover:border-emerald-300 hover:text-emerald-700"
+                        >
+                          {COPY.home.allIn} {section.name} →
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

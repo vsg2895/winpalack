@@ -78,6 +78,12 @@ export const COPY = {
     bestNews: 'Most Popular',
     bestNewsAll: 'All news',
     viewAll: 'View All',
+    // Phone-only controls. The casino list collapses to its first ten and the
+    // Bonus strips to their first two, so each needs a way forward that says
+    // what is behind it rather than a bare "More".
+    showMoreCasinos: 'Show more casinos',
+    showFewerCasinos: 'Show fewer casinos',
+    allIn: 'All',
     // Leads the home <title>; the year and brand are appended in page.tsx.
     homeTitle: 'Verified Casinos & Safer Play',
     faqTitle: 'Questions About Safer Play',
@@ -152,6 +158,21 @@ export const COPY = {
     profileHeadingTail: 'in detail',
     profileIntro: 'Stated by the operator and checked against its licence where one is published. Blank fields are ones we have not verified.',
     noResults: 'No verified casinos match this filter yet.',
+  },
+  /**
+   * The page behind one Bonus category (/bonuses/[slug]).
+   *
+   * Only the wrapper text lives here: the heading, the description and the
+   * cards are the category's own, written in the admin, so this site never
+   * puts words in a category's mouth.
+   */
+  bonusCategory: {
+    // Composed with the category name when the admin left its description
+    // empty, so the meta description is still about THIS category rather than
+    // a sentence every category would share.
+    metaSuffix: 'every offer of this type we currently list, with its wagering requirement and withdrawal cap stated up front.',
+    countOne: 'offer in this section',
+    countMany: 'offers in this section',
   },
   specialOffers: {
     pageTitle: 'Verified Casino Offers',

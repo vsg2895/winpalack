@@ -110,7 +110,7 @@ export default function FooterBonusMenu({
           {items.map((item) => (
             <li key={item.slug}>
               <Link
-                href={`/#bonus-${item.slug}`}
+                href={`/bonuses/${item.slug}`}
                 className="inline-flex items-center gap-2 py-3 -my-3 text-sm font-semibold text-slate-500 transition-colors hover:text-emerald-700 lg:text-base"
               >
                 {/* bg-current so the dot follows the label's colour on hover

@@ -191,7 +191,7 @@ export default function MobileNav({
                               </li>
                               {bonusSections.map((section) => (
                                 <li key={section.slug}>
-                                  <Link href={`/#bonus-${section.slug}`} onClick={close} className="flex min-h-11 items-center gap-2.5 rounded-xl px-4 text-[15px] font-semibold tracking-tight text-slate-500 transition-colors hover:bg-emerald-50 hover:text-emerald-700 focus-visible:bg-emerald-50 focus-visible:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
+                                  <Link href={`/bonuses/${section.slug}`} onClick={close} className="flex min-h-11 items-center gap-2.5 rounded-xl px-4 text-[15px] font-semibold tracking-tight text-slate-500 transition-colors hover:bg-emerald-50 hover:text-emerald-700 focus-visible:bg-emerald-50 focus-visible:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
                                     {/* Takes its colour from the text, so it follows the hover
                                         state without a group variant — those have repeatedly
                                         failed to generate on this project. */}

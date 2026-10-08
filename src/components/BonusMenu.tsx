@@ -145,7 +145,7 @@ export default function BonusMenu({
             {items.map((item) => (
               <li key={item.slug}>
                 <Link
-                  href={`/#bonus-${item.slug}`}
+                  href={`/bonuses/${item.slug}`}
                   className="flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3.5 py-2.5 text-sm font-semibold text-slate-600 transition-colors duration-150 hover:bg-emerald-50 hover:text-emerald-700"
                 >
                   {/* A quiet marker that takes its colour from the TEXT via
