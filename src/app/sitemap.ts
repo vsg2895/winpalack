@@ -105,6 +105,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           changeFrequency: 'daily' as const,
           priority: 0.7,
         },
+        // The Most Popular listing — its own indexable page, and the rail on
+        // /news is the only thing linking to it.
+        {
+          url: `${SITE_URL}/news/most-popular`,
+          lastModified: safeDate(news[0]?.published_at ?? null),
+          changeFrequency: 'daily' as const,
+          priority: 0.6,
+        },
         ...news.map((post) => ({
           url: `${SITE_URL}/news/${post.slug}`,
           lastModified: safeDate(post.updated_at ?? post.published_at),

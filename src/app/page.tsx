@@ -432,7 +432,16 @@ export default async function HomePage({ searchParams }: Props) {
                 caps each category at eight — two full rows. */}
             <div className="mx-auto max-w-[90rem]">
               <div className="mb-8 flex items-end justify-between gap-4">
-                <h2 id="bonus-heading" className="font-display text-3xl font-semibold text-slate-900 sm:text-4xl">{COPY.home.bonus}</h2>
+                {/* The section title IS a way in — it names the page it leads
+                    to, so a reader who aims at it should arrive rather than
+                    click nothing. No arrow or marker on it: a heading that
+                    changes colour under the pointer already reads as a link,
+                    and a symbol in a title competes with the word. The "View
+                    all" link beside it keeps its arrow — that one is a control,
+                    not a title. */}
+                <h2 id="bonus-heading" className="font-display text-3xl font-semibold text-slate-900 sm:text-4xl">
+                  <Link href="/special-offers" className="rounded transition-colors hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">{COPY.home.bonus}</Link>
+                </h2>
                 <Link href="/special-offers" className="hidden py-3 -my-3 text-sm font-semibold text-emerald-600 hover:text-emerald-700 sm:block whitespace-nowrap">{COPY.home.viewAll} →</Link>
               </div>
         
@@ -450,13 +459,17 @@ export default async function HomePage({ searchParams }: Props) {
                       <h3 className="font-display text-xl font-semibold text-slate-900">
                         {/* The heading IS the way into the section. A title that
                             names a category and leads nowhere is the thing a
-                            reader tries to click first. */}
+                            reader tries to click first.
+
+                            No arrow: the title carries the category's name and
+                            nothing else, like the section titles above it. The
+                            "See more" link under the cards is where an explicit
+                            marker belongs. */}
                         <Link
                           href={`/bonuses/${section.slug}`}
-                          className="inline-flex items-center gap-1.5 rounded-lg transition-colors hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                          className="rounded-lg transition-colors hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
                         >
                           {section.name}
-                          <span aria-hidden className="text-base text-emerald-600">→</span>
                         </Link>
                       </h3>
                       {section.description && <p className="mt-1 text-slate-500">{section.description}</p>}
@@ -515,7 +528,16 @@ export default async function HomePage({ searchParams }: Props) {
                 the picks at eight: two full rows, never a ragged third. */}
             <div className="mx-auto max-w-[90rem]">
               <div className="mb-6 flex items-end justify-between gap-4">
-                <h2 id="news-heading" className="font-display text-3xl font-semibold text-slate-900 sm:text-4xl">{COPY.home.news}</h2>
+                {/* The section title IS a way in — it names the page it leads
+                    to, so a reader who aims at it should arrive rather than
+                    click nothing. No arrow or marker on it: a heading that
+                    changes colour under the pointer already reads as a link,
+                    and a symbol in a title competes with the word. The "View
+                    all" link beside it keeps its arrow — that one is a control,
+                    not a title. */}
+                <h2 id="news-heading" className="font-display text-3xl font-semibold text-slate-900 sm:text-4xl">
+                  <Link href="/news" className="rounded transition-colors hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">{COPY.home.news}</Link>
+                </h2>
                 <Link href="/news" className="hidden py-3 -my-3 text-sm font-semibold text-emerald-600 hover:text-emerald-700 sm:block whitespace-nowrap">{COPY.home.viewAll} →</Link>
               </div>
 

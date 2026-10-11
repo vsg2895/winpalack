@@ -524,28 +524,89 @@ export interface NewsTopic {
 }
 
 /** One request feeds the whole news page: the feed, the rail and the pills. */
+export interface NewsPageMeta {
+  current_page: number
+  last_page: number
+  /** Posts in the GRID, i.e. every page after the first. */
+  per_page: number
+  total: number
+  /** Page 1 holds this many: the two lead cards plus a full grid. */
+  first_page_size: number
+}
+
 export interface NewsFeed {
+  /**
+   * The feed, in order — one page of it.
+   *
+   * Page 1 carries the two lead cards AND the grid under them, which is why it
+   * is two rows longer than the pages after it. The page renders its first two
+   * large; nothing here marks them, because which two are "lead" is a layout
+   * decision rather than a property of a post.
+   */
   posts: Article[]
   popular: Article[]
   categories: NewsTopic[]
+  /** Null only for the unpaginated `all` shape below. */
+  meta: NewsPageMeta | null
 }
 
-const EMPTY_FEED: NewsFeed = { posts: [], popular: [], categories: [] }
+const EMPTY_FEED: NewsFeed = { posts: [], popular: [], categories: [], meta: null }
 
-export const getNewsFeed = async (categorySlug?: string): Promise<NewsFeed> => {
+export const getNewsFeed = async (categorySlug?: string, page = 1): Promise<NewsFeed> => {
   try {
-    const query = categorySlug ? `?category=${encodeURIComponent(categorySlug)}` : ''
-    // The chosen topic is part of the cache tag set so a filtered view does not
-    // evict the unfiltered one.
-    const res = await publicFetch<ApiResponse<NewsFeed>>(`/news${query}`, ['news'])
+    const params = new URLSearchParams()
+    if (categorySlug) params.set('category', categorySlug)
+    if (page > 1) params.set('page', String(page))
+    const query = params.toString()
+    // The chosen topic and the page are part of the cache key, so a filtered or
+    // deeper view does not evict the one the next reader lands on.
+    const res = await publicFetch<ApiResponse<NewsFeed>>(`/news${query ? `?${query}` : ''}`, ['news'])
     return res.data ?? EMPTY_FEED
   } catch {
     return EMPTY_FEED
   }
 }
 
-/** Just the posts — for the nav gate and the sitemap, which need nothing else. */
-export const getNews = async (): Promise<Article[]> => (await getNewsFeed()).posts
+/**
+ * EVERY post — for the nav gate and the sitemap, which need nothing else.
+ *
+ * `?all=1` rather than page 1: the sitemap must list every news URL, and a
+ * paginated answer would have cut it to one page of entries. That failure is
+ * invisible — the sitemap still validates, the missing pages simply never get
+ * discovered — so the escape hatch is explicit on both sides.
+ */
+export const getNews = async (): Promise<Article[]> => {
+  try {
+    const res = await publicFetch<ApiResponse<NewsFeed>>('/news?all=1', ['news'])
+    return res.data?.posts ?? []
+  } catch {
+    return []
+  }
+}
+
+/** One page of the Most Popular listing — the rail's own page. */
+export interface PopularNewsPage {
+  posts: Article[]
+  meta: { current_page: number; last_page: number; per_page: number; total: number }
+}
+
+/**
+ * Every "most popular" pick, paginated.
+ *
+ * Same selection and order as the rail on /news, so the page is the rail
+ * continued rather than a second opinion about what is popular.
+ */
+export const getPopularNews = async (page = 1): Promise<PopularNewsPage | null> => {
+  try {
+    const res = await publicFetch<ApiResponse<PopularNewsPage>>(
+      `/news/popular${page > 1 ? `?page=${page}` : ''}`,
+      ['news', 'news:popular'],
+    )
+    return res.data ?? null
+  } catch {
+    return null
+  }
+}
 
 export const getBestNews = async (): Promise<Article[]> => {
   try {

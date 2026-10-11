@@ -229,6 +229,12 @@ export const COPY = {
     // the site has no view tracking, and tabs over picks would be a
     // measurement we never took.
     mostPopular: 'Most Popular',
+    // Under the rail, leading to the page that holds every pick.
+    seeMorePopular: 'See more',
+    // The Most Popular page itself.
+    popularTitle: 'Most Popular News',
+    popularDescription:
+      'The stories our editors keep pointing readers back to — every pick, newest first.',
     // Built here rather than in the component so the wording lives with the
     // rest of the site's copy, and the plural cannot disagree with the number.
     readTime: (minutes: number) => `${minutes} min read`,

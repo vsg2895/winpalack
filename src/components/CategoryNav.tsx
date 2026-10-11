@@ -95,6 +95,22 @@ export default function CategoryNav({
                 : `/categories/${c.slug}${country ? `?country=${encodeURIComponent(country)}` : ''}`
             }
             aria-current={active ? 'page' : undefined}
+            /*
+             * Keep the scroll position when this nav is the home page's IN-PAGE
+             * filter.
+             *
+             * Choosing a category there swaps the list below the chips for
+             * another one; the chips themselves do not move. Next's default is
+             * to scroll a navigation to the top, so every chip press threw the
+             * reader back to the hero and they had to scroll down again to see
+             * what they had just asked for — the control punished its own use.
+             *
+             * Left at the default everywhere else, because everywhere else these
+             * chips lead to a DIFFERENT page (/categories/<slug>): arriving
+             * part-way down a document you have not seen is the disorienting
+             * version of the same behaviour.
+             */
+            scroll={basePath === '/' ? false : undefined}
             // `flex` + centring rather than the old inline box: the chip is now
             // as wide as its grid track, so its contents have to be placed
             // inside that width instead of defining it.

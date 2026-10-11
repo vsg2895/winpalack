@@ -3,6 +3,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { getNewsFeed, getSiteFeatures } from '@/lib/api'
+import Pagination from '@/components/Pagination'
 import { buildItemListSchema, buildWebPageSchema, jsonLdScript } from '@/lib/seo'
 import { resolveImageUrl } from '@/lib/images'
 import { COPY } from '@/constants/copy'
@@ -38,7 +39,7 @@ const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
 
 export const revalidate = 3600
 
-type Props = { searchParams: Promise<{ category?: string }> }
+type Props = { searchParams: Promise<{ category?: string; page?: string }> }
 
 
 function Badge({ post }: { post: Article }) {
@@ -70,19 +71,23 @@ function Meta({ post }: { post: Article }) {
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
-  const { category } = await searchParams
+  const sp = await searchParams
+  const page = Math.max(1, Number(sp.page) || 1)
   // A filtered view is the same page narrowed, not a page of its own — so it
-  // canonicalises to /news rather than competing with it in the index.
-  const title = COPY.news.pageTitle
+  // canonicalises to /news rather than competing with it in the index. A deeper
+  // PAGE is different: it holds other stories, so it gets its own canonical and
+  // its own title, or the two would be reported as duplicates of each other.
+  const title = page > 1 ? `${COPY.news.pageTitle} — Page ${page}` : COPY.news.pageTitle
+  const canonical = page > 1 ? `/news?page=${page}` : '/news'
 
   return {
     title,
     description: COPY.news.pageDescription,
-    alternates: { canonical: '/news' },
-    ...(category ? { robots: { index: false, follow: true } } : {}),
+    alternates: { canonical },
+    ...(sp.category ? { robots: { index: false, follow: true } } : {}),
     openGraph: {
       type: 'website',
-      url: '/news',
+      url: canonical,
       siteName: SITE_NAME,
       title,
       description: COPY.news.pageDescription,
@@ -94,13 +99,22 @@ export default async function NewsPage({ searchParams }: Props) {
   const { news_enabled: enabled } = await getSiteFeatures()
   if (!enabled) notFound()
 
-  const { category } = await searchParams
-  const { posts, popular, categories } = await getNewsFeed(category)
+  const sp = await searchParams
+  const category = sp.category
+  const page = Math.max(1, Number(sp.page) || 1)
+  const { posts, popular, categories, meta } = await getNewsFeed(category, page)
 
   // 404 only when the site has no news at all. A filtered view with no matches
-  // is a real, explainable state and gets an empty message instead.
-  const { posts: allPosts } = category ? await getNewsFeed() : { posts }
+  // is a real, explainable state and gets an empty message instead. Asked of
+  // page 1, because a page past the end of the feed is empty for a different
+  // reason and must not read as "this site has no news".
+  const { posts: allPosts } = category || page > 1 ? await getNewsFeed() : { posts }
   if (allPosts.length === 0) notFound()
+
+  // A page past the end is not a page. Without this it rendered the "no posts"
+  // message with no paginator under it — a dead end a reader could only leave
+  // with the back button, and a thin duplicate for a crawler to index.
+  if (meta && page > meta.last_page) notFound()
 
   /*
    * The two big cards are simply the first two of the feed.
@@ -112,11 +126,26 @@ export default async function NewsPage({ searchParams }: Props) {
    * first, so the first two ARE the newest two and sorting them again would
    * only be a second opinion about an order the server already settled.
    */
-  const newest = posts.slice(0, 2)
-  const [leadA, leadB] = newest
-  const leadIds = new Set(newest.map((p) => p.id))
-  const rest = posts.filter((post) => !leadIds.has(post.id))
+  /*
+   * The lead pair is the first two posts OF PAGE 1, and page 1 only.
+   *
+   * The treatment belongs to the top of the feed, not to the top of every
+   * page: giving page 3 two big cards would say "these are the newest" about
+   * stories that are three pages down. The server sends 22 rows on page 1
+   * precisely so the grid under the leads is still a full twenty.
+   */
+  const leading = page === 1 ? posts.slice(0, 2) : []
+  const [leadA, leadB] = leading
+  const rest = page === 1 ? posts.slice(2) : posts
   const activeTopic = categories.find((topic) => topic.slug === category)
+
+  /**
+   * Base path for the feed's paginator, carrying the chosen topic.
+   *
+   * Without it, turning the page would silently drop the filter — the pills
+   * would still read "Regulation" while the feed showed everything.
+   */
+  const newsBasePath = category ? `/news?category=${encodeURIComponent(category)}` : '/news'
 
   const graph = [
     buildWebPageSchema({
@@ -202,8 +231,8 @@ export default async function NewsPage({ searchParams }: Props) {
                 </p>
               ) : (
                 <>
-                  {/* Lead pair — the two the editor put first. */}
-                  <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
+                  {/* Lead pair — the newest two, on page 1 only. */}
+                  <div className={`grid grid-cols-1 gap-8 sm:grid-cols-2 ${leading.length === 0 ? 'hidden' : ''}`}>
                     {[leadA, leadB].filter(Boolean).map((post, i) => {
                       const hero = resolveImageUrl(post.hero_image_path)
                       return (
@@ -237,7 +266,14 @@ export default async function NewsPage({ searchParams }: Props) {
 
                   {/* The rest, in a tighter grid. */}
                   {rest.length > 0 && (
-                    <ul className="mt-12 grid grid-cols-1 gap-8 border-t border-slate-200/70 pt-10 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4" role="list">
+                    <ul
+                      className={`grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 ${
+                        // The rule separates the grid from the leads; on a page
+                        // that has no leads it would be a line under nothing.
+                        leading.length > 0 ? 'mt-12 border-t border-slate-200/70 pt-10' : ''
+                      }`}
+                      role="list"
+                    >
                       {rest.map((post) => {
                         const hero = resolveImageUrl(post.hero_image_path)
                         return (
@@ -265,6 +301,12 @@ export default async function NewsPage({ searchParams }: Props) {
                       })}
                     </ul>
                   )}
+
+                  {/* The feed paginates in twenties — the grid's size, which is
+                      what a reader counts. Page 1 carries the two leads on top
+                      of that twenty, so the numbers here always describe the
+                      grid. */}
+                  {meta && <Pagination basePath={newsBasePath} current={meta.current_page} last={meta.last_page} />}
                 </>
               )}
             </div>
@@ -307,6 +349,17 @@ export default async function NewsPage({ searchParams }: Props) {
                     )
                   })}
                 </ul>
+
+                {/* The rail holds ten; this is where the rest of them live.
+                    A sidebar is not a listing, and an editor who picks forty
+                    stories should not have them silently fall off the end of
+                    one. */}
+                <Link
+                  href="/news/most-popular"
+                  className="mt-6 inline-flex min-h-11 w-full items-center justify-center rounded-full border border-slate-300 bg-white/70 px-6 py-3 text-sm font-semibold text-slate-700 backdrop-blur transition-colors hover:border-emerald-300 hover:text-emerald-700"
+                >
+                  {COPY.news.seeMorePopular} →
+                </Link>
               </aside>
             )}
           </div>
