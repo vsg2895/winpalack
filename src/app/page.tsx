@@ -8,6 +8,7 @@ import { COPY } from '@/constants/copy'
 import { FAQ_ITEMS } from '@/constants/faq'
 import CasinoCard from '@/components/CasinoCard'
 import Pagination from '@/components/Pagination'
+import BonusCategoryNav from '@/components/BonusCategoryNav'
 import CategoryNav from '@/components/CategoryNav'
 import CountryNav from '@/components/CountryNav'
 import SpecialOfferCard from '@/components/SpecialOfferCard'
@@ -351,6 +352,49 @@ export default async function HomePage({ searchParams }: Props) {
             </ul>
           </div>
         </section>
+
+        {/* Bonus types — the first thing under the hero.
+
+            Placed here rather than above the hero on purpose: the h1 has to
+            stay the top of the document for a reader and for a crawler alike,
+            and a row of filters above the page's own name reads as a second
+            site header. Directly beneath it, this is the first thing a visitor
+            can act on.
+
+            It renders nothing when the site publishes no Bonus area or every
+            type is empty, so the band collapses rather than leaving a gap. */}
+        {bonusSections.length > 0 && (
+          <section className="px-4 pb-12 sm:px-6 lg:px-8 lg:pb-16">
+            <div className="mx-auto max-w-[90rem]">
+              {/*
+                * The chips sit on their own tinted panel rather than on the bare
+                * page.
+                *
+                * On the plain ground the row read as six loose buttons left over
+                * from the hero; a panel makes it one control surface, which is
+                * what it is. The tint is the site's own emerald→teal, kept to a
+                * 50-weight wash so the WHITE chips stay the brightest thing in
+                * the band — a saturated panel would turn them grey by contrast.
+                *
+                * The two blurred discs are the hero's radial wash, scaled down
+                * and pushed into opposite corners, so this band reads as part of
+                * the same surface rather than a card dropped onto it.
+                */}
+              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-50 via-white to-teal-50 px-4 py-6 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.45)] ring-1 ring-emerald-100/80 sm:px-8 sm:py-8">
+                {/* Decoration only. No -z-10: the panel paints its own
+                    background, and a layer sent behind it would never be seen. */}
+                <div aria-hidden className="pointer-events-none absolute inset-0">
+                  <div className="absolute -left-24 -top-28 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(16,185,129,0.20),transparent_70%)] blur-2xl" />
+                  <div className="absolute -right-20 -bottom-28 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(20,184,166,0.18),transparent_70%)] blur-2xl" />
+                </div>
+
+                <div className="relative">
+                  <BonusCategoryNav sections={bonusSections} />
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Casinos by category */}
         <section className="px-4 pb-20 sm:px-6 lg:px-8" aria-labelledby="top-casinos-heading">

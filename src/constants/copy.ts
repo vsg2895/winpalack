@@ -69,6 +69,10 @@ export const COPY = {
     specialOffers: 'Offers With Fair Terms',
     // Heading for the Bonus area — the categories render beneath it.
     bonus: 'Bonuses',
+    // The chip row at the top of the page. No visible heading — the chips say
+    // what they are — so this exists for screen readers, which otherwise meet
+    // an unnamed navigation landmark between the hero and the casino list.
+    bonusTypesLabel: 'Bonus types',
     // The home page's news block carries TWO headings, the same shape the Bonus
     // block above it uses: the section's own name, then what this particular
     // strip within it is. Without the first one the block announced itself as

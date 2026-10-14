@@ -634,7 +634,23 @@ export interface BonusSection {
   name: string
   slug: string
   description: string | null
+  /**
+   * The type's SVG mark on the API's storage disk, or null.
+   *
+   * Resolve with `resolveImageUrl()` — the same path shape as a casino
+   * category's `logo_path`.
+   */
+  icon_path: string | null
   position: number
+  /**
+   * Every bonus filed under this type that is visible on THIS site.
+   *
+   * NOT `offers.length`: that array is capped by the `limit` the page asked
+   * for, so counting it would report "4" for a heading holding sixteen. The
+   * server counts the unlimited set with the same visibility rule it uses to
+   * build the list.
+   */
+  offers_count: number
   offers: SpecialOffer[]
 }
 
@@ -650,7 +666,15 @@ export interface BonusSection {
  */
 /** One Bonus category with a page of its offers. */
 export interface BonusCategoryPage {
-  category: { id: number; name: string; slug: string; description: string | null; position: number }
+  category: {
+    id: number
+    name: string
+    slug: string
+    description: string | null
+    /** The same mark the chip that led here carries. */
+    icon_path: string | null
+    position: number
+  }
   offers: SpecialOffer[]
   meta: { current_page: number; last_page: number; per_page: number; total: number }
 }

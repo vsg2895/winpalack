@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
+import OfferBanner from '@/components/OfferBanner'
 import { resolveImageUrl } from '@/lib/images'
 import { COPY } from '@/constants/copy'
 import type { SpecialOffer } from '@shared/types/specialOffer'
@@ -67,16 +67,18 @@ export default function CasinoSpecialOffers({ offers }: { offers: SpecialOffer[]
               href={`/special-offers/${offer.slug}`}
               className="group flex gap-4 rounded-xl border border-zinc-200 bg-white p-4 transition-colors hover:border-emerald-300 hover:bg-emerald-50/40"
             >
-              {thumb && (
-                <Image
-                  src={thumb}
-                  alt={offer.title}
-                  width={112}
-                  height={64}
-                  sizes="112px"
-                  className="h-16 w-28 shrink-0 rounded-lg bg-slate-50 object-contain object-center p-1"
-                />
-              )}
+              {/* The same frame the home page's bonus cards use — see
+                  OfferBanner. These thumbnails sat on plain white, so a casino's
+                  own offers read as a different kind of thing from the bonus
+                  blocks everywhere else on the site; they are the same thing at
+                  a smaller size.
+
+                  Rendered unconditionally now: the backdrop IS the frame, so an
+                  offer still waiting for its artwork keeps its place in the row
+                  instead of collapsing the card to text. */}
+              <span className="relative block h-16 w-28 shrink-0 overflow-hidden rounded-lg">
+                <OfferBanner src={thumb} alt={offer.title} sizes="112px" />
+              </span>
               <span className="min-w-0">
                 <span className="block truncate font-semibold text-zinc-900 group-hover:text-emerald-700">{offer.title}</span>
                 {offer.bonuses && <span className="mt-1 block line-clamp-2 text-sm text-zinc-500">{offer.bonuses}</span>}
