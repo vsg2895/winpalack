@@ -121,7 +121,7 @@ export default function BonusCategoryNav({ sections }: { sections: BonusSection[
             <li key={section.id}>
               <Link
                 href={`/bonuses/${section.slug}`}
-                className="group flex h-full w-full min-h-12 items-center justify-center gap-2.5 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-[0_6px_20px_-12px_rgba(15,23,42,0.4)] ring-1 ring-slate-200/80 transition-all hover:-translate-y-0.5 hover:text-emerald-700 hover:ring-emerald-300 hover:shadow-[0_10px_24px_-12px_rgba(16,185,129,0.45)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                className="group flex h-full w-full min-h-12 items-center gap-2.5 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-[0_6px_20px_-12px_rgba(15,23,42,0.4)] ring-1 ring-slate-200/80 transition-all hover:-translate-y-0.5 hover:text-emerald-700 hover:ring-emerald-300 hover:shadow-[0_10px_24px_-12px_rgba(16,185,129,0.45)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
               >
                 {icon && (
                   /*
@@ -143,11 +143,17 @@ export default function BonusCategoryNav({ sections }: { sections: BonusSection[
                   />
                 )}
 
+                {/* LEFT-aligned, not centred.
+                    With the tracks equal and the contents centred, every chip
+                    put its icon and its label at a different distance from its
+                    own left edge — so the column read as ragged even though the
+                    boxes were identical. Starting them all at the same point is
+                    what makes a set of equal boxes look like a set. */}
                 <span>{section.name}</span>
 
                 {/* The count rides INSIDE the link, as its own pill: it is part
                     of what the button says, not a caption next to it. */}
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold tabular-nums text-slate-500 transition-colors group-hover:bg-emerald-50 group-hover:text-emerald-700">
+                <span className="ml-auto rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold tabular-nums text-slate-500 transition-colors group-hover:bg-emerald-50 group-hover:text-emerald-700">
                   {section.offers_count}
                 </span>
               </Link>
