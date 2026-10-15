@@ -30,11 +30,11 @@ export default function CasinoSpecialOffers({ offers }: { offers: SpecialOffer[]
   return (
     <section className="mt-10">
       <div className="mb-4 flex items-center justify-between gap-4">
-        <h2 className="text-xl font-bold text-zinc-900">
+        <h2 className="min-w-0 text-xl font-bold text-zinc-900">
           {COPY.casinos.offersHeading} <span className="font-semibold text-zinc-400">({total})</span>
         </h2>
         {pageCount > 1 && (
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <button
               type="button"
               onClick={() => setPage((p) => Math.max(0, p - 1))}
@@ -44,7 +44,12 @@ export default function CasinoSpecialOffers({ offers }: { offers: SpecialOffer[]
             >
               ←
             </button>
-            <span className="text-sm tabular-nums text-zinc-500">{page + 1} / {pageCount}</span>
+            {/* `whitespace-nowrap`, and it is load-bearing: in a flex row next
+                to a heading this is three tokens ("1", "/", "2"), and a long
+                heading squeezed it into three stacked lines between the two
+                arrows. The counter is one word, so it is told to behave like
+                one. */}
+            <span className="whitespace-nowrap text-sm tabular-nums text-zinc-500">{page + 1} / {pageCount}</span>
             <button
               type="button"
               onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
