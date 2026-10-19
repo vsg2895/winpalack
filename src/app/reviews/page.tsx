@@ -15,6 +15,7 @@ import {
 } from '@/lib/seo'
 import Pagination from '@/components/Pagination'
 import type { ReviewThread } from '@shared/types/casinoReview'
+import { canonicalPath } from '@/lib/seo/canonical'
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
 const PAGE_URL = `${SITE_URL}/reviews`
@@ -102,7 +103,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 
   // Page 2+ gets its OWN canonical rather than pointing at page 1: they hold
   // different casinos, so collapsing them would ask Google to drop real content.
-  const path = page > 1 ? `/reviews?page=${page}` : '/reviews'
+  const path = canonicalPath('/reviews', page)
   const metaTitle = settings?.meta_title ?? FALLBACK_META_TITLE
   const description = settings?.meta_description ?? FALLBACK_META_DESCRIPTION
   const title = page > 1 ? `${metaTitle} — Page ${page}` : metaTitle

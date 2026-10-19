@@ -212,19 +212,25 @@ export default function CasinoCard({
 
       {/* CTAs — Visit is primary, Read Review secondary */}
       {/*
-        * Side by side while the card is stacked, stacked once it is a row.
+        * STACKED, full width, until the card is wide enough to put them in
+        * their own column beside the text.
         *
-        * In a half-width card the two CTAs are what decide the height: full
-        * width each, they add ~100px of button to a card that is already
-        * taller for being stacked. Next to each other they cost one row, and
-        * the card stays about the height of the full-width version — which is
-        * the point, since the ask was two per row and NOT bigger cards.
+        * The compact card used to set them `flex-row` below 540px, to save the
+        * ~50px of height a second button costs. On a phone that meant two
+        * ~170px buttons sharing a 358px card, and "Read Safety Review" does not
+        * fit in 170px: it wrapped to two lines, so one CTA was two lines tall
+        * and the other one, and the pair read as broken rather than compact.
+        * Height is the cheaper thing to spend here — a phone scrolls.
+        *
+        * Mobile-first, so there is ONE rule to read: stacked and full width by
+        * default, a fixed-width column from the container width where the card
+        * becomes a row. The two variants now differ only in where that happens.
         */}
       <div
-        className={`flex w-full gap-2 ${
+        className={`flex w-full flex-col gap-2 ${
           compact
-            ? 'flex-row @[540px]:w-auto @[540px]:flex-col @[540px]:flex-shrink-0'
-            : 'flex-col @[600px]:w-auto @[600px]:flex-shrink-0'
+            ? '@[540px]:w-auto @[540px]:flex-shrink-0'
+            : '@[600px]:w-auto @[600px]:flex-shrink-0'
         }`}
       >
         {/* Through our own /go route, not the operator URL: the destination
@@ -234,13 +240,23 @@ export default function CasinoCard({
           href={`/go/${casino.slug}`}
           target="_blank"
           rel="nofollow sponsored noopener"
-          className={`rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 px-4 py-3 text-center text-sm font-bold text-white shadow-lg shadow-emerald-500/30 transition-transform hover:scale-[1.03] @[600px]:px-6 @[600px]:min-w-[150px] ${compact ? 'flex-1 @[540px]:flex-none @[540px]:min-w-[132px]' : ''}`}
+          /*
+           * One box shared with the secondary CTA below: same min height, same
+           * padding, same radius, same centring, both full width. They are two
+           * buttons of one control, and anything that differs between them is
+           * read as one of them being wrong.
+           *
+           * `inline-flex` + `items-center`, not a text-centred block: a label
+           * that wraps then stays centred in the same height instead of
+           * growing the button past its sibling.
+           */
+          className={`inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 px-4 py-3 text-center text-sm font-bold text-white shadow-lg shadow-emerald-500/30 transition-transform hover:scale-[1.03] @[600px]:px-6 @[600px]:min-w-[150px] ${compact ? '@[540px]:w-auto @[540px]:min-w-[132px]' : ''}`}
         >
           {COPY.casinos.visitCasino}
         </a>
         <Link
           href={`/casinos/${casino.slug}`}
-          className={`inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 px-4 py-2.5 text-center text-sm font-semibold text-slate-600 transition-colors hover:border-emerald-300 hover:text-emerald-700 @[600px]:px-6 ${compact ? 'flex-1 @[540px]:flex-none' : ''}`}
+          className={`inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-slate-200 px-4 py-3 text-center text-sm font-semibold text-slate-600 transition-colors hover:border-emerald-300 hover:text-emerald-700 @[600px]:px-6 ${compact ? '@[540px]:w-auto' : ''}`}
         >
           {COPY.casinos.readReview}
         </Link>

@@ -14,6 +14,7 @@ import { SITE_URL } from '@/lib/config'
 // two clicks away.
 import { relativeTime } from '@/lib/relativeTime'
 import type { Article } from '@shared/types/article'
+import { canonicalPath } from '@/lib/seo/canonical'
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
 
@@ -78,13 +79,16 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   // PAGE is different: it holds other stories, so it gets its own canonical and
   // its own title, or the two would be reported as duplicates of each other.
   const title = page > 1 ? `${COPY.news.pageTitle} — Page ${page}` : COPY.news.pageTitle
-  const canonical = page > 1 ? `/news?page=${page}` : '/news'
+  const canonical = canonicalPath('/news', page)
 
   return {
     title,
     description: COPY.news.pageDescription,
     alternates: { canonical },
-    ...(sp.category ? { robots: { index: false, follow: true } } : {}),
+    // A topic-filtered view gets NO `noindex` — the canonical above names
+    // /news as the one copy, which is the signal that consolidates. There is no
+    // /news/topics/<slug> route to 301 these at, so the canonical is the whole
+    // mechanism here and must not be undercut by a noindex.
     openGraph: {
       type: 'website',
       url: canonical,

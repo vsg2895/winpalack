@@ -1,9 +1,9 @@
 'use client'
 
+import Link from 'next/link'
 import { useState, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import GoogleSignInButton from '@/components/forum/GoogleSignInButton'
-import { COPY } from '@/constants/copy'
 
 /**
  * Sign in / create account.
@@ -67,6 +67,11 @@ export default function AccountForm({ next, initialMode = 'signin' }: { next?: s
           display_name: form.get('display_name'),
           email: form.get('email'),
           password: form.get('password'),
+          // An unchecked box submits nothing, so `form.get` returns null —
+          // hence the explicit boolean rather than passing the raw value
+          // through. The server treats a missing key the same way, but being
+          // explicit here means the payload always says what was meant.
+          marketing_consent: form.get('marketing_consent') === '1',
           website: form.get('website') ?? '',
         }),
       })
@@ -155,6 +160,46 @@ export default function AccountForm({ next, initialMode = 'signin' }: { next?: s
             <p className="mt-1 text-xs text-slate-400">At least 6 characters — anything you'll remember.</p>
           )}
         </div>
+
+        {mode === 'register' && (
+          /*
+           * MARKETING CONSENT — unticked by default, and that is the whole
+           * point.
+           *
+           * Creating an account is not agreeing to be marketed to. Without this
+           * box, verifying a registration would have started a promotional
+           * email on its own, which is consent nobody gave. `defaultChecked` is
+           * deliberately absent: a pre-ticked box is not opt-in, and under GDPR
+           * it is not consent either.
+           *
+           * Optional, never blocking. The field is `sometimes|boolean` on the
+           * server, so leaving it alone registers the account and simply records
+           * no consent — which is what the promotion sweep reads as "do not
+           * market to this person".
+           */
+          <div className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+            <input
+              id="marketing_consent"
+              name="marketing_consent"
+              type="checkbox"
+              value="1"
+              className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-emerald-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
+            />
+            {/* Written inline rather than in constants/copy.ts: the convention
+                there is for strings used more than once, and this appears on
+                one form on one site. It names what arrives, says it is
+                optional, and points at the opt-out — the three things consent
+                has to be informed about to mean anything. */}
+            <label htmlFor="marketing_consent" className="text-xs leading-relaxed text-slate-600">
+              Email me casino bonus offers and promotions. Optional — you can leave this unticked and
+              still use your account, and every email has a one-click unsubscribe link. See our{' '}
+              <Link href="/privacy-policy" className="font-semibold text-emerald-700 underline underline-offset-2">
+                Privacy Policy
+              </Link>
+              .
+            </label>
+          </div>
+        )}
 
         {mode === 'register' && (
           /* Honeypot — inline styles, never a utility class: a Tailwind class

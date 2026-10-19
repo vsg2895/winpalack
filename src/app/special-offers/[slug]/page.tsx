@@ -34,22 +34,105 @@ type Props = { params: Promise<{ slug: string }> }
  * straight to the API.
  */
 
+/**
+ * An admin-authored SEO title, with a brand suffix it already carries removed.
+ *
+ * The root layout sets `title.template = '%s | <brand>'`. That is right for a
+ * composed default, but an SEO title written in the admin is a finished string,
+ * and operators naturally end one with the brand — so every offer page with a
+ * pattern applied rendered "… — Terms Stated Up Front | Winpalack | Winpalack":
+ * the brand twice, and the words that matter pushed past the ~60 characters
+ * Google renders.
+ *
+ * Stripping the suffix rather than switching to `title: { absolute }` is
+ * deliberate. `absolute` bypasses the template entirely, which also means a
+ * perfectly good admin title that does NOT mention the brand loses it — the
+ * duplication would be gone and the branding with it. This way the template
+ * stays in charge of appending the brand exactly once, whichever way the title
+ * was written.
+ *
+ * Only an exact ` | <brand>` / ` - <brand>` / ` — <brand>` tail is removed, and
+ * only from the end: a title that mentions the brand mid-sentence is left alone.
+ */
+function withoutBrandSuffix(title: string): string {
+  if (SITE_NAME === '') return title
+
+  const stripped = title.replace(
+    new RegExp(`\\s*[|\\-—–]\\s*${SITE_NAME.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`, 'i'),
+    '',
+  )
+
+  // Never return an empty title — a record whose SEO title is nothing but the
+  // brand keeps it, and the template's duplicate is the lesser problem.
+  return stripped.trim() === '' ? title : stripped
+}
+
+/**
+ * The offer's own prose, as plain text — the only field on an offer that is
+ * written per offer AND per nothing else.
+ *
+ * Measured on live data before this existed: 18 of 29 offers carry no
+ * `bonuses` value, and `bonuses` is a column on the global `special_offers`
+ * row — identical across all eight domains, with only 8 distinct values across
+ * 29 offers. Composed from it, every thin offer's meta description came out as
+ * its title plus one sentence repeated on every sibling page. `description` is
+ * where an editor actually writes, so it goes first.
+ */
+function plainDescription(html: string | null | undefined): string {
+  return (html ?? '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+/** Trimmed at a word boundary to the ~155 characters Google renders. */
+function metaLength(text: string): string {
+  return text.length <= 155 ? text : `${text.slice(0, 155).replace(/\s+\S*$/, '')}…`
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   try {
     const { data: offer } = await getSpecialOffer(slug)
     const title = offer.title
-    // `bonuses` is shared master data, identical on every site — so the site's
-    // own line is appended to keep the factual bonus lead while making the
-    // description unique per domain.
-    const description = offer.bonuses
-      ? `${offer.bonuses} — ${COPY.specialOffers.offerMetaSuffix}`
-      : `${offer.title} — ${COPY.specialOffers.offerMetaSuffix}`
+    /*
+     * The written description first; the `bonuses` composition only as a
+     * fallback for an offer nobody has written up yet — which is a content gap
+     * this file cannot close, not something to paper over with a longer
+     * boilerplate sentence. See plainDescription() above for the measurements.
+     */
+    const prose = plainDescription(offer.description)
+    const description = prose !== ''
+      ? metaLength(prose)
+      : offer.bonuses
+        ? `${offer.bonuses} — ${COPY.specialOffers.offerMetaSuffix}`
+        : `${offer.title} — ${COPY.specialOffers.offerMetaSuffix}`
     // Admin-resolved SEO. Null unless a site pattern or a per-record override
     // exists, so the composed wording above remains the default.
     const seo = offer.seo
-    const finalTitle = seo?.title ?? title
-    const finalDescription = seo?.description ?? description
+    const finalTitle = seo?.title ? withoutBrandSuffix(seo.title) : title
+    /*
+     * PRECEDENCE, and the reason it is not simply `seo?.description ?? …`:
+     *
+     *   1. a per-record override someone typed for THIS offer;
+     *   2. the offer's own written prose;
+     *   3. the site's SEO pattern;
+     *   4. the composed `bonuses` line.
+     *
+     * The pattern used to sit at (1) because the API hands back a finished
+     * string either way. It renders one sentence with the title substituted in,
+     * so all 29 offers carried "Wagering, minimum deposit and withdrawal caps
+     * for <title>, written out before you claim." — differing only by a few
+     * words of title, on pages that are already thin. `description_from_record`
+     * is what lets a real override keep winning while the pattern drops below
+     * the prose.
+     */
+    const finalDescription = seo?.description_from_record === true && seo.description
+      ? seo.description
+      : prose !== ''
+        ? description
+        : (seo?.description ?? description)
 
     return {
       title: finalTitle,
@@ -69,9 +152,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       // other way from indexing it. `follow: false` there is deliberate and
       // stricter than the editorial noindex below, which keeps follow so the
       // page still passes link equity.
+      /*
+       * INDEXABILITY, in two distinct gates.
+       *
+       * `!active` is the hard one: the offer is withdrawn, the page exists only
+       * so an old link does not 404, and `follow: false` keeps it from passing
+       * anything onward.
+       *
+       * `is_indexable` is the editorial one, computed on the server from this
+       * offer alone (SpecialOffer::isIndexable): at least ~80 words of
+       * description OR filled bonus terms, and no explicit admin noindex. It
+       * exists because the median offer description was 33 words and Search
+       * Console reported those pages as "Crawled — currently not indexed" —
+       * Google's verdict was right, and asking it again on every crawl spends
+       * budget the finished offers need. `follow` stays true: the casino and
+       * category links on a thin page are still worth following.
+       *
+       * The same flag filters the sitemap, so the two can never disagree.
+       */
       ...(!offer.active
         ? { robots: { index: false, follow: false } }
-        : seo?.noindex
+        : offer.is_indexable === false
           ? { robots: { index: false, follow: true } }
           : {}),
     }
@@ -102,15 +203,56 @@ export default async function SpecialOfferDetailPage({ params }: Props) {
     ],
     pageUrl,
   )
+  /*
+   * `Offer`, and deliberately NOT `SpecialAnnouncement`.
+   *
+   * SpecialAnnouncement is scoped to public-health and emergency notices;
+   * applying it to a casino bonus is schema misuse that risks a manual action
+   * rather than a rich result. `Offer` is the type that describes a promotion.
+   *
+   * ONLY FIELDS WE ACTUALLY HOLD. No `price`, no `priceCurrency`, no
+   * `availabilityEnds` — this API exposes none of them, and an Offer carrying
+   * an invented figure is worse than no Offer at all. Every optional key is
+   * omitted rather than emitted empty, for the same reason the casino Review
+   * schema omits an author it cannot name.
+   */
+  const offerProse = plainDescription(offer.description)
+  const offerSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Offer',
+    name: offer.title,
+    url: pageUrl,
+    /*
+     * One description, from whichever field has something to say. `bonuses` is
+     * NOT given a property of its own: it reads like "100% up to €500", and the
+     * Offer properties that take a figure (`price`, `eligibleTransactionVolume`)
+     * expect a number or a PriceSpecification, not a human sentence. Forcing it
+     * into one would be the same misuse this block avoided by not reaching for
+     * SpecialAnnouncement.
+     */
+    ...(offerProse !== ''
+      ? { description: offerProse }
+      : offer.bonuses
+        ? { description: offer.bonuses }
+        : {}),
+    ...(offer.casino?.name
+      ? { offeredBy: { '@type': 'Organization', name: offer.casino.name } }
+      : {}),
+    ...(offer.bonus_category_name ? { category: offer.bonus_category_name } : {}),
+  }
+
   const graph = [
     buildWebPageSchema({
       name: offer.title,
       url: pageUrl,
-      description: offer.bonuses ?? undefined,
+      // The prose, same as the meta description, rather than the shared
+      // `bonuses` line that is identical across the network.
+      description: offerProse !== '' ? offerProse : (offer.bonuses ?? undefined),
       breadcrumbId: breadcrumbIdFor(pageUrl),
       dateModified: offer.updated_at,
     }),
     breadcrumb,
+    offerSchema,
   ]
 
   return (

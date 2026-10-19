@@ -120,7 +120,11 @@ export const COPY = {
     // H2 over the offers block on a casino page. The literal 'Special Offers'
     // was hardcoded in the component on all six sites — an identical H2 on
     // every review page in the network.
-    offersHeading: 'Offers Worth Claiming',
+    // The casino page's own offers section. "Bonuses" rather than a phrase:
+    // it is the word the rest of the site uses for these — the menu, the
+    // category pages and the home-page band all say Bonuses — and a section
+    // heading that renames the same thing makes it read as something else.
+    offersHeading: 'Bonuses',
     // Tail of the summary-panel H2: `{casino.name} the safety checks`.
     glanceHeadingTail: 'safety record',
     reviewTitleTail: 'Licence & Limits Checked',
@@ -220,13 +224,6 @@ export const COPY = {
     pageTitle: 'News',
     pageDescription:
       'Licensing decisions, operator changes and offer updates — what changed, when, and what it means for players.',
-    /**
-     * Precedes the outbound credit on an item whose facts came from a feed.
-     *
-     * "Reported first by" rather than "Source", because it says the true thing:
-     * the words are ours, the reporting was theirs.
-     */
-    sourceCredit: 'Reported first by',
     backToIndex: 'All news',
     latest: 'Latest',
     // The rail beside the feed. It is the editor's PICK, not a measured count —

@@ -7,6 +7,7 @@ import { COPY } from '@/constants/copy'
 import SpecialOfferCard from '@/components/SpecialOfferCard'
 import Pagination from '@/components/Pagination'
 import { SITE_URL } from '@/lib/config'
+import { canonicalPath } from '@/lib/seo/canonical'
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
 
@@ -24,7 +25,7 @@ type Props = {
  * prefix SITE_URL themselves.
  */
 function canonicalPathFor(slug: string, page: number): string {
-  return `/bonuses/${slug}${page > 1 ? `?page=${page}` : ''}`
+  return canonicalPath(`/bonuses/${slug}`, page)
 }
 
 /*

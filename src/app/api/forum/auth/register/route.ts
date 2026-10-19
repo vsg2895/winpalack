@@ -28,6 +28,14 @@ export async function POST(req: NextRequest) {
       display_name: String(body.display_name ?? ''),
       email: String(body.email ?? ''),
       password: String(body.password ?? ''),
+      /*
+       * Forwarded explicitly, because this handler WHITELISTS fields rather
+       * than passing the body through — anything not named here is dropped
+       * silently, which is exactly what happened to this field on its first
+       * attempt. `=== true` so a client cannot smuggle a truthy string past the
+       * server's `boolean` rule.
+       */
+      marketing_consent: body.marketing_consent === true,
       website: String(body.website ?? ''),
     }
   } catch {

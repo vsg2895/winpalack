@@ -14,6 +14,7 @@ import { COPY } from '@/constants/copy'
 import { relativeTime } from '@/lib/relativeTime'
 import Breadcrumbs from '@/components/forum/Breadcrumbs'
 import Pagination from '@/components/Pagination'
+import { canonicalPath } from '@/lib/seo/canonical'
 
 /**
  * One board, listing its discussions.
@@ -60,10 +61,10 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     // pages hold different discussions, so pointing them all at page 1 would ask
     // Google to drop real content. The differing <title> is what keeps them from
     // reading as duplicates.
-    alternates: { canonical: page > 1 ? `/forum/${category}?page=${page}` : `/forum/${category}` },
+    alternates: { canonical: canonicalPath(`/forum/${category}`, page) },
     openGraph: {
       type: 'website',
-      url: page > 1 ? `/forum/${category}?page=${page}` : `/forum/${category}`,
+      url: canonicalPath(`/forum/${category}`, page),
       title,
       description: board.description ?? undefined,
     },
@@ -83,6 +84,19 @@ export default async function ForumCategoryPage({ params, searchParams }: Props)
   const board = res.data.category
   const articles = res.data.articles
   const meta = res.meta
+
+  /*
+   * A PAGE NUMBER PAST THE END IS NOT A PAGE.
+   *
+   * Without this, /forum/<board>?page=999 rendered an empty list with HTTP 200 and a
+   * self-referencing canonical, so every out-of-range number a crawler guessed
+   * became its own indexable URL claiming to be a real page of the board. Google
+   * calls that a soft 404 and reports it as an error.
+   *
+   * `page > 1` is part of the test on purpose: an empty listing still has a
+   * legitimate page 1, and it must render its empty state rather than 404.
+   */
+  if (page > 1 && page > meta.last_page) notFound()
   const now = Date.now()
 
   const pageUrl = `${SITE_URL}/forum/${category}`

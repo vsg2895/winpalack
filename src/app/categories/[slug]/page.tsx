@@ -8,6 +8,7 @@ import CasinoCard from '@/components/CasinoCard'
 import CountryNav from '@/components/CountryNav'
 import Pagination from '@/components/Pagination'
 import { SITE_URL } from '@/lib/config'
+import { canonicalPath } from '@/lib/seo/canonical'
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
 
@@ -27,7 +28,7 @@ type Props = {
  * the two call sites below prefix SITE_URL explicitly.
  */
 function canonicalPathFor(slug: string, page: number): string {
-  return `/categories/${slug}${page > 1 ? `?page=${page}` : ''}`
+  return canonicalPath(`/categories/${slug}`, page)
 }
 
 /*
@@ -57,7 +58,6 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   const page = Math.max(1, Number(sp.page) || 1)
   // Country is the only filter this listing offers, so it is the only thing
   // that can make this a filtered view.
-  const isFiltered = Boolean(sp.country)
   try {
     const { data } = await getCategory(slug, page, sp.country)
     // Distinct title per page so paginated views are never reported as duplicates.
@@ -70,10 +70,11 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 
     return {
       title,
-      // A country-filtered view stays OUT of the index: it is a near-duplicate
-      // of the category page. `follow` is kept so the casinos it links to still
-      // receive the links. Same treatment /casinos gives its own country facet.
-      ...(isFiltered ? { robots: { index: false, follow: true } } : {}),
+      // A country-filtered view gets NO `noindex`. The self-referencing
+      // canonical above already names the unfiltered category page as the one
+      // true copy, and that is the signal Google consolidates on; a noindex
+      // stacked on top of it suppresses the page instead of folding it in, and
+      // over time a noindexed page stops passing on the links it carries.
       description,
       // Self-referencing canonical: this route is now the canonical home of a
       // category, and /casinos?category=<slug> 301s here (see next.config).
@@ -123,6 +124,24 @@ export default async function CategoryDetailPage({ params, searchParams }: Props
 
   const { category, meta } = payload
   const casinos = payload.casinos
+
+  /*
+   * A PAGE NUMBER PAST THE END IS NOT A PAGE.
+   *
+   * Without this, /categories/<slug>?page=999 rendered an empty list with HTTP 200 and a
+   * self-referencing canonical — so every out-of-range number any crawler ever
+   * guessed became its own indexable URL claiming to be a real page of the
+   * category. Google calls that a soft 404 and reports it as an error; worse,
+   * it spends crawl budget enumerating pages that do not exist.
+   *
+   * `page > 1` is part of the test on purpose: an EMPTY listing still has a
+   * legitimate page 1 (`last_page` is 1, or 0 when the list is empty), and that
+   * page must render its empty state rather than 404 — the filters on it are
+   * the only way back.
+   *
+   * Same rule, same shape, as /news and /news/most-popular.
+   */
+  if (page > 1 && page > (meta?.last_page ?? 1)) notFound()
   // Position continues across pages so the ItemList reflects the real ranking
   // rather than restarting at 1 on every page.
   const offset = ((meta?.current_page ?? page) - 1) * (meta?.per_page ?? casinos.length)

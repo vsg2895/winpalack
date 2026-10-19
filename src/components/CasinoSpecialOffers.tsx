@@ -85,6 +85,18 @@ export default function CasinoSpecialOffers({ offers }: { offers: SpecialOffer[]
                 <OfferBanner src={thumb} alt={offer.title} sizes="112px" />
               </span>
               <span className="min-w-0">
+                {/* The bonus TYPE, as the editor named it.
+                    An eyebrow rather than a line under the title: the title is
+                    truncated to one line and the description clamped to two, so
+                    anything added below them competes for space that is already
+                    spoken for. Rendered only when the offer is filed under a
+                    type — an unfiled one shows nothing rather than an empty
+                    chip. */}
+                {offer.bonus_category_name && (
+                  <span className="mb-1 inline-block rounded-full border border-zinc-200 text-zinc-500 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                    {offer.bonus_category_name}
+                  </span>
+                )}
                 <span className="block truncate font-semibold text-zinc-900 group-hover:text-emerald-700">{offer.title}</span>
                 {offer.bonuses && <span className="mt-1 block line-clamp-2 text-sm text-zinc-500">{offer.bonuses}</span>}
                 <span className="mt-2 inline-block text-xs font-semibold text-emerald-600">View offer →</span>

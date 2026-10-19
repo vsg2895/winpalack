@@ -15,6 +15,7 @@ import { COPY } from '@/constants/copy'
 import CasinoCard from '@/components/CasinoCard'
 import Pagination from '@/components/Pagination'
 import { SITE_URL } from '@/lib/config'
+import { canonicalPath } from '@/lib/seo/canonical'
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
 
@@ -31,7 +32,7 @@ type Props = {
  * prefix SITE_URL explicitly.
  */
 function canonicalPathFor(slug: string, page: number): string {
-  return `/countries/${slug}${page > 1 ? `?page=${page}` : ''}`
+  return canonicalPath(`/countries/${slug}`, page)
 }
 
 /*
@@ -91,6 +92,19 @@ export default async function CountryDetailPage({ params, searchParams }: Props)
   if (res === null) notFound()
 
   const { country, casinos, meta } = res.data
+
+  /*
+   * A PAGE NUMBER PAST THE END IS NOT A PAGE.
+   *
+   * Without this, /countries/<slug>?page=999 rendered an empty list with HTTP 200 and a
+   * self-referencing canonical, so every out-of-range number a crawler guessed
+   * became its own indexable URL claiming to be a real page of the country listing. Google
+   * calls that a soft 404 and reports it as an error.
+   *
+   * `page > 1` is part of the test on purpose: an empty listing still has a
+   * legitimate page 1, and it must render its empty state rather than 404.
+   */
+  if (page > 1 && page > (meta?.last_page ?? 1)) notFound()
   const flag = resolveImageUrl(country.image_path)
 
   // Position continues across pages so the ItemList reflects the real ranking

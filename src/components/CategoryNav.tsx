@@ -4,17 +4,16 @@ import type { Category } from '@shared/types/category'
 
 /**
  * Idev Affiliation category selector — elegant glass pills with an emerald→teal
- * active state. Works on the home page (basePath="/") and the casinos listing.
+ * active state. Mounted on the home page and on the casinos listing; both link
+ * at the canonical /categories/<slug> route.
  */
 export default function CategoryNav({
   categories,
   selected,
-  basePath = '/casinos',
   country,
 }: {
   categories: Category[]
   selected: string
-  basePath?: string
   /** Carried through every chip link, so choosing a category keeps the country. */
   country?: string
 }) {
@@ -86,31 +85,26 @@ export default function CategoryNav({
         return (
           <Link
             key={c.id}
-            // On the home page the nav is an in-page filter (basePath="/"), so it
-            // keeps the query form. Anywhere else it links straight at the
-            // canonical category route — never through the 301.
-            href={
-              basePath === '/'
-                ? `/?category=${c.slug}${country ? `&country=${encodeURIComponent(country)}` : ''}`
-                : `/categories/${c.slug}${country ? `?country=${encodeURIComponent(country)}` : ''}`
-            }
-            aria-current={active ? 'page' : undefined}
             /*
-             * Keep the scroll position when this nav is the home page's IN-PAGE
-             * filter.
+             * ALWAYS the canonical category route, on every page this nav
+             * appears — including the home page, which used to take the query
+             * form `/?category=<slug>` and filter in place.
              *
-             * Choosing a category there swaps the list below the chips for
-             * another one; the chips themselves do not move. Next's default is
-             * to scroll a navigation to the top, so every chip press threw the
-             * reader back to the hero and they had to scroll down again to see
-             * what they had just asked for — the control punished its own use.
+             * That query form is now 301'd to this very URL at the edge (see
+             * lib/seo/redirects.ts), so emitting it would mean linking a
+             * redirect: one wasted hop for a visitor and, multiplied by the
+             * number of categories, a page's worth of crawl budget spent on
+             * URLs that resolve to somewhere else. It is also what Search
+             * Console was reporting as "Alternate page with proper canonical
+             * tag" — the home page existed once per category, each copy
+             * canonical-tagged back at `/`.
              *
-             * Left at the default everywhere else, because everywhere else these
-             * chips lead to a DIFFERENT page (/categories/<slug>): arriving
-             * part-way down a document you have not seen is the disorienting
-             * version of the same behaviour.
+             * The chips therefore NAVIGATE rather than filter in place. The
+             * destination renders the same list, from the same endpoint, under
+             * a URL that can be linked, shared and indexed.
              */
-            scroll={basePath === '/' ? false : undefined}
+            href={`/categories/${c.slug}${country ? `?country=${encodeURIComponent(country)}` : ''}`}
+            aria-current={active ? 'page' : undefined}
             // `flex` + centring rather than the old inline box: the chip is now
             // as wide as its grid track, so its contents have to be placed
             // inside that width instead of defining it.

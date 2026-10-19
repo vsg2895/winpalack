@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
 import { getCategories, getCategory, getCountries } from '@/lib/api'
 import { buildItemListSchema, buildWebPageSchema, jsonLdScript } from '@/lib/seo'
+import { canonicalPath } from '@/lib/seo/canonical'
 import { COPY } from '@/constants/copy'
 import CasinoCard from '@/components/CasinoCard'
 import CategoryNav from '@/components/CategoryNav'
@@ -51,51 +53,58 @@ async function resolve(searchParams: Props['searchParams']) {
 }
 
 /**
- * The canonical URL for a listing view, carrying only the parameters that
- * genuinely change the content.
+ * The canonical URL for this listing view.
+ *
+ * TAKES `requested`, NOT `selected`. That distinction is the whole bug this
+ * function used to have, and `resolve()` above explains both halves of it:
+ * `selected` falls back to the first category so the page always renders
+ * something, while `requested` is what the URL actually asked for. Handed
+ * `selected`, the bare /casinos?page=2 declared itself a copy of
+ * /categories/<first-category>?page=2 — which is exactly what Search Console
+ * reported, and it meant the catalogue's own paginated pages were never indexed
+ * under their own URL.
+ *
+ * /casinos is the canonical UNFILTERED catalogue and self-canonicals, including
+ * past page 1. /categories/<slug> is the canonical home of each FILTERED view,
+ * and /casinos?category=<slug> 301s there (next.config.ts, plus the same rule in
+ * lib/seo/redirects.ts so it folds into one hop) — so a category can never reach
+ * this page and the two routes cannot canonical at each other.
+ *
+ * `canonicalPath` returns a PATH, not an absolute URL: Next resolves
+ * alternates.canonical and openGraph.url against `metadataBase`, so the host is
+ * named once (lib/config) and cannot drift per page. JSON-LD needs absolute
+ * URLs and uses `canonicalUrl` at its own call site.
  */
-function canonicalPathFor(selected: string | undefined, page: number): string {
-  // Under the Option B consolidation /categories/<slug> is the canonical home of
-  // a category, and /casinos?category=<slug> 301s there (see next.config). What
-  // reaches this page is therefore only the bare /casinos, which renders the
-  // default category — so it points at that category's canonical URL rather
-  // than competing with it as a second copy of the same list.
-  //
-  // A PATH, not an absolute URL: Next resolves alternates.canonical and
-  // openGraph.url against `metadataBase`, so the host is named once (lib/config)
-  // and cannot drift per page. JSON-LD needs absolute URLs and prefixes
-  // SITE_URL at its own call site.
-  if (!selected) {
-    return '/casinos'
-  }
-
-  return `/categories/${selected}${page > 1 ? `?page=${page}` : ''}`
+function canonicalPathFor(requested: string | undefined, page: number): string {
+  return requested ? canonicalPath(`/categories/${requested}`, page) : canonicalPath('/casinos', page)
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
-  const { selected, page, country } = await resolve(searchParams)
+  const { requested, page } = await resolve(searchParams)
   // Page 2+ gets its own title so paginated views are not reported as duplicate
   // titles, and so a searcher landing on one knows where they are.
   const title = page > 1 ? `${COPY.casinos.pageTitle} — Page ${page}` : COPY.casinos.pageTitle
-  const canonical = canonicalPathFor(selected, page)
+  const canonical = canonicalPathFor(requested, page)
 
   return {
     title,
     description: COPY.casinos.pageDescription,
-    // Self-referencing canonical. Pointing page 3 back at page 1 (the previous
-    // behaviour) tells Google the deeper pages are duplicates of the first, so
-    // the casinos listed only on those pages never get indexed.
+    // Self-referencing canonical. Pointing page 3 back at page 1 tells Google
+    // the deeper pages are duplicates of the first, so the casinos listed only
+    // on those pages never get indexed.
+    //
+    // A country-filtered view (`?country=`) gets NO `noindex`. The canonical
+    // above already names the unfiltered listing as the one true copy, which is
+    // the signal Google acts on; adding noindex on top of it suppresses the
+    // page without consolidating anything, and a noindexed page passes on
+    // nothing it links to in the long run.
     alternates: { canonical },
-    // A country-filtered view is a near-duplicate of the category page — keep
-    // it out of the index (follow kept, so the casinos still receive the links),
-    // exactly as /categories/<slug> treats its facets.
-    ...(country ? { robots: { index: false, follow: true } } : {}),
     openGraph: { type: 'website', url: canonical, siteName: SITE_NAME, title, description: COPY.casinos.pageDescription },
   }
 }
 
 export default async function CasinosPage({ searchParams }: Props) {
-  const { categories, selected, page, continents, countries, country } = await resolve(searchParams)
+  const { categories, requested, selected, page, continents, countries, country } = await resolve(searchParams)
 
   if (!selected) {
     return (
@@ -116,6 +125,24 @@ export default async function CasinosPage({ searchParams }: Props) {
   }
 
   const { category, casinos, meta } = (await getCategory(selected, page, country, CASINOS_PER_PAGE)).data
+
+  /*
+   * A PAGE NUMBER PAST THE END IS NOT A PAGE.
+   *
+   * Without this, /casinos?page=999 rendered an empty list with HTTP 200 and a
+   * self-referencing canonical — so every out-of-range number any crawler ever
+   * guessed became its own indexable URL claiming to be a real page of the
+   * catalogue. Google calls that a soft 404 and reports it as an error; worse,
+   * it spends crawl budget enumerating pages that do not exist.
+   *
+   * `page > 1` is part of the test on purpose: an EMPTY listing still has a
+   * legitimate page 1 (`last_page` is 1, or 0 when the list is empty), and that
+   * page must render its empty state rather than 404 — the filters on it are
+   * the only way back.
+   *
+   * Same rule, same shape, as /news and /news/most-popular.
+   */
+  if (page > 1 && page > meta.last_page) notFound()
   /*
    * Paginate on THIS route.
    *
@@ -131,10 +158,9 @@ export default async function CasinosPage({ searchParams }: Props) {
    * default category, and `page` and `country` are both carried, so page 2
    * shows the continuation of exactly the list page 1 showed.
    *
-   * The SEO consolidation is untouched: `canonicalPathFor` still points every
-   * page of this view at /categories/<slug>, which is what stops the two URLs
-   * competing. rel=canonical is the right tool for that — moving the visitor
-   * was never part of it.
+   * The canonical now reflects what the URL ASKED for rather than what the page
+   * fell back to rendering, so bare /casinos (and every page of it) is its own
+   * canonical and no longer declares itself a copy of the first category.
    */
   const basePath = `/casinos${country ? `?country=${encodeURIComponent(country)}` : ''}`
   const cats = categories as Category[]
@@ -148,7 +174,7 @@ export default async function CasinosPage({ searchParams }: Props) {
   const graph = [
     buildWebPageSchema({
       name: COPY.casinos.pageTitle,
-      url: `${SITE_URL}${canonicalPathFor(selected, page)}`,
+      url: `${SITE_URL}${canonicalPathFor(requested, page)}`,
       description: COPY.casinos.pageDescription,
     }),
     listSchema,

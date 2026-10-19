@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { canonicalRedirect } from '@/lib/seo/redirects'
 
 /**
  * Applies admin-managed redirects.
@@ -101,6 +102,22 @@ async function rules(): Promise<Map<string, Rule>> {
 }
 
 export async function proxy(request: NextRequest) {
+  /*
+   * CANONICAL URL RULES FIRST, and before any network call.
+   *
+   * They are static, they cost nothing, and they must not depend on the
+   * admin-managed table being reachable — a www. host or a `?page=1` has to
+   * 301 even while the API is down. See lib/seo/redirects.ts for the rules and
+   * for why they cannot live in next.config.ts.
+   *
+   * An admin rule for the same path still wins afterwards, because this layer
+   * only ever rewrites a URL into its own canonical spelling: an editorial
+   * redirect targets a path, and the canonical spelling of that path is what
+   * gets looked up below.
+   */
+  const canonical = canonicalRedirect(request)
+  if (canonical) return NextResponse.redirect(canonical, 301)
+
   // Missing configuration must not break routing — the site simply does no
   // redirecting until it is configured.
   if (!API || !SITE || !KEY) return NextResponse.next()

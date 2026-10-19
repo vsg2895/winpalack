@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
-import { getArticle, getEditorial, getSiteFeatures } from '@/lib/api'
+import { getArticles, getArticle, getEditorial, getSiteFeatures } from '@/lib/api'
 import { buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript } from '@/lib/seo'
 import { resolveImageUrl } from '@/lib/images'
 import { COPY } from '@/constants/copy'
@@ -73,6 +73,16 @@ export default async function GuidePage({ params }: Props) {
 
   const hero = resolveImageUrl(article.hero_image_path)
   const pageUrl = `${SITE_URL}/guides/${slug}`
+
+  /*
+   * Up to three other guides, newest first, this one excluded.
+   *
+   * Never fatal and never empty-rendered: a failed fetch or a site with only
+   * one guide yields an empty list and the block below is not rendered at all.
+   */
+  const siblings = (await getArticles().catch(() => []))
+    .filter((a) => a.slug !== slug)
+    .slice(0, 3)
 
   const breadcrumb = buildBreadcrumbSchema(
     [
@@ -158,6 +168,43 @@ export default async function GuidePage({ params }: Props) {
             </Link>
           </p>
         </article>
+
+        {/*
+          RELATED GUIDES — the reason this block exists is crawl depth, not
+          decoration.
+
+          Every guide had exactly ONE inbound internal link: the card on
+          /guides. The hub itself is linked site-wide from the header and
+          footer, so the hub is found easily and its children are each a
+          single, lonely link away. Google crawled two of these guides and
+          declined to index them despite ~500 words, a NewsArticle block and a
+          named author — a page with one internal link reads as a page the site
+          itself does not think is important.
+
+          Siblings link to siblings here, so each guide gains an inbound link
+          from every other one. No new data: `getArticles()` is the same
+          cached, tagged fetch the hub uses.
+        */}
+        {siblings.length > 0 && (
+          <aside className="mx-auto mt-16 max-w-3xl">
+            <h2 className="font-display text-2xl font-semibold text-slate-900">{COPY.guides.pageTitle}</h2>
+            <ul className="mt-6 flex flex-col gap-4" role="list">
+              {siblings.map((sibling) => (
+                <li key={sibling.slug}>
+                  <Link
+                    href={`/guides/${sibling.slug}`}
+                    className="block rounded-xl border border-slate-200 bg-white p-5 transition-colors hover:border-emerald-200 hover:bg-emerald-50/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
+                  >
+                    <span className="font-display text-base font-semibold text-slate-900">{sibling.title}</span>
+                    {sibling.excerpt && (
+                      <span className="mt-1 block text-sm leading-relaxed text-slate-500">{sibling.excerpt}</span>
+                    )}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </aside>
+        )}
       </main>
     </>
   )

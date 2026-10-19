@@ -8,7 +8,7 @@ import type {
   WithContext, FAQPage } from 'schema-dts'
 import type { CasinoWithAttachment } from '@shared/types/casino'
 import type { SocialLink } from '@shared/types/socialLink'
-import { SITE_URL } from './config'
+import { SITE_URL } from '../config'
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
 const SITE_DESCRIPTION =

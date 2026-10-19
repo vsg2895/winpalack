@@ -25,6 +25,14 @@ export interface SpecialOffer {
    * Null when the offer is filed under no type.
    */
   bonus_category_slug: string | null
+  /**
+   * The type's name, as an editor wrote it — "Free Spins", "Tournament".
+   *
+   * The label a reader sees. Never derived from the slug: a renamed type would
+   * keep its old slug (it is in the URL and in every cache key) and the derived
+   * label would quietly go stale.
+   */
+  bonus_category_name: string | null
   title: string
   slug: string
   image_path: string | null
@@ -39,6 +47,23 @@ export interface SpecialOffer {
   updated_at: string
   /** Server-resolved SEO. Offers have no meta columns, so title comes from the site pattern. */
   seo?: ResolvedSeo
+  /**
+   * Whether this offer's page is worth putting in front of Google.
+   *
+   * Computed on the server from the offer itself: at least ~80 words of
+   * `description`, OR filled bonus terms (wagering requirement, minimum
+   * deposit, withdrawal cap), AND no explicit admin `noindex`. A coupon code
+   * alone does not qualify.
+   *
+   * The median description across the live offers was 33 words and Search
+   * Console reported those pages as "Crawled — currently not indexed". This is
+   * what keeps them out of the sitemap and tags them `noindex, follow` until
+   * someone writes them up, so crawl budget goes to the finished ones.
+   *
+   * NOT the same as `active`: an inactive offer is hidden for a different
+   * reason and its page serves the stricter `index: false, follow: false`.
+   */
+  is_indexable: boolean
   /** Structured bonus terms. Additive — `bonuses` stays the scannable headline. */
   terms?: SpecialOfferTerms
 }

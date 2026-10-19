@@ -10,6 +10,7 @@ import { COPY } from '@/constants/copy'
 import { SITE_URL } from '@/lib/config'
 import Pagination from '@/components/Pagination'
 import type { Article } from '@shared/types/article'
+import { canonicalPath } from '@/lib/seo/canonical'
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
 
@@ -29,7 +30,7 @@ type Props = { searchParams: Promise<{ page?: string }> }
  */
 
 function canonicalPathFor(page: number): string {
-  return `/news/most-popular${page > 1 ? `?page=${page}` : ''}`
+  return canonicalPath('/news/most-popular', page)
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
@@ -38,9 +39,31 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const title = page > 1 ? `${COPY.news.popularTitle} — Page ${page}` : COPY.news.popularTitle
   const canonical = canonicalPathFor(page)
 
+  /*
+   * AN EMPTY PAGE IS KEPT OUT OF THE INDEX.
+   *
+   * This page renders its empty state rather than 404ing, and that is correct:
+   * unlike /news — which has no reason to exist with no posts at all — the
+   * popular picks can legitimately come back empty while the feed itself is
+   * full, and the rail on /news links here regardless. A linked page must not
+   * answer 404.
+   *
+   * But an indexable page whose body says "nothing here" is thin content, and
+   * Google reports it as such. `noindex, follow` is the one case where the
+   * canonical cannot do this job: there is no other copy of this list to
+   * consolidate into — there is simply nothing to index yet. `follow` keeps
+   * /news reachable through it.
+   *
+   * The fetch is the SAME cached call the page body makes below, on the same
+   * tag, so this costs no extra round trip.
+   */
+  const payload = await getPopularNews(page)
+  const isEmpty = payload === null || payload.posts.length === 0
+
   return {
     title,
     description: COPY.news.popularDescription,
+    ...(isEmpty ? { robots: { index: false, follow: true } } : {}),
     alternates: { canonical },
     openGraph: {
       type: 'website',

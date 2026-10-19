@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
-import { getCasino, getEditorial, getSiteFeatures } from '@/lib/api'
+import { notFound, permanentRedirect } from 'next/navigation'
+import { getCasino, getCasinos, getEditorial, getSiteFeatures } from '@/lib/api'
 import { buildCasinoReviewSchema, buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript } from '@/lib/seo'
 import { resolveImageUrl } from '@/lib/images'
 import BonusTerms from '@/components/BonusTerms'
@@ -39,6 +39,39 @@ type Props = { params: Promise<{ slug: string }> }
  * existing per-fetch cache and its tags exactly as they were.
  */
 
+/**
+ * An admin-authored SEO title, with a brand suffix it already carries removed.
+ *
+ * The root layout sets `title.template = '%s | <brand>'`. That is right for a
+ * composed default, but an SEO title written in the admin is a finished string,
+ * and operators naturally end one with the brand — so every offer page with a
+ * pattern applied rendered "… — Terms Stated Up Front | Winpalack | Winpalack":
+ * the brand twice, and the words that matter pushed past the ~60 characters
+ * Google renders.
+ *
+ * Stripping the suffix rather than switching to `title: { absolute }` is
+ * deliberate. `absolute` bypasses the template entirely, which also means a
+ * perfectly good admin title that does NOT mention the brand loses it — the
+ * duplication would be gone and the branding with it. This way the template
+ * stays in charge of appending the brand exactly once, whichever way the title
+ * was written.
+ *
+ * Only an exact ` | <brand>` / ` - <brand>` / ` — <brand>` tail is removed, and
+ * only from the end: a title that mentions the brand mid-sentence is left alone.
+ */
+function withoutBrandSuffix(title: string): string {
+  if (SITE_NAME === '') return title
+
+  const stripped = title.replace(
+    new RegExp(`\\s*[|\\-—–]\\s*${SITE_NAME.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`, 'i'),
+    '',
+  )
+
+  // Never return an empty title — a record whose SEO title is nothing but the
+  // brand keeps it, and the template's duplicate is the lesser problem.
+  return stripped.trim() === '' ? title : stripped
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   try {
@@ -66,7 +99,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     // so the composed wording above stays the default and nothing changes for a
     // site that has not adopted this.
     const seo = casino.seo
-    const finalTitle = seo?.title ?? title
+    const finalTitle = seo?.title ? withoutBrandSuffix(seo.title) : title
     const finalDescription = seo?.description ?? description
 
     return {
@@ -92,6 +125,46 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
+/**
+ * Resolve a TRUNCATED slug to the real one, or return null.
+ *
+ * Search Console reported `/casinos/7` as a 404. There is no casino "7" and
+ * there never was: slugs come from the operator name via spatie/sluggable, and
+ * not one of them is numeric. What does exist is `7-bit-casino` — and cutting
+ * that at its first hyphen gives exactly the URL that was crawled. Email
+ * clients, chat apps and some link parsers end a URL at punctuation, so a
+ * hyphenated slug is the one shape that reliably arrives truncated.
+ *
+ * A PREFIX, and only up to the hyphen. `startsWith(fragment + '-')` means the
+ * fragment has to end where a slug segment ends, so `/casinos/7` can reach
+ * `7-bit-casino` but `/casinos/bit` cannot reach `bitstarz` — that would be
+ * guessing at a substring rather than restoring a cut.
+ *
+ * EXACTLY ONE MATCH, or nothing. With `7-bit-casino` and a hypothetical
+ * `7-bit-casino-vip` both present, `/casinos/7` is genuinely ambiguous and a
+ * redirect would be picking one on the visitor's behalf. Ambiguity falls
+ * through to the 404, which is the honest answer.
+ *
+ * Costs nothing on the happy path: it is only reached when `getCasino()` has
+ * already failed, and `getCasinos()` is the same cached, `casinos`-tagged fetch
+ * the listing and the sitemap use.
+ */
+async function resolveTruncatedSlug(fragment: string): Promise<string | null> {
+  // A fragment that already contains a hyphen is not a cut at a segment
+  // boundary — it is just a wrong slug. Bail before spending the fetch.
+  if (fragment === '' || fragment.includes('-')) return null
+
+  try {
+    const { data: casinos } = await getCasinos()
+    const matches = casinos.filter((c) => c.slug.startsWith(`${fragment}-`))
+
+    return matches.length === 1 ? matches[0].slug : null
+  } catch {
+    // The list being unreachable must not turn a 404 into a 500.
+    return null
+  }
+}
+
 export default async function CasinoDetailPage({ params }: Props) {
   const { slug } = await params
 
@@ -99,6 +172,17 @@ export default async function CasinoDetailPage({ params }: Props) {
   try {
     casino = (await getCasino(slug)).data
   } catch {
+    /*
+     * Before 404ing, try the one recoverable case: a slug truncated at a
+     * hyphen. `permanentRedirect` is a 308, not a 301 — the App Router cannot
+     * set an arbitrary status from a page, and 308 is the permanent redirect
+     * that preserves the method. Google treats the two identically for
+     * canonicalisation, so the signal is the same one a 301 would send.
+     */
+    const real = await resolveTruncatedSlug(slug)
+
+    if (real !== null) permanentRedirect(`/casinos/${real}`)
+
     notFound()
   }
 

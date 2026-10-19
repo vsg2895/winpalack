@@ -20,6 +20,21 @@ export interface ResolvedSeo {
   /** Absolute URL, or null when the page is its own canonical. */
   canonical_url: string | null
   noindex: boolean
+  /**
+   * WHERE `description` came from — a per-record override, or the site pattern.
+   *
+   * Both arrive as a finished string, so without this the front end cannot tell
+   * them apart, and that difference matters. A pattern is a sentence with
+   * `{{name}}` substituted into it, so it is near-identical on every record of
+   * that type: the special-offer pattern produced "Wagering, minimum deposit
+   * and withdrawal caps for <title>, written out before you claim." on all 29
+   * offers. An override is something a person typed for that one record.
+   *
+   * So a page can prefer its own written prose over a PATTERN while still
+   * yielding to a genuine override. Absent (undefined) on resources that do not
+   * publish it.
+   */
+  description_from_record?: boolean
 }
 
 /** One entity's patterns for one site. Tokens: {{name}}, {{site_name}}, {{year}}, {{month}}. */

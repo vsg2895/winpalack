@@ -158,19 +158,19 @@ export default async function HomePage({ searchParams }: Props) {
   const rankOffset = (casinoPage - 1) * casinoPerPage
 
   /**
-   * Base URL for the paginator, carrying the current category and country.
+   * Base URL for the paginator, carrying the country filter.
    *
-   * Without them, paging would silently reset the visitor's filters — the
-   * chips would still read "Free Spins" while the list showed Most Popular.
-   * Pagination appends its own `page`, and picks the right separator.
+   * NO `category`. The home page is no longer a per-category view: the chips
+   * navigate to /categories/<slug>, and `/?category=<slug>` is 301'd there at
+   * the edge, so a paginator that re-added the parameter would link straight
+   * into a redirect. Country stays, because paging must not silently reset the
+   * visitor's filter — the nav would still read "Germany" while the list showed
+   * everything.
+   *
+   * `Pagination` appends its own `page` through `pageHref`, which also decides
+   * the separator and omits the parameter entirely for page 1.
    */
-  const casinosBasePath = (() => {
-    const qs = new URLSearchParams()
-    if (selected) qs.set('category', selected)
-    if (country) qs.set('country', country)
-    const query = qs.toString()
-    return query ? `/?${query}` : '/'
-  })()
+  const casinosBasePath = country ? `/?country=${encodeURIComponent(country)}` : '/'
   // Offers are already scoped to the selected category and capped by the backend (?category=&limit=).
   const topOffers: SpecialOffer[] = offersRes.status === 'fulfilled' ? offersRes.value.data : []
   const bonusSections: BonusSection[] = bonusRes.status === 'fulfilled' ? bonusRes.value : []
@@ -423,7 +423,7 @@ export default async function HomePage({ searchParams }: Props) {
 
             {categories.length > 0 && selected && (
               <div className="mb-8">
-                <CategoryNav categories={categories} selected={selected} basePath="/" country={country} />
+                <CategoryNav categories={categories} selected={selected} country={country} />
               </div>
             )}
 
