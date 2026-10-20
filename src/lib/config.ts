@@ -22,6 +22,8 @@ const SITE_DOMAINS: Record<string, string> = {
   crogambline: 'https://crogambline.com',
   partnerplaypro: 'https://partnerplaypro.com',
   luckysevenhub: 'https://luckysevenhub.com',
+  betpulsehq: 'https://betpulsehq.com',
+  sevenstarslots: 'https://sevenstarslots.com',
 }
 // Ports each site's dev server actually runs on. Kept in step with the
 // revalidation URLs registered against each site in the admin — if these drift,
@@ -35,6 +37,8 @@ const SITE_DEV_PORTS: Record<string, string> = {
   crogambline: '3006',
   partnerplaypro: '3007',
   luckysevenhub: '3008',
+  betpulsehq: '3009',
+  sevenstarslots: '3010',
 }
 
 export const API_URL: string = process.env.API_URL ?? `${API_ORIGIN}/api/v1/public`

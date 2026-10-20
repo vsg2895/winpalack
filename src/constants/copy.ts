@@ -39,6 +39,8 @@ export const COPY = {
     bonus: 'Bonuses',
     // First entry in the Bonus dropdown — the parent's own destination.
     allOffers: 'All Offers',
+    // First entry in the Casinos dropdown — the parent's own destination.
+    allCasinos: 'All Casinos',
     categories: 'Categories',
     countries: 'Countries',
     // Renamed from "Forum". This page is a combined feed of player-written

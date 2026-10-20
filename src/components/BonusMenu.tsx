@@ -34,6 +34,18 @@ export default function BonusMenu({
   href,
   allLabel,
   items,
+  /**
+   * Where each item in the list points, minus the slug.
+   *
+   * The dropdown itself has nothing to do with bonuses — it is a parent link
+   * plus an ordered list of children — so the one thing that WAS bonus-specific
+   * is a prop. `/casinos` now uses the same component for its casino
+   * categories, and the two menus cannot drift apart in behaviour, keyboard
+   * handling or styling because there is only one of them.
+   *
+   * Defaulted, so the bonus call sites did not have to change.
+   */
+  itemBasePath = '/bonuses',
 }: {
   label: string
   /** Where the parent itself goes — the full offers listing. */
@@ -42,6 +54,7 @@ export default function BonusMenu({
    *  which produced "All bonus" — grammatical only by accident. */
   allLabel: string
   items: BonusMenuItem[]
+  itemBasePath?: string
 }) {
   const [open, setOpen] = useState(false)
   // Separate from `open` so the panel can animate IN: it mounts at rest, then a
@@ -145,7 +158,7 @@ export default function BonusMenu({
             {items.map((item) => (
               <li key={item.slug}>
                 <Link
-                  href={`/bonuses/${item.slug}`}
+                  href={`${itemBasePath}/${item.slug}`}
                   className="flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3.5 py-2.5 text-sm font-semibold text-slate-600 transition-colors duration-150 hover:bg-emerald-50 hover:text-emerald-700"
                 >
                   {/* A quiet marker that takes its colour from the TEXT via

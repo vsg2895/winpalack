@@ -34,12 +34,25 @@ export default function FooterBonusMenu({
   href,
   allLabel,
   items,
+  /**
+   * Where each item in the list points, minus the slug.
+   *
+   * The dropdown itself has nothing to do with bonuses — it is a parent link
+   * plus an ordered list of children — so the one thing that WAS bonus-specific
+   * is a prop. `/casinos` now uses the same component for its casino
+   * categories, and the two menus cannot drift apart in behaviour, keyboard
+   * handling or styling because there is only one of them.
+   *
+   * Defaulted, so the bonus call sites did not have to change.
+   */
+  itemBasePath = '/bonuses',
 }: {
   label: string
   /** The parent's own destination — the full offers listing. */
   href: string
   allLabel: string
   items: FooterBonusMenuItem[]
+  itemBasePath?: string
 }) {
   const [open, setOpen] = useState(false)
   const pathname = usePathname()
@@ -110,7 +123,7 @@ export default function FooterBonusMenu({
           {items.map((item) => (
             <li key={item.slug}>
               <Link
-                href={`/bonuses/${item.slug}`}
+                href={`${itemBasePath}/${item.slug}`}
                 className="inline-flex items-center gap-2 py-3 -my-3 text-sm font-semibold text-slate-500 transition-colors hover:text-emerald-700 lg:text-base"
               >
                 {/* bg-current so the dot follows the label's colour on hover

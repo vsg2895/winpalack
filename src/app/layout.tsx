@@ -18,7 +18,7 @@ import Logo from '@/components/Logo'
 import SearchOverlay from '@/components/SearchOverlay'
 import MobileNav from '@/components/MobileNav'
 import HeaderAccount from '@/components/forum/HeaderAccount'
-import { getSocialLinks, hasSpecialOffers, getSiteFeatures, getNavigation, getArticles, getNews, getBonusArea } from '@/lib/api'
+import { getSocialLinks, hasSpecialOffers, getSiteFeatures, getNavigation, getArticles, getNews, getBonusArea, getCategories } from '@/lib/api'
 import { buildOrganizationSchema, buildWebSiteSchema, jsonLdScript } from '@/lib/seo'
 import { NEWSLETTER_ANCHOR, SITE_URL, SUBSCRIBE_ENABLED } from '@/lib/config'
 import { COPY } from '@/constants/copy'
@@ -185,6 +185,22 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   // rendered. Categories with no visible offer are dropped server-side.
   const bonusSections = bonusEnabled ? await getBonusArea() : []
 
+  /*
+   * Casino categories for the /casinos dropdown.
+   *
+   * ORDERED BY THE ADMIN, not by this file: the public endpoint applies
+   * `Category::scopeOrdered()` — `sort_order` then name — so changing the
+   * `sort_order` of a category reorders the menu with no deploy, exactly the
+   * way the Bonus dropdown already works.
+   *
+   * Never fatal and never empty: a failed fetch yields no items and the entry
+   * falls back to a plain link to /casinos, rather than a dropdown that opens
+   * onto nothing.
+   */
+  const casinoCategories = await getCategories()
+    .then((res) => res.data)
+    .catch(() => [])
+
   // Admin-managed menus, or null when this site has none configured.
   const navigation = await getNavigation()
 
@@ -281,6 +297,19 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                       allLabel={COPY.nav.allOffers}
                       href={href}
                       items={bonusSections.map((section) => ({ slug: section.slug, name: section.name }))}
+                    />
+                  ) : /* The same dropdown for casino categories. Only when
+                        there are any — with none, the entry stays the plain
+                        link it was, because a menu that opens onto nothing is
+                        worse than no menu. */
+                  href === '/casinos' && casinoCategories.length > 0 ? (
+                    <BonusMenu
+                      key={href}
+                      label={label}
+                      allLabel={COPY.nav.allCasinos}
+                      href={href}
+                      itemBasePath="/categories"
+                      items={casinoCategories.map((c) => ({ slug: c.slug, name: c.name }))}
                     />
                   ) : (
                     <li key={href}>
@@ -396,6 +425,15 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                         allLabel={COPY.nav.allOffers}
                         href={href}
                         items={bonusSections.map((section) => ({ slug: section.slug, name: section.name }))}
+                      />
+                    ) : href === '/casinos' && casinoCategories.length > 0 ? (
+                      <FooterBonusMenu
+                        key={href}
+                        label={label}
+                        allLabel={COPY.nav.allCasinos}
+                        href={href}
+                        itemBasePath="/categories"
+                        items={casinoCategories.map((c) => ({ slug: c.slug, name: c.name }))}
                       />
                     ) : (
                       <li key={href}>
