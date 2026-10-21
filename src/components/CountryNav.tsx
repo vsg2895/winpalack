@@ -184,7 +184,12 @@ export default function CountryNav({
             All Countries
           </>
         )}
-        <svg viewBox="0 0 24 24" className={`h-4 w-4 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <svg viewBox="0 0 24 24" // 12px, matching the 12px count badge a category chip carries in the
+          // same trailing slot. At 16px this one piece of chrome made the
+          // trigger measurably wider than the chips it sits above, which is
+          // the only thing that still separated the two once padding, height,
+          // weight and icon had been matched.
+          className={`h-3 w-3 shrink-0 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
           <path d="M6 9l6 6 6-6" />
         </svg>
       </button>

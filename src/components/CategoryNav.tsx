@@ -19,67 +19,23 @@ export default function CategoryNav({
 }) {
   return (
     /*
-     * EQUAL-WIDTH pills, whatever the labels say.
-     *
-     * This was `flex flex-wrap`, which sizes every chip to its own content, so
-     * the row read as five different buttons rather than one set of options —
-     * "Free Spins" came out barely half the width of "Most Popular", and the
-     * eye reads that difference as importance rather than as a word count.
-     *
-     * A grid fixes it at the container level instead of per chip: every track is
-     * `1fr`, so the tracks are equal by definition and no chip has to know what
-     * the others contain.
-     *
-     * 11.5rem is measured, not guessed: the widest chip's contents come to 186px
-     * ("Online Casinos" + icon + count), and this is the largest minimum that
-     * still fits five tracks across the 1024px container the casinos page gives
-     * this nav. Raising it to 12.5rem drops the row to four columns and strands
-     * the fifth chip on a line of its own.
-     *
-     * A longer name than any of today's does NOT break the layout: it wraps
-     * inside its own chip, and because grid items stretch, every chip on that
-     * row grows to match. Nothing overflows and nothing is truncated.
+     * CONTENT-SIZED chips in a wrapping row — the same shape all ten sibling
+     * sites use, and what this one had before.
+      *
+     * It briefly ran on `grid-template-columns: repeat(auto-fit, minmax(11.5rem,
+     * 1fr))` so every chip filled an equal track. The intent was that unequal
+     * widths read as unequal importance; the cost was that every chip became as
+     * wide as the widest one could need, so "Most Popular" rendered at ~235px
+     * for a 12-character label and the row read as a stack of slabs rather than
+     * a set of filters.
+      *
+     * The grid also existed to stop one wrapping label ("Online Casinos") making
+     * its row taller than the rest. `whitespace-nowrap` on the chip settles that
+     * at the source: a label that cannot wrap cannot pull a row out of line, so
+     * every chip sits at the same 44px floor without the container equalising
+     * anything — and 44px is what the country filter above matches.
      */
-    <nav
-      aria-label="Casino categories"
-      className=""
-      /*
-       * The whole layout is an INLINE STYLE, not Tailwind classes.
-       *
-       * It was `grid-cols-[repeat(auto-fit,minmax(11.5rem,1fr))]`, and when that
-       * arbitrary utility is not generated the element is left as a bare `grid`
-       * — which means ONE column, and the chips stack full-width down the page.
-       * The failure is silent and total, and it is the same shape as the
-       * honeypot bug: a class that has to survive a build step is a class that
-       * can be missing at runtime. An inline style ships in the HTML and cannot.
-       *
-       * repeat(auto-fit, …) keeps the count out of the code: five categories or
-       * nine, the row divides itself into equal 1fr tracks and wraps only when a
-       * track would fall under the minimum.
-       */
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(11.5rem, 1fr))',
-        // 0.625rem is Tailwind's gap-2.5, inlined with the rest so the layout
-        // has ONE source rather than half a rule here and half in a stylesheet.
-        gap: '0.625rem',
-        /*
-         * EVERY ROW THE SAME HEIGHT.
-         *
-         * Grid already stretches items within a row, so a chip whose label
-         * wraps — "Online Casinos" is the one that does — pulled only its own
-         * row taller and left the rows above and below it short. At 412px that
-         * read as two 62px chips sitting above three 44px ones, which looks
-         * like a rendering fault rather than a layout.
-         *
-         * `1fr` on the implicit rows sizes them all to the tallest, so the
-         * whole set matches at every width whatever any label does. It is the
-         * wrap-proof version of the fix: tightening the padding or forbidding
-         * the wrap would hold only until the next long category name.
-         */
-        gridAutoRows: '1fr',
-      }}
-    >
+    <nav aria-label="Casino categories" className="flex flex-wrap gap-2.5">
       {categories.map((c) => {
         const active = c.slug === selected
         return (
@@ -120,7 +76,7 @@ export default function CategoryNav({
             // the edge of the selected chip. Sizing it to the border box leaves nothing
             // to repeat. This chip is the only bordered button on the site, which is
             // why no other gradient here shows the same line.
-            className={`flex min-h-11 items-center justify-center rounded-full px-5 py-2.5 text-center text-sm font-bold transition-all ${
+            className={`inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-full px-5 py-2.5 text-center text-sm font-bold transition-all ${
               active
                 ? 'border border-transparent bg-origin-border bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-lg shadow-emerald-500/30'
                 : 'border border-slate-200 bg-white/70 text-slate-600 backdrop-blur hover:border-emerald-300 hover:text-emerald-700'
