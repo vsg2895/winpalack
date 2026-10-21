@@ -128,12 +128,12 @@ export default function CountryNav({
   const Flag = ({ src, name }: { src: string | null; name: string }) => {
     const url = resolveImageUrl(src)
     if (!url) {
-      return <span className="h-5 w-5 shrink-0 rounded-full bg-slate-100" aria-hidden />
+      return <span className="h-[18px] w-[18px] shrink-0 rounded-full bg-slate-100" aria-hidden />
     }
     // A plain <img>: these are SVGs, which next/image will not optimise without
     // `dangerouslyAllowSVG`, and a flag gains nothing from resizing. alt=""
     // because the country name sits right beside it.
-    return <img src={url} alt="" width={20} height={20} className="h-5 w-5 shrink-0 rounded-full" aria-hidden />
+    return <img src={url} alt="" width={20} height={20} className="h-[18px] w-[18px] shrink-0 rounded-full" aria-hidden />
   }
 
   // The "all countries" counterpart to a flag.
@@ -148,7 +148,7 @@ export default function CountryNav({
   // a flag inside this control and the trigger must not resize when it does.
   const GlobeMark = () => (
     <span
-      className="grid h-5 w-5 shrink-0 place-items-center rounded-[6px] bg-gradient-to-br from-emerald-600 to-teal-500"
+      className="grid h-[18px] w-[18px] shrink-0 place-items-center rounded-[6px] bg-gradient-to-br from-emerald-600 to-teal-500"
       aria-hidden
     >
       <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-white" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -170,13 +170,13 @@ export default function CountryNav({
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label={`Filter casinos by ${label.toLowerCase()}`}
-        className="inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-700 backdrop-blur transition-colors hover:border-emerald-300 hover:text-emerald-700"
+        className="inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-5 py-2.5 text-sm font-bold text-slate-700 backdrop-blur transition-colors hover:border-emerald-300 hover:text-emerald-700"
       >
         {current ? (
           <>
             <Flag src={current.image_path} name={current.name} />
             {current.name}
-            <span className="text-xs font-medium text-slate-400">{current.casinos_count}</span>
+            <span className="text-xs font-bold text-slate-400">{current.casinos_count}</span>
           </>
         ) : (
           <>

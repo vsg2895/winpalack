@@ -58,7 +58,19 @@ export default function BonusCategoryNav({ sections }: { sections: BonusSection[
   if (types.length === 0) return null
 
   return (
-    <nav aria-label={COPY.home.bonusTypesLabel}>
+    /*
+     * `aria-labelledby`, not `aria-label`.
+     *
+     * The heading below is now the visible name of this block, so the
+     * landmark points AT it rather than carrying a second, invisible name
+     * of its own. Two names for one region is how they drift apart — a
+     * screen reader would announce one thing and the page would show
+     * another.
+     */
+    <nav aria-labelledby="bonus-types-heading">
+      <h2 id="bonus-types-heading" className="font-display text-3xl font-semibold text-slate-900 sm:text-4xl mb-5">
+        {COPY.home.bonusTypesTitle}
+      </h2>
       {/*
        * Wraps rather than scrolls sideways.
        *
