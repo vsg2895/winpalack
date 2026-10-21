@@ -294,11 +294,25 @@ export interface ForumMemberRow {
   email: string
   role: ForumMemberRole
   status: ForumMemberStatus
+  /** Whether they confirmed at all — drives the "unconfirmed" tag. */
   verified: boolean
+  /**
+   * WHEN they confirmed their address, or null.
+   *
+   * Distinct from `last_seen_at`: clicking a link in a confirmation email is
+   * not a session, so a member can be verified and still have never been
+   * "seen". Those two being different is the normal state right after signup,
+   * not a fault.
+   */
+  email_verified_at: string | null
   posts_count: number
   approved_posts_count: number
   banned_until: string | null
   ban_reason: string | null
+  /**
+   * Last activity on the SITE — written by sign-in and by the authenticated
+   * heartbeat, never by registration or by confirming an address.
+   */
   last_seen_at: string | null
   created_at: string | null
   site: { id: number; name: string } | null
