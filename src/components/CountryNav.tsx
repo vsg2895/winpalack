@@ -160,7 +160,20 @@ export default function CountryNav({
   )
 
   return (
-    <div ref={wrapper} className="relative inline-block text-left">
+    /*
+     * `block` on a phone, `inline-block` from 640px.
+     *
+     * The button inside carries `w-full` so it matches the category chips,
+     * which are one full-width column at that size — but `w-full` resolves
+     * against THIS wrapper, and an `inline-block` parent shrinks to its own
+     * content, so the button kept rendering at its content width (177px
+     * measured, against 358px chips). The wrapper has to be a block for the
+     * button to have a width to fill.
+     *
+     * A plain block comment, not `{/* … *\/}`: a JSX expression container
+     * cannot sit where the returned element goes.
+     */
+    <div ref={wrapper} className="relative block text-left sm:inline-block">
       {/* No visible "COUNTRY" caption: the trigger already reads "All Countries"
           or the chosen country's name, so the word was labelling something that
           said its own name. `label` lives on now only as the accessible name. */}
@@ -170,7 +183,12 @@ export default function CountryNav({
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label={`Filter casinos by ${label.toLowerCase()}`}
-        className="inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-5 py-2.5 text-sm font-bold text-slate-700 backdrop-blur transition-colors hover:border-emerald-300 hover:text-emerald-700"
+        /* Full width on a phone, so this sits at exactly the size of the
+           category chips below it — they are one column there, and a
+           filter row whose first control is a different width reads as
+           a different kind of control. Content-sized again from 640px,
+           where the chips go back to a wrapping row. */
+        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-slate-200 bg-white/80 px-5 py-2.5 text-sm font-bold text-slate-700 backdrop-blur transition-colors hover:border-emerald-300 hover:text-emerald-700 sm:inline-flex sm:w-auto sm:justify-start"
       >
         {current ? (
           <>
