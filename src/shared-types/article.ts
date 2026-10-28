@@ -57,6 +57,12 @@ export interface Article {
   meta_description: string | null
   canonical_url: string | null
   noindex: boolean
+  /**
+   * ADMIN LISTING ONLY. True while a scraped draft has not been through
+   * `news:rewrite`: its title and excerpt are still the source's wording, so
+   * it must not be published as it stands. Absent from every other response.
+   */
+  awaiting_rewrite?: boolean
   updated_at: string | null
 }
 

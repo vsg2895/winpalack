@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import { resolveImageUrl } from '@/lib/images'
+import { COPY } from '@/constants/copy'
+import MobileCollapse from '@/components/MobileCollapse'
 import type { Category } from '@shared/types/category'
 
 /**
@@ -48,12 +50,14 @@ export default function CategoryNav({
      * half-width track at 390px is ~166px, so `whitespace-nowrap` would push the
      * label out of its own chip. One full-width column is the honest answer —
      * every chip identical, nothing clipped, and it matches the bonus-type
-     * block directly above it, which is already a single column at this width.
+     * block on the home page, which is already a single column at this width.
      *
      * `sm:` restores the content-sized row exactly as it was from 640px up, so
      * the desktop treatment that was asked for is untouched.
      */
-    <nav aria-label="Casino categories" className="grid grid-cols-1 gap-2.5 sm:flex sm:flex-wrap">
+    /* On a phone the one-column stack can be folded away — see MobileCollapse. */
+    <MobileCollapse label={COPY.collapse.casinoCategories} count={categories.length}>
+    <nav aria-label="Casino categories" className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:gap-2.5">
       {categories.map((c) => {
         const active = c.slug === selected
         return (
@@ -136,5 +140,6 @@ export default function CategoryNav({
         )
       })}
     </nav>
+    </MobileCollapse>
   )
 }

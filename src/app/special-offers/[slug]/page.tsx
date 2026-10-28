@@ -159,14 +159,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
        * so an old link does not 404, and `follow: false` keeps it from passing
        * anything onward.
        *
-       * `is_indexable` is the editorial one, computed on the server from this
-       * offer alone (SpecialOffer::isIndexable): at least ~80 words of
-       * description OR filled bonus terms, and no explicit admin noindex. It
-       * exists because the median offer description was 33 words and Search
-       * Console reported those pages as "Crawled — currently not indexed" —
-       * Google's verdict was right, and asking it again on every crawl spends
-       * budget the finished offers need. `follow` stays true: the casino and
-       * category links on a thin page are still worth following.
+       * `is_indexable` is the editorial one (SpecialOffer::isIndexable): true
+       * unless an admin set noindex on this offer. Every other offer page is
+       * indexed. `follow` stays true on a noindexed one: its casino and
+       * category links are still worth following.
        *
        * The same flag filters the sitemap, so the two can never disagree.
        */

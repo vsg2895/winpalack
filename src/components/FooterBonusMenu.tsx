@@ -3,10 +3,13 @@
 import { useEffect, useId, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import MenuItemIcon from '@/components/MenuItemIcon'
 
 export interface FooterBonusMenuItem {
   slug: string
   name: string
+  /** The category's icon, already resolved to a full URL. Null falls back to a dot. */
+  icon?: string | null
 }
 
 /**
@@ -126,9 +129,9 @@ export default function FooterBonusMenu({
                 href={`${itemBasePath}/${item.slug}`}
                 className="inline-flex items-center gap-2 py-3 -my-3 text-sm font-semibold text-slate-500 transition-colors hover:text-emerald-700 lg:text-base"
               >
-                {/* bg-current so the dot follows the label's colour on hover
-                    without a second class that has to exist. */}
-                <span aria-hidden className="h-1 w-1 shrink-0 rounded-full bg-current opacity-50" />
+                {/* The category's icon, as on the category chips; the smaller
+                    footer dot when there is none. */}
+                <MenuItemIcon icon={item.icon} dotClassName="h-1 w-1 opacity-50" />
                 {item.name}
               </Link>
             </li>

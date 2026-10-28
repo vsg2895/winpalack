@@ -40,7 +40,7 @@ function deleteCookie(name: string): void {
  * Compact welcome modal that opens shortly after a page loads, inviting the
  * visitor to subscribe. Winpalack uses double opt-in, so it makes the verify
  * step explicit and reminds visitors to check their spam folder. Submits through
- * the same server route as the footer form (keeps API_SITE_KEY server-side).
+ * the same server route as the newsletter band (keeps API_SITE_KEY server-side).
  *
  * Open cadence is browser-based (see cookie constants above): once, then not for
  * 2 hours, and never again if the visitor says they already subscribed.

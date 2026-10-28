@@ -3,10 +3,13 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import MenuItemIcon from '@/components/MenuItemIcon'
 
 export interface BonusMenuItem {
   slug: string
   name: string
+  /** The category's icon, already resolved to a full URL. Null falls back to a dot. */
+  icon?: string | null
 }
 
 /**
@@ -101,8 +104,8 @@ export default function BonusMenu({
         aria-expanded={open}
         aria-haspopup="true"
         onClick={() => setOpen((v) => !v)}
-        className={`group relative flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-2 text-[15px] font-semibold tracking-tight transition-colors duration-200 xl:px-4 xl:text-base ${
-          open ? 'bg-emerald-50 text-emerald-700' : 'text-slate-700 hover:bg-emerald-50 hover:text-emerald-700'
+        className={`group relative flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-2 text-[15px] font-medium tracking-tight transition-colors duration-200 xl:px-4 xl:text-[17px] ${
+          open ? 'text-emerald-700' : 'text-slate-800 hover:text-emerald-700'
         }`}
       >
         {label}
@@ -161,16 +164,9 @@ export default function BonusMenu({
                   href={`${itemBasePath}/${item.slug}`}
                   className="flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3.5 py-2.5 text-sm font-semibold text-slate-600 transition-colors duration-150 hover:bg-emerald-50 hover:text-emerald-700"
                 >
-                  {/* A quiet marker that takes its colour from the TEXT via
-                      bg-current, so it turns emerald with the label on hover
-                      without any variant at all.
-
-                      It was `group-hover/item:bg-emerald-500`, and that named
-                      group variant generated no CSS rule — verified by walking
-                      the stylesheet and finding zero matching selectors, so the
-                      dot never changed. Inheriting currentColor cannot fail the
-                      same way: there is no second class that has to exist. */}
-                  <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-40" />
+                  {/* The category's icon, as on the category chips. Without one
+                      it is the quiet bg-current dot this menu always had. */}
+                  <MenuItemIcon icon={item.icon} />
                   {item.name}
                 </Link>
               </li>

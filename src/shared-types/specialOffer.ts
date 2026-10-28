@@ -48,17 +48,9 @@ export interface SpecialOffer {
   /** Server-resolved SEO. Offers have no meta columns, so title comes from the site pattern. */
   seo?: ResolvedSeo
   /**
-   * Whether this offer's page is worth putting in front of Google.
-   *
-   * Computed on the server from the offer itself: at least ~80 words of
-   * `description`, OR filled bonus terms (wagering requirement, minimum
-   * deposit, withdrawal cap), AND no explicit admin `noindex`. A coupon code
-   * alone does not qualify.
-   *
-   * The median description across the live offers was 33 words and Search
-   * Console reported those pages as "Crawled — currently not indexed". This is
-   * what keeps them out of the sitemap and tags them `noindex, follow` until
-   * someone writes them up, so crawl budget goes to the finished ones.
+   * Whether this offer's page may be indexed: true unless an admin set
+   * `noindex` on the offer (SpecialOffer::isIndexable). The page's robots tag
+   * and the sitemap both read it, so they cannot disagree.
    *
    * NOT the same as `active`: an inactive offer is hidden for a different
    * reason and its page serves the stricter `index: false, follow: false`.

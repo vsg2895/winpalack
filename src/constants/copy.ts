@@ -57,18 +57,23 @@ export const COPY = {
     heroHighlight: 'plays fair',
     heroSubtitle:
       'Licence, withdrawal limits and safer-play tools are verified before a casino earns a place on this list.',
-    // The three checks the sentence above names, as a row under the buttons.
+    // The three checks the sentence above names, as chips in the hero card.
     // Wording only — no counts, no scores: these are what the review covers,
     // not a measurement anybody took.
-    // The hero's third control: a jump to the footer's sign-up form, not a
-    // page of its own. "Subscribe" rather than "Newsletter" — the word names
-    // the action the button performs, which is what the reader is deciding.
-    heroSubscribe: 'Subscribe',
     heroChecks: ['Licence verified', 'Withdrawal limits listed', 'Safer-play tools checked'],
+    // The check card beside the headline. It states the LISTING RULE — every
+    // casino here passed all three checks — so "3/3" is a property of the
+    // list, not a score measured for any one casino.
+    heroCard: {
+      title: 'Checked before it’s listed',
+      // Read before the "3/3" badge, which on its own says nothing aloud.
+      badgeLabel: 'Checks passed:',
+    },
     topCasinosTitle: 'Verified Casinos',
     topCasinosSubtitle: 'Each one cleared our licensing and payout checks. Filter them by category.',
-    featuredCasinos: 'See Verified Casinos',
-    specialOffers: 'Offers With Fair Terms',
+    featuredCasinos: 'Verified Casinos',
+    // The hero's secondary button, to /special-offers.
+    heroOffersCta: 'Fair Offers',
     // Heading for the Bonus area — the categories render beneath it.
     bonus: 'Bonuses',
     /**
@@ -76,7 +81,7 @@ export const COPY = {
      *
      * The row used to carry no heading at all — the chips were taken to
      * speak for themselves. They do not: arriving mid-page at a band of
-     * unlabelled buttons between the hero and the casino list, there is
+     * unlabelled buttons under the casino list, there is
      * nothing saying what the set IS, and nothing a screen reader can
      * announce for the landmark beyond a generic label nobody wrote for
      * this page.
@@ -396,7 +401,7 @@ export const COPY = {
       `${avg.toFixed(1)} out of 5 from ${total} ${total === 1 ? 'review' : 'reviews'}`,
   },
   newsletter: {
-    title: 'Stay On The Safe Side',
+    title: 'Stay on the safe side',
     subtitle: 'Occasional updates on verified casinos and offers with terms worth reading.',
     placeholder: 'Your email address',
     button: 'Subscribe',
@@ -439,6 +444,11 @@ export const COPY = {
     postalAddress: '25 Regent Street, London SW1Y 4PH, United Kingdom',
     disclaimer:
       'Gambling should stay entertainment, never a way to make money. Strictly 18+. Set a limit before you play and walk away when you reach it.',
+  },
+  // Labels on the phone-only hide / show toggle above each chip list.
+  collapse: {
+    casinoCategories: 'Casino categories',
+    bonusTypes: 'Bonus types',
   },
   errors: {
     notFound: 'That page does not exist.',

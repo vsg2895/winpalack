@@ -32,21 +32,21 @@ export default async function CategoriesPage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(webPage) }} />
-      <main className="py-12 px-4 sm:px-6 lg:px-8">
+      <main className="py-6 px-4 sm:px-6 sm:py-12 lg:px-8">
       {/* Same 90rem measure as the other listings; the tiles stay four
           across on desktop, so each one is simply bigger. */}
       <div className="mx-auto max-w-[90rem]">
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold text-zinc-900">{COPY.categories.pageTitle}</h1>
-          <p className="mt-2 text-zinc-500">{COPY.categories.pageDescription}</p>
+        <header className="mb-4 sm:mb-8">
+          <h1 className="text-2xl font-bold sm:text-3xl text-zinc-900">{COPY.categories.pageTitle}</h1>
+          <p className="mt-1 text-sm text-zinc-500 sm:mt-2 sm:text-base">{COPY.categories.pageDescription}</p>
         </header>
         {categories.length === 0 ? (
           <p className="text-zinc-500">{COPY.categories.noResults}</p>
         ) : (
-          <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 lg:gap-6">
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-6">
             {categories.map((c) => (
               <li key={c.id}>
-                <Link href={`/categories/${c.slug}`} className="block rounded-2xl border border-zinc-100 bg-white p-6 text-center font-bold text-zinc-800 shadow-sm lg:p-9 lg:text-lg hover:border-emerald-300 hover:text-emerald-600 transition-colors">
+                <Link href={`/categories/${c.slug}`} className="block rounded-2xl border border-zinc-100 bg-white p-4 sm:p-6 text-center font-bold text-zinc-800 shadow-sm lg:p-9 lg:text-lg hover:border-emerald-300 hover:text-emerald-600 transition-colors">
                   {/* Stacked, not inline: these cards are centred and one
                       word wide, so a logo beside the label would push long
                       names onto a second line. */}

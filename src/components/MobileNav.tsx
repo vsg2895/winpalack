@@ -4,6 +4,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { createPortal } from 'react-dom'
+import MenuItemIcon from '@/components/MenuItemIcon'
 
 /**
  * The header menu on small screens.
@@ -25,33 +26,40 @@ import { createPortal } from 'react-dom'
 
 export type MobileNavLink = { href: string; label: string; external?: boolean }
 
+type MobileNavItem = { slug: string; name: string; icon?: string | null }
+
 export default function MobileNav({
   links,
   bonusSections = [],
   bonusEnabled = false,
   bonusLabel = 'Bonuses',
   bonusAllLabel = 'All Offers',
+  casinoCategories = [],
+  casinosAllLabel = 'All Casinos',
 }: {
   links: MobileNavLink[]
   /** Categories under Bonus, already filtered server-side to those holding at
    *  least one visible offer. Empty means the whole entry is dropped. */
-  bonusSections?: { slug: string; name: string }[]
+  bonusSections?: MobileNavItem[]
   /** Whether this site publishes the Bonus area at all. With it off the menu
    *  keeps whatever link the editor authored instead. */
   bonusEnabled?: boolean
   bonusLabel?: string
   /** The parent's own destination, shown as the first row inside the group. */
   bonusAllLabel?: string
+  /** Casino categories under Casinos, ordered by the admin. Empty leaves
+   *  Casinos the plain link it was — as the desktop dropdown does. */
+  casinoCategories?: MobileNavItem[]
+  casinosAllLabel?: string
 }) {
   const [open, setOpen] = useState(false)
-  // The Bonus group, collapsed until asked for — the same disclosure the footer
-  // uses, so the two menus behave identically on a phone. It used to render
-  // expanded, which pushed Categories, Countries, Forum, News and Guides below
-  // the fold the moment the menu opened.
-  const [bonusOpen, setBonusOpen] = useState(false)
-  // Stable across server and client render; Math.random() here would be a
-  // guaranteed hydration mismatch on aria-controls.
-  const bonusPanelId = `mobile-bonus-${useId()}`
+  // Which group (Casinos or Bonuses, keyed by its href) is expanded, if any.
+  // Collapsed until asked for — the same disclosure the footer uses, so the two
+  // menus behave identically on a phone. A group used to render expanded, which
+  // pushed Categories, Countries, Forum, News and Guides below the fold the
+  // moment the menu opened.
+  const [openGroup, setOpenGroup] = useState<string | null>(null)
+  const toggleGroup = (href: string) => setOpenGroup((current) => (current === href ? null : href))
   const [mounted, setMounted] = useState(false)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
@@ -75,7 +83,7 @@ export default function MobileNav({
   // Reopening the menu starts from the top: a group left expanded from last
   // time hides the links below it before the reader has asked for anything.
   useEffect(() => {
-    if (!open) setBonusOpen(false)
+    if (!open) setOpenGroup(null)
   }, [open])
 
   // Escape, outside click, and a body scroll lock — all bound only while open,
@@ -152,58 +160,31 @@ export default function MobileNav({
                          unbidden pushed every remaining link off the screen. */
                       href === '/special-offers' && bonusEnabled ? (
                         bonusSections.length === 0 ? null : (
-                        <li key={href}>
-                          <button
-                            type="button"
-                            aria-expanded={bonusOpen}
-                            aria-controls={bonusPanelId}
-                            onClick={() => setBonusOpen((v) => !v)}
-                            className={`flex min-h-12 w-full items-center justify-between gap-2 rounded-xl px-4 text-[17px] font-semibold tracking-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 ${
-                              bonusOpen ? 'bg-emerald-50 text-emerald-700' : 'text-slate-700 hover:bg-emerald-50 hover:text-emerald-700'
-                            }`}
-                          >
-                            {bonusLabel}
-                            <svg
-                              viewBox="0 0 20 20"
-                              aria-hidden
-                              className={`h-4 w-4 shrink-0 transition-transform duration-200 ${bonusOpen ? 'rotate-180' : ''}`}
-                              fill="none" stroke="currentColor" strokeWidth="2.25"
-                            >
-                              <path d="M6 8l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          </button>
-
-                          {/* Rendered only while open, so a collapsed group keeps
-                              its links out of the tab order and the
-                              accessibility tree. The rule down the left is what
-                              says "these belong to Bonuses" — the same device the
-                              footer uses. */}
-                          {bonusOpen && (
-                            <ul id={bonusPanelId} role="list" className="my-1 ml-4 flex flex-col border-l-2 border-emerald-100 pl-2">
-                              <li>
-                                {/* The parent's own page. A disclosure that
-                                    swallows its parent link loses the "all of
-                                    them" listing entirely — which is what this
-                                    menu was doing. */}
-                                <Link href={href} onClick={close} className="flex min-h-11 items-center rounded-xl px-4 text-[15px] font-bold tracking-tight text-slate-800 transition-colors hover:bg-emerald-50 hover:text-emerald-700 focus-visible:bg-emerald-50 focus-visible:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
-                                  {bonusAllLabel}
-                                </Link>
-                              </li>
-                              {bonusSections.map((section) => (
-                                <li key={section.slug}>
-                                  <Link href={`/bonuses/${section.slug}`} onClick={close} className="flex min-h-11 items-center gap-2.5 rounded-xl px-4 text-[15px] font-semibold tracking-tight text-slate-500 transition-colors hover:bg-emerald-50 hover:text-emerald-700 focus-visible:bg-emerald-50 focus-visible:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
-                                    {/* Takes its colour from the text, so it follows the hover
-                                        state without a group variant — those have repeatedly
-                                        failed to generate on this project. */}
-                                    <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-40" />
-                                    {section.name}
-                                  </Link>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </li>
+                          <MobileNavGroup
+                            key={href}
+                            label={bonusLabel}
+                            href={href}
+                            allLabel={bonusAllLabel}
+                            items={bonusSections}
+                            itemBasePath="/bonuses"
+                            expanded={openGroup === href}
+                            onToggle={() => toggleGroup(href)}
+                            onNavigate={close}
+                          />
                         )
+                      ) : /* Casinos and its categories, the same disclosure. */
+                      href === '/casinos' && casinoCategories.length > 0 ? (
+                        <MobileNavGroup
+                          key={href}
+                          label={label}
+                          href={href}
+                          allLabel={casinosAllLabel}
+                          items={casinoCategories}
+                          itemBasePath="/categories"
+                          expanded={openGroup === href}
+                          onToggle={() => toggleGroup(href)}
+                          onNavigate={close}
+                        />
                       ) : (
                         <li key={href}>
                           {external || href.startsWith('http') ? (
@@ -230,5 +211,84 @@ export default function MobileNav({
             document.body,
           )}
     </>
+  )
+}
+
+/**
+ * One expandable group in the phone menu: the parent as a toggle, then its own
+ * page and its categories. Shared by Casinos and Bonuses so the two cannot
+ * drift apart in markup, behaviour or styling.
+ */
+function MobileNavGroup({
+  label,
+  href,
+  allLabel,
+  items,
+  itemBasePath,
+  expanded,
+  onToggle,
+  onNavigate,
+}: {
+  label: string
+  href: string
+  allLabel: string
+  items: MobileNavItem[]
+  /** Where each item points, minus the slug. */
+  itemBasePath: string
+  expanded: boolean
+  onToggle: () => void
+  onNavigate: () => void
+}) {
+  // Stable across server and client render; Math.random() here would be a
+  // guaranteed hydration mismatch on aria-controls.
+  const panelId = `mobile-group-${useId()}`
+
+  return (
+    <li>
+      <button
+        type="button"
+        aria-expanded={expanded}
+        aria-controls={panelId}
+        onClick={onToggle}
+        className={`flex min-h-12 w-full items-center justify-between gap-2 rounded-xl px-4 text-[17px] font-semibold tracking-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 ${
+          expanded ? 'bg-emerald-50 text-emerald-700' : 'text-slate-700 hover:bg-emerald-50 hover:text-emerald-700'
+        }`}
+      >
+        {label}
+        <svg
+          viewBox="0 0 20 20"
+          aria-hidden
+          className={`h-4 w-4 shrink-0 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
+          fill="none" stroke="currentColor" strokeWidth="2.25"
+        >
+          <path d="M6 8l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {/* Rendered only while open, so a collapsed group keeps its links out of
+          the tab order and the accessibility tree. The rule down the left is
+          what says "these belong to this entry" — the same device the footer
+          uses. */}
+      {expanded && (
+        <ul id={panelId} role="list" className="my-1 ml-4 flex flex-col border-l-2 border-emerald-100 pl-2">
+          <li>
+            {/* The parent's own page. A disclosure that swallows its parent
+                link loses the "all of them" listing entirely. */}
+            <Link href={href} onClick={onNavigate} className="flex min-h-11 items-center rounded-xl px-4 text-[15px] font-bold tracking-tight text-slate-800 transition-colors hover:bg-emerald-50 hover:text-emerald-700 focus-visible:bg-emerald-50 focus-visible:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
+              {allLabel}
+            </Link>
+          </li>
+          {items.map((item) => (
+            <li key={item.slug}>
+              <Link href={`${itemBasePath}/${item.slug}`} onClick={onNavigate} className="flex min-h-11 items-center gap-2.5 rounded-xl px-4 text-[15px] font-semibold tracking-tight text-slate-500 transition-colors hover:bg-emerald-50 hover:text-emerald-700 focus-visible:bg-emerald-50 focus-visible:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
+                {/* Same icon as the header dropdown and the chips. */}
+                <MenuItemIcon icon={item.icon} />
+                {item.name}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </li>
   )
 }

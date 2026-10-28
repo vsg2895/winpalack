@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { resolveImageUrl } from '@/lib/images'
 import { COPY } from '@/constants/copy'
+import MobileCollapse from '@/components/MobileCollapse'
 import { CLAIMABLE_BONUS_CATEGORY } from '@/components/SpecialOfferCard'
 import type { BonusSection } from '@/lib/api'
 
@@ -106,6 +107,8 @@ export default function BonusCategoryNav({ sections }: { sections: BonusSection[
        * a bare `grid` — which means ONE column at every width, silently. An
        * inline style ships in the HTML and cannot go missing.
        */}
+      {/* The heading stays; on a phone the chips under it can be folded away. */}
+      <MobileCollapse label={COPY.collapse.bonusTypes} count={types.length} variant="card">
       <ul
         style={{
           display: 'grid',
@@ -133,7 +136,7 @@ export default function BonusCategoryNav({ sections }: { sections: BonusSection[
             <li key={section.id}>
               <Link
                 href={`/bonuses/${section.slug}`}
-                className="group flex h-full w-full min-h-12 items-center gap-2.5 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-[0_6px_20px_-12px_rgba(15,23,42,0.4)] ring-1 ring-slate-200/80 transition-all hover:-translate-y-0.5 hover:text-emerald-700 hover:ring-emerald-300 hover:shadow-[0_10px_24px_-12px_rgba(16,185,129,0.45)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                className="group flex h-full w-full min-h-12 items-center gap-2.5 rounded-full bg-white px-5 py-2.5 sm:rounded-2xl sm:px-4 text-sm font-bold text-slate-700 shadow-[0_6px_20px_-12px_rgba(15,23,42,0.4)] ring-1 ring-slate-200/80 transition-all hover:-translate-y-0.5 hover:text-emerald-700 hover:ring-emerald-300 hover:shadow-[0_10px_24px_-12px_rgba(16,185,129,0.45)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
               >
                 {icon && (
                   /*
@@ -173,6 +176,7 @@ export default function BonusCategoryNav({ sections }: { sections: BonusSection[
           )
         })}
       </ul>
+      </MobileCollapse>
     </nav>
   )
 }

@@ -178,13 +178,13 @@ export default async function CategoryDetailPage({ params, searchParams }: Props
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(graph) }} />
 
-      <main className="py-12 px-4 sm:px-6 lg:px-8">
+      <main className="py-6 px-4 sm:px-6 sm:py-12 lg:px-8">
         {/* Same 90rem measure and the same card blocks as /casinos. */}
         <div className="mx-auto max-w-[90rem]">
-          <nav className="mb-6 text-sm text-zinc-400">
+          <nav className="mb-3 text-sm sm:mb-6 text-zinc-400">
             <Link href="/" className="inline-block -mx-1 px-1 py-3 -my-3 hover:text-emerald-600">Home</Link> / <Link href="/categories" className="inline-block -mx-1 px-1 py-3 -my-3 hover:text-emerald-600">Categories</Link> / <span className="text-zinc-600">{category.name}</span>
           </nav>
-          <h1 className="text-3xl font-bold text-zinc-900">{category.name} Casinos</h1>
+          <h1 className="text-2xl font-bold sm:text-3xl text-zinc-900">{category.name} Casinos</h1>
 
           {/* The SAME control as the home page and /casinos — one pill-shaped
               dropdown with flags, grouped by continent and searchable — rather
@@ -194,7 +194,7 @@ export default async function CategoryDetailPage({ params, searchParams }: Props
               Rendered only when some country actually has casinos: a filter
               whose every option returns the same list is noise. */}
           {countries.length > 0 && (
-            <div className="mt-6 mb-8">
+            <div className="mt-4 mb-5 sm:mt-6 sm:mb-8">
               <CountryNav continents={continents} selected={country} basePath={`/categories/${slug}`} />
             </div>
           )}
@@ -205,7 +205,7 @@ export default async function CategoryDetailPage({ params, searchParams }: Props
             /* The same blocks as the home page and /casinos: two compact cards
                per row from `md` up, one below it. A category page is the same
                kind of list, so it should not be a different kind of card. */
-            <ol className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-5">
+            <ol className="mt-5 sm:mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-5">
               {casinos.map((casino, i) => <CasinoCard key={casino.id} casino={casino} rank={offset + i + 1} compact />)}
             </ol>
           )}

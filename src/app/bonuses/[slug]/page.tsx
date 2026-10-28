@@ -127,12 +127,12 @@ export default async function BonusCategoryPage({ params, searchParams }: Props)
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(graph) }} />
 
-      <main className="py-12 px-4 sm:px-6 lg:px-8">
+      <main className="py-6 px-4 sm:px-6 sm:py-12 lg:px-8">
         {/* Same 90rem measure and the same compact four-up grid as the home
             page's Bonus strip and /special-offers, so arriving here from either
             one is the same listing with the cap lifted. */}
         <div className="mx-auto max-w-[90rem]">
-          <nav className="mb-6 text-sm text-zinc-400">
+          <nav className="mb-3 text-sm sm:mb-6 text-zinc-400">
             <Link href="/" className="inline-block -mx-1 px-1 py-3 -my-3 hover:text-emerald-600">Home</Link>
             {' / '}
             <Link href="/special-offers" className="inline-block -mx-1 px-1 py-3 -my-3 hover:text-emerald-600">{COPY.nav.specialOffers}</Link>
@@ -140,9 +140,9 @@ export default async function BonusCategoryPage({ params, searchParams }: Props)
             <span className="text-zinc-600">{category.name}</span>
           </nav>
 
-          <header className="mb-8">
-            <h1 className="font-display text-3xl font-semibold text-zinc-900 sm:text-4xl">{category.name}</h1>
-            {category.description && <p className="mt-2 text-zinc-500">{category.description}</p>}
+          <header className="mb-4 sm:mb-8">
+            <h1 className="font-display text-2xl font-semibold text-zinc-900 sm:text-4xl">{category.name}</h1>
+            {category.description && <p className="mt-1 text-sm text-zinc-500 sm:mt-2 sm:text-base">{category.description}</p>}
             {/* The count is the reason a reader can trust the paginator: it says
                 how much is behind these eight cards. */}
             {meta.total > 0 && (
@@ -155,7 +155,7 @@ export default async function BonusCategoryPage({ params, searchParams }: Props)
           {offers.length === 0 ? (
             <p className="text-zinc-500">{COPY.specialOffers.noResults}</p>
           ) : (
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
               {offers.map((offer) => <SpecialOfferCard key={offer.id} offer={offer} compact />)}
             </div>
           )}

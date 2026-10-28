@@ -102,9 +102,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     offersRes.status === 'fulfilled'
       ? offersRes.value.data
           // `is_indexable` and not `seo.noindex`: the server-side rule already
-          // folds the admin flag in, and adds the thin-content test the page's
-          // robots tag uses. One definition, so the sitemap and the header
-          // cannot disagree.
+          // folds the admin flag in, and the page's robots tag reads the same
+          // flag. One definition, so the sitemap and the header cannot disagree.
           .filter((o) => o.active !== false && o.is_indexable !== false)
           .map((o) => ({
             url: `${SITE_URL}/special-offers/${o.slug}`,

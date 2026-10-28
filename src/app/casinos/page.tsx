@@ -108,9 +108,9 @@ export default async function CasinosPage({ searchParams }: Props) {
 
   if (!selected) {
     return (
-      <main className="px-4 py-16 sm:px-6 lg:px-8">
+      <main className="px-4 py-6 sm:px-6 sm:py-16 lg:px-8">
         <div className="mx-auto max-w-[90rem]">
-          <h1 className="font-display text-4xl font-semibold text-slate-900">{COPY.casinos.pageTitle}</h1>
+          <h1 className="font-display text-2xl sm:text-4xl font-semibold text-slate-900">{COPY.casinos.pageTitle}</h1>
           {/* The filter stays reachable on the empty state, or a country that
               leaves no categories would be a dead end with no way back. */}
           {countries.length > 0 && (
@@ -183,11 +183,11 @@ export default async function CasinosPage({ searchParams }: Props) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(graph) }} />
-      <main className="px-4 py-16 sm:px-6 lg:px-8">
+      <main className="px-4 py-6 sm:px-6 sm:py-16 lg:px-8">
         <div className="mx-auto max-w-[90rem]">
-          <header className="mb-8">
-            <h1 className="font-display text-4xl font-semibold text-slate-900">{COPY.casinos.pageTitle}</h1>
-            <p className="mt-2 text-slate-500">{COPY.casinos.pageDescription}</p>
+          <header className="mb-4 sm:mb-8">
+            <h1 className="font-display text-2xl sm:text-4xl font-semibold text-slate-900">{COPY.casinos.pageTitle}</h1>
+            <p className="mt-1 text-sm text-slate-500 sm:mt-2 sm:text-base">{COPY.casinos.pageDescription}</p>
           </header>
 
           {/* Country first, categories nested inside it — the same pair as the
@@ -199,10 +199,10 @@ export default async function CasinosPage({ searchParams }: Props) {
               <CountryNav continents={continents} selected={country} basePath="/casinos" />
             </div>
           )}
-          <div className="mb-8"><CategoryNav categories={cats} selected={selected} country={country} /></div>
+          <div className="mb-5 sm:mb-8"><CategoryNav categories={cats} selected={selected} country={country} /></div>
 
           <div className="mb-4 flex items-baseline justify-between">
-            <h2 className="font-display text-2xl font-semibold text-slate-900">{category.name}</h2>
+            <h2 className="font-display text-xl sm:text-2xl font-semibold text-slate-900">{category.name}</h2>
             <span className="text-sm text-slate-400">{meta.total} casinos</span>
           </div>
 

@@ -41,13 +41,13 @@ export default async function SpecialOffersPage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(webPage) }} />
-      <main className="py-12 px-4 sm:px-6 lg:px-8">
+      <main className="py-6 px-4 sm:px-6 sm:py-12 lg:px-8">
       {/* Same 90rem measure and compact four-up grid as the home page's Bonus
           strip, so the listing is the strip with the caps lifted. */}
       <div className="mx-auto max-w-[90rem]">
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold text-zinc-900">{COPY.specialOffers.pageTitle}</h1>
-          <p className="mt-2 text-zinc-500">{COPY.specialOffers.pageDescription}</p>
+        <header className="mb-4 sm:mb-8">
+          <h1 className="text-2xl font-bold sm:text-3xl text-zinc-900">{COPY.specialOffers.pageTitle}</h1>
+          <p className="mt-1 text-sm text-zinc-500 sm:mt-2 sm:text-base">{COPY.specialOffers.pageDescription}</p>
         </header>
         {offers.length === 0 ? (
           <p className="text-zinc-500">{COPY.specialOffers.noResults}</p>
@@ -55,14 +55,14 @@ export default async function SpecialOffersPage() {
           /* Grouped under each category's own title, matching the home page and
              the Bonus menu. The ids are what the menu's anchors point at, so
              arriving from the dropdown lands on the right heading. */
-          <div className="space-y-12">
+          <div className="space-y-8 sm:space-y-12">
             {grouped.map((section) => (
               <section key={section.id} id={`bonus-${section.slug}`} className="scroll-mt-24">
-                <div className="mb-5">
-                  <h2 className="font-display text-xl font-semibold text-zinc-900">{section.name}</h2>
-                  {section.description && <p className="mt-1 text-zinc-500">{section.description}</p>}
+                <div className="mb-3 sm:mb-5">
+                  <h2 className="font-display text-lg sm:text-xl font-semibold text-zinc-900">{section.name}</h2>
+                  {section.description && <p className="mt-1 text-sm text-zinc-500 sm:text-base">{section.description}</p>}
                 </div>
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
                   {section.offers.map((offer) => <SpecialOfferCard key={offer.id} offer={offer} compact />)}
                 </div>
               </section>
@@ -72,10 +72,10 @@ export default async function SpecialOffersPage() {
                 the fetch above. */}
             {ungrouped.length > 0 && (
               <section id="bonus-other" className="scroll-mt-24">
-                <h2 className="mb-6 font-display text-2xl font-semibold text-zinc-900">
+                <h2 className="mb-4 font-display text-xl sm:mb-6 sm:text-2xl font-semibold text-zinc-900">
                   {COPY.specialOffers.otherOffers}
                 </h2>
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
                   {ungrouped.map((offer) => <SpecialOfferCard key={offer.id} offer={offer} compact />)}
                 </div>
               </section>
@@ -83,7 +83,7 @@ export default async function SpecialOffersPage() {
           </div>
         ) : (
           /* No Bonus area on this site — the flat list it has always been. */
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
             {offers.map((offer) => <SpecialOfferCard key={offer.id} offer={offer} compact />)}
           </div>
         )}

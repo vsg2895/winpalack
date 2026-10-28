@@ -22,6 +22,7 @@ import { getSocialLinks, hasSpecialOffers, getSiteFeatures, getNavigation, getAr
 import { buildOrganizationSchema, buildWebSiteSchema, jsonLdScript } from '@/lib/seo'
 import { NEWSLETTER_ANCHOR, SITE_URL, SUBSCRIBE_ENABLED } from '@/lib/config'
 import { COPY } from '@/constants/copy'
+import { resolveImageUrl } from '@/lib/images'
 import { LEGAL_PAGES } from '@/constants/legalPages'
 import type { SocialLink } from '@shared/types/socialLink'
 import './globals.css'
@@ -201,6 +202,25 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     .then((res) => res.data)
     .catch(() => [])
 
+  /*
+   * Menu children for the header dropdown, the footer disclosure and the phone
+   * menu: one list each, built once, so the three cannot disagree.
+   *
+   * Each carries the same icon its chip shows (a casino category's `logo_path`,
+   * a bonus type's `icon_path`), resolved HERE on the server so the client menu
+   * components never need the storage base URL.
+   */
+  const bonusMenuItems = bonusSections.map((section) => ({
+    slug: section.slug,
+    name: section.name,
+    icon: resolveImageUrl(section.icon_path),
+  }))
+  const categoryMenuItems = casinoCategories.map((c) => ({
+    slug: c.slug,
+    name: c.name,
+    icon: resolveImageUrl(c.logo_path),
+  }))
+
   // Admin-managed menus, or null when this site has none configured.
   const navigation = await getNavigation()
 
@@ -258,20 +278,20 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             __html: jsonLdScript(siteGraph),
           }}
         />
-        <header className="sticky top-0 z-40 border-b border-white/60 bg-white/70 backdrop-blur-xl">
+        <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/90 backdrop-blur-xl">
           {/* Same 90rem measure as the page sections and the footer, and the
               padding sits OUTSIDE the measure so the logo lines up with the
               content edge below it. A touch taller on desktop to match the
               larger type everywhere else. */}
           <div className="px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto flex h-16 max-w-[90rem] items-center justify-between gap-4 lg:h-[4.5rem]">
+          <div className="mx-auto flex h-16 max-w-[90rem] items-center justify-between gap-4 lg:h-20">
             <Logo />
             {/* Desktop only. Seven items plus the logo and the icon cluster
                 need roughly 810px, so below `lg` (1024px) the bar overflowed
                 the viewport on tablets and at 200% zoom and MobileNav takes
                 over there. */}
             <nav aria-label="Main navigation" className="hidden min-w-0 lg:block">
-              <ul className="flex items-center gap-1" role="list">
+              <ul className="flex items-center gap-0.5 xl:gap-1.5" role="list">
                 {headerLinks.map(({ href, label, external }) =>
                   /* Special Offers becomes a CHILD of Bonus, so the Bonus parent takes
                      the slot the editor gave Special Offers — replaced in place rather
@@ -296,7 +316,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                       label={COPY.nav.bonus}
                       allLabel={COPY.nav.allOffers}
                       href={href}
-                      items={bonusSections.map((section) => ({ slug: section.slug, name: section.name }))}
+                      items={bonusMenuItems}
                     />
                   ) : /* The same dropdown for casino categories. Only when
                         there are any — with none, the entry stays the plain
@@ -309,7 +329,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                       allLabel={COPY.nav.allCasinos}
                       href={href}
                       itemBasePath="/categories"
-                      items={casinoCategories.map((c) => ({ slug: c.slug, name: c.name }))}
+                      items={categoryMenuItems}
                     />
                   ) : (
                     <li key={href}>
@@ -317,12 +337,12 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                         <a
                           href={href}
                           {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                          className="group relative flex min-h-11 items-center whitespace-nowrap rounded-full px-3 py-2 text-[15px] font-semibold tracking-tight transition-all duration-200 xl:px-4 xl:text-base after:absolute after:bottom-1 after:left-1/2 after:h-[2px] after:w-0 after:-translate-x-1/2 after:rounded-full after:transition-all after:duration-300 after:content-[''] hover:after:w-1/2 text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 after:bg-emerald-600"
+                          className="group relative flex min-h-11 items-center whitespace-nowrap rounded-full px-3 py-2 text-[15px] font-medium tracking-tight transition-colors duration-200 xl:px-4 xl:text-[17px] after:absolute after:bottom-1 after:left-1/2 after:h-[2px] after:w-0 after:-translate-x-1/2 after:rounded-full after:transition-all after:duration-300 after:content-[''] hover:after:w-1/2 text-slate-800 hover:text-emerald-700 after:bg-emerald-600"
                         >
                           {label}
                         </a>
                       ) : (
-                        <Link href={href} className="group relative flex min-h-11 items-center whitespace-nowrap rounded-full px-3 py-2 text-[15px] font-semibold tracking-tight transition-all duration-200 xl:px-4 xl:text-base after:absolute after:bottom-1 after:left-1/2 after:h-[2px] after:w-0 after:-translate-x-1/2 after:rounded-full after:transition-all after:duration-300 after:content-[''] hover:after:w-1/2 text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 after:bg-emerald-600">
+                        <Link href={href} className="group relative flex min-h-11 items-center whitespace-nowrap rounded-full px-3 py-2 text-[15px] font-medium tracking-tight transition-colors duration-200 xl:px-4 xl:text-[17px] after:absolute after:bottom-1 after:left-1/2 after:h-[2px] after:w-0 after:-translate-x-1/2 after:rounded-full after:transition-all after:duration-300 after:content-[''] hover:after:w-1/2 text-slate-800 hover:text-emerald-700 after:bg-emerald-600">
                           {label}
                         </Link>
                       )}
@@ -350,7 +370,9 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                   admin-managed menu must not diverge between breakpoints. */}
               <MobileNav
                 links={headerLinks}
-                bonusSections={bonusSections.map((section) => ({ slug: section.slug, name: section.name }))}
+                bonusSections={bonusMenuItems}
+                casinoCategories={categoryMenuItems}
+                casinosAllLabel={COPY.nav.allCasinos}
                 bonusLabel={COPY.nav.bonus}
                 bonusAllLabel={COPY.nav.allOffers}
                 bonusEnabled={bonusEnabled}
@@ -360,6 +382,43 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           </div>
         </header>
 
+        {/* Newsletter, directly under the header menu.
+
+            In the page flow, NOT inside the sticky header: it is seen on
+            arrival and scrolls away, rather than permanently taking a strip of
+            every screen from the content.
+
+            DARK, deliberately: a navy strip between the white header and the
+            pale hero is the one band on the page that reads as an action
+            rather than more surface, and it frames the hero below it. The
+            emerald glow sits behind the envelope icon, so the eye starts at
+            the left and reads across to the form. The 90rem measure keeps the
+            icon on the logo's edge above.
+
+            The guard wraps the whole band: with capture switched off there is
+            no empty strip. `scroll-mt` clears the sticky header, so a jump link
+            to #newsletter lands with the heading visible. */}
+        {SUBSCRIBE_ENABLED && (
+          <section
+            id={NEWSLETTER_ANCHOR}
+            aria-label={COPY.newsletter.title}
+            className="relative isolate scroll-mt-24 overflow-hidden bg-slate-900"
+          >
+            <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+              {/* Emerald glow behind the icon, fading out to the right. */}
+              <div className="absolute -left-24 top-1/2 h-64 w-[36rem] -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.30),rgba(13,148,136,0.10)_45%,transparent_70%)] blur-2xl" />
+              {/* A faint lift along the bottom edge, so the band does not end
+                  in a hard dark line against the hero. */}
+              <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-slate-800/60 to-transparent" />
+            </div>
+            <div className="px-4 sm:px-6 lg:px-8">
+              <div className="mx-auto max-w-[90rem] py-3.5 md:py-6">
+                <NewsletterForm variant="band" />
+              </div>
+            </div>
+          </section>
+        )}
+
         <div className="flex-1">{children}</div>
 
         <footer className="mt-auto border-t border-slate-200/70 bg-white/60 backdrop-blur-xl">
@@ -367,20 +426,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               column and the Explore column sit on the content's own edges. */}
           <div className="px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
           <div className="mx-auto max-w-[90rem]">
-            {/* Newsletter. The card wrapper is INSIDE the guard on purpose:
-                left outside, it would render as an empty bordered box at the
-                top of the footer whenever capture is switched off. */}
-            {SUBSCRIBE_ENABLED && (
-              /* The hero links here. `scroll-mt` clears the sticky header, or
-                 the jump lands with the form's heading hidden behind it. */
-              <div
-                id={NEWSLETTER_ANCHOR}
-                className="mb-10 scroll-mt-24 rounded-2xl border border-slate-200/70 bg-white/60 p-6 shadow-sm"
-              >
-                <NewsletterForm />
-              </div>
-            )}
-
+            {/* The newsletter form moved to the band under the header. */}
             {/* Two columns pushed to opposite edges (space-between), not a
                 2-col grid: the grid put "Explore" at the exact centre of the
                 footer with dead space to its right. The brand column keeps a
@@ -424,7 +470,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                         label={COPY.nav.bonus}
                         allLabel={COPY.nav.allOffers}
                         href={href}
-                        items={bonusSections.map((section) => ({ slug: section.slug, name: section.name }))}
+                        items={bonusMenuItems}
                       />
                     ) : href === '/casinos' && casinoCategories.length > 0 ? (
                       <FooterBonusMenu
@@ -433,7 +479,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                         allLabel={COPY.nav.allCasinos}
                         href={href}
                         itemBasePath="/categories"
-                        items={casinoCategories.map((c) => ({ slug: c.slug, name: c.name }))}
+                        items={categoryMenuItems}
                       />
                     ) : (
                       <li key={href}>
@@ -455,8 +501,10 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               </div>
             </div>
 
+            {/* Two even columns on a phone, so every link starts on one of two
+                shared edges; wrapped as a paragraph, no two rows lined up. */}
             <nav aria-label="Legal" className="mt-10 border-t border-slate-200/70 pt-6">
-              <ul className="flex flex-wrap gap-x-5 gap-y-2">
+              <ul className="grid grid-cols-2 gap-x-5 gap-y-3 sm:flex sm:flex-wrap sm:gap-y-2">
                 {LEGAL_PAGES.map(({ slug, label }) => (
                   <li key={slug}>
                     <Link href={`/${slug}`} className="inline-block -mx-1 px-1 py-3 -my-3 text-xs text-slate-400 transition-colors hover:text-emerald-700 lg:text-sm">{label}</Link>
@@ -478,7 +526,17 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                     reset it and the browser default for the tag is italic. */}
                 <address className="mt-1 text-xs not-italic text-slate-400">{COPY.footer.postalAddress}</address>
               </div>
-              <p className="text-xs text-slate-400">18+ · Gamble responsibly</p>
+              {/* The circled 18+ reads as a mark rather than as another line of
+                  grey type, with "Gamble responsibly" beside it — the same pair
+                  every site's footer carries, each in its own accent. Not
+                  `aria-hidden`: the sentence beside it never says the age, so
+                  a screen reader needs the "18+" too. */}
+              <p className="flex items-center gap-3 text-xs text-slate-400">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border-2 border-emerald-600 text-emerald-600 text-[13px] font-extrabold">
+                  18+
+                </span>
+                Gamble responsibly
+              </p>
             </div>
             <p className="mt-4 text-xs text-slate-400">{COPY.footer.disclaimer}</p>
           </div>

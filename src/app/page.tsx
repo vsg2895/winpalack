@@ -14,10 +14,9 @@ import CountryNav from '@/components/CountryNav'
 import SpecialOfferCard from '@/components/SpecialOfferCard'
 import type { Category } from '@shared/types/category'
 import type { CasinoWithAttachment } from '@shared/types/casino'
-import type { SpecialOffer } from '@shared/types/specialOffer'
 import type { Article } from '@shared/types/article'
 import type { BonusSection } from '@/lib/api'
-import { NEWSLETTER_ANCHOR, SITE_URL, SUBSCRIBE_ENABLED } from '@/lib/config'
+import { SITE_URL } from '@/lib/config'
 import { relativeTime } from '@/lib/relativeTime'
 
 /**
@@ -68,9 +67,6 @@ const HOME_CASINOS_PER_PAGE = 10
  * because the heading links to the category's own page where all of them are.
  */
 const HOME_BONUSES_PER_CATEGORY = 4
-
-/** Of those four, how many a phone shows. The rest are hidden below `sm`. */
-const HOME_BONUSES_ON_MOBILE = 2
 
 type Props = { searchParams: Promise<{ category?: string; country?: string; page?: string }> }
 
@@ -127,9 +123,8 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function HomePage({ searchParams }: Props) {
   const { categories, selected, continents, countries, country, page } = await resolveFilters(searchParams)
 
-  const [categoryRes, offersRes, anyOffersRes, bestNewsRes, bonusRes] = await Promise.allSettled([
+  const [categoryRes, anyOffersRes, bestNewsRes, bonusRes] = await Promise.allSettled([
     selected ? getCategory(selected, page, country, HOME_CASINOS_PER_PAGE) : Promise.resolve(null),
-    getSpecialOffers(selected, 6),
     // Site-wide, unfiltered, limit 1 — just "does a visible offer exist at all?".
     // Runs alongside the others, so it costs no extra round-trip of latency, and
     // the public endpoint already excludes offers whose visibility is off.
@@ -171,8 +166,6 @@ export default async function HomePage({ searchParams }: Props) {
    * the separator and omits the parameter entirely for page 1.
    */
   const casinosBasePath = country ? `/?country=${encodeURIComponent(country)}` : '/'
-  // Offers are already scoped to the selected category and capped by the backend (?category=&limit=).
-  const topOffers: SpecialOffer[] = offersRes.status === 'fulfilled' ? offersRes.value.data : []
   const bonusSections: BonusSection[] = bonusRes.status === 'fulfilled' ? bonusRes.value : []
   const bestNews: Article[] = bestNewsRes.status === 'fulfilled' ? bestNewsRes.value : []
 
@@ -216,195 +209,127 @@ export default async function HomePage({ searchParams }: Props) {
 
       <main>
         {/* Hero.
-            Vertical rhythm is deliberately tight on a phone: py-10 there and
-            py-24 at `lg`. A hero that eats the whole first screen on a 375px
+            Vertical rhythm is deliberately tight on a phone: py-7 there and
+            py-20 at `lg`. A hero that eats the whole first screen on a 375px
             device is a hero nobody scrolls past, and the casino list below it is
             what visitors came for. */}
-        <section className="relative isolate overflow-hidden px-4 py-10 sm:px-6 sm:py-16 lg:py-24">
-          {/* Atmosphere: concentric rings and faint spokes radiating from behind
-              the headline, with an emerald bloom over them. All three are pure
-              CSS gradients — no image to download, nothing announced to a screen
-              reader. The masks are what keep them from reading as a texture laid
-              flat over the page: each fades to nothing well before the section's
-              edges, so the eye sees light behind the words rather than a
-              pattern. */}
+        <section className="relative isolate overflow-hidden bg-gradient-to-b from-slate-50 via-slate-50 to-emerald-50/30 px-4 py-7 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
+          {/* Atmosphere: soft concentric rings low on the right, under the
+              check card, with a faint emerald bloom. Pure CSS — nothing to
+              download, nothing announced. The ring mask fades well before the
+              edges, so it reads as light rather than a pattern. */}
           <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-            <div className="absolute left-1/2 top-1/2 h-[64rem] w-[64rem] max-w-[200%] -translate-x-1/2 -translate-y-1/2 bg-[repeating-radial-gradient(circle,rgba(15,23,42,0.055)_0px,rgba(15,23,42,0.055)_1px,transparent_1px,transparent_58px)] [mask-image:radial-gradient(circle,#000_20%,rgba(0,0,0,0.55)_45%,transparent_72%)]" />
-            <div className="absolute left-1/2 top-1/2 h-[64rem] w-[64rem] max-w-[200%] -translate-x-1/2 -translate-y-1/2 bg-[repeating-conic-gradient(from_0deg_at_50%_50%,rgba(15,23,42,0.05)_0deg,rgba(15,23,42,0.05)_0.3deg,transparent_0.3deg,transparent_7.5deg)] [mask-image:radial-gradient(circle,transparent_14%,#000_40%,transparent_70%)]" />
-            <div className="absolute left-1/2 top-[-14%] h-[32rem] w-[56rem] max-w-[150%] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.22),rgba(13,148,136,0.08)_45%,transparent_70%)] blur-2xl" />
+            <div className="absolute bottom-[-30rem] right-[-22rem] h-[56rem] w-[56rem] bg-[repeating-radial-gradient(circle,rgba(15,118,110,0.07)_0px,rgba(15,118,110,0.07)_1px,transparent_1px,transparent_68px)] [mask-image:radial-gradient(circle,#000_25%,rgba(0,0,0,0.5)_50%,transparent_70%)] lg:bottom-[-34rem] lg:right-[-14rem]" />
+            <div className="absolute bottom-[-6rem] right-[-4rem] h-[26rem] w-[34rem] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.10),transparent_70%)] blur-2xl" />
           </div>
 
-          <div className="mx-auto max-w-5xl text-center">
-            <p className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-700 shadow-[0_6px_20px_-8px_rgba(15,23,42,0.25)] ring-1 ring-slate-200/70 sm:px-5 sm:text-xs sm:tracking-[0.2em]">
-              <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" aria-hidden />
-              {COPY.home.heroEyebrow}
-            </p>
+          {/* Two columns from `xl`: the pitch on the left, the check card at
+              the top right, level with the eyebrow. Below `xl` they stack,
+              card under the buttons, so a phone reads headline -> action ->
+              proof. Not from `lg`: at 1024px the 40rem card left the headline
+              a ~250px column, one word per line. */}
+          <div className="mx-auto grid max-w-[90rem] items-start gap-6 sm:gap-10 xl:grid-cols-[minmax(0,1fr)_minmax(0,40rem)] xl:gap-16">
+            <div>
+              <p className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-800 ring-1 ring-emerald-200/80 sm:gap-2.5 sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]">
+                {/* Dot with a soft halo, a live-status mark. */}
+                <span aria-hidden className="grid h-3.5 w-3.5 shrink-0 place-items-center rounded-full bg-emerald-200/70">
+                  <span className="h-2 w-2 rounded-full bg-emerald-600" />
+                </span>
+                {COPY.home.heroEyebrow}
+              </p>
 
-            {/* A NARROWER measure than the section, so the headline breaks into
-                two balanced lines instead of one very long one — at this size a
-                single line would run past 1,000px and lose the reader between
-                "Play" and "fair". */}
-            <h1 className="mx-auto mt-6 max-w-3xl font-display text-[2.25rem] font-semibold leading-[1.06] tracking-tight text-balance text-slate-900 sm:mt-8 sm:text-5xl lg:text-[4rem] xl:text-[4.5rem]">
-              {COPY.home.heroHeadline}{' '}
-              {/* Two things this span has to survive: `inline-block` so the
-                  gradient fill is never split across a line break — a clipped
-                  background on a wrapped inline element restarts, and the second
-                  line came out pale; and the padding, because `bg-clip-text`
-                  paints only INSIDE the element's box. At this leading the box
-                  ends above the italic `y`'s tail, so the descender in "plays"
-                  was being sliced off. The negative margin gives the paint room
-                  back without moving the line. */}
-              <span className="inline-block bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text pb-[0.22em] align-baseline italic text-transparent -mb-[0.22em]">
-                {COPY.home.heroHighlight}
-              </span>
-            </h1>
+              {/* The highlight runs INLINE after "house", and the measure is
+                  capped in `ch`, so the headline breaks as "Play where the /
+                  house plays fair" at every width that fits two lines. The
+                  padding and negative margin give `bg-clip-text` room for the
+                  italic descenders, which it would otherwise slice off. */}
+              <h1 className="mt-4 max-w-[11ch] font-display text-[2.25rem] font-semibold leading-[1.04] tracking-tight text-slate-900 sm:mt-6 sm:text-6xl lg:text-[4.25rem] xl:text-[4.75rem]">
+                {COPY.home.heroHeadline}{' '}
+                <span className="bg-gradient-to-r from-emerald-700 to-emerald-500 bg-clip-text pb-[0.18em] pr-[0.06em] italic text-transparent -mb-[0.18em]">
+                  {COPY.home.heroHighlight}
+                </span>
+              </h1>
 
-            <p className="mx-auto mt-5 max-w-xl text-pretty text-base leading-relaxed text-slate-500 sm:mt-7 sm:max-w-2xl sm:text-lg">
-              {COPY.home.heroSubtitle}
-            </p>
+              <p className="mt-3 max-w-xl text-pretty text-[15px] leading-relaxed text-slate-600 sm:mt-6 sm:text-xl">
+                {COPY.home.heroSubtitle}
+              </p>
 
-            {/* Buttons: full width on a phone, where two half-width pills are
-                two cramped targets, and side by side from `sm`. */}
-            <div className="mt-7 flex flex-col items-stretch justify-center gap-3 sm:mt-10 sm:flex-row sm:items-center">
-              <Link
-                href="/casinos"
-                className="group inline-flex min-h-12 items-center justify-center gap-2.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-500 px-8 py-3.5 font-semibold text-white shadow-lg shadow-emerald-600/25 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-emerald-600/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
-              >
-                {COPY.home.featuredCasinos}
-                {/* Decorative: the label already says where this goes. */}
-                <span aria-hidden className="transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none">&rarr;</span>
-              </Link>
-              {anyOffersVisible && (
+              {/* Stacked full-width on a phone so each label fits on one line at a
+                  readable size; side by side from `sm`, where both share one
+                  fixed width (`sm:w-64`) so neither reads as the lesser choice.
+                  The primary button jumps to the list on this page, hence the
+                  down arrow. */}
+              <div className="mt-5 flex flex-col gap-2.5 sm:mt-8 sm:flex-row sm:items-center sm:gap-3">
                 <Link
-                  href="/special-offers"
-                  className="inline-flex min-h-12 items-center justify-center rounded-full bg-white px-8 py-3.5 font-semibold text-slate-700 shadow-[0_6px_20px_-10px_rgba(15,23,42,0.35)] ring-1 ring-slate-200 transition-colors hover:text-emerald-700 hover:ring-emerald-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
+                  href="#verified-casinos"
+                  className="group inline-flex min-h-[3.25rem] w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-slate-900 px-6 py-3 text-base font-semibold sm:min-h-14 sm:w-64 sm:flex-none sm:gap-3 sm:px-6 sm:text-lg text-white shadow-[0_14px_30px_-12px_rgba(15,23,42,0.55)] transition-all hover:-translate-y-0.5 hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
                 >
-                  {COPY.home.specialOffers}
+                  {COPY.home.featuredCasinos}
+                  {/* Decorative: the label already says where this goes. */}
+                  <svg aria-hidden viewBox="0 0 20 20" className="h-4 w-4 shrink-0 text-emerald-400 sm:h-5 sm:w-5 transition-transform group-hover:translate-y-0.5 motion-reduce:transition-none" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M10 4v12M5 11l5 5 5-5" />
+                  </svg>
                 </Link>
-              )}
-
-              {/* Third control, and deliberately the quietest of the three: it
-                  does not leave the page, it scrolls to the sign-up form at the
-                  bottom of it. A plain <a>, not <Link> — Next's router has
-                  nothing to do for a same-page fragment, and an anchor is what
-                  makes the browser's own jump (and `motion-safe:scroll-smooth`)
-                  work. Rendered only when capture is switched on, or it would
-                  point at an element the footer never wrote.
-
-                  Arrow DOWN, because that is the direction the page moves. */}
-              {SUBSCRIBE_ENABLED && (
-                <a
-                  href={`#${NEWSLETTER_ANCHOR}`}
-                  className="group inline-flex min-h-12 items-center justify-center gap-2.5 rounded-full bg-emerald-50 py-3 pl-7 pr-3 font-semibold text-emerald-700 ring-1 ring-emerald-200 transition-all hover:-translate-y-0.5 hover:bg-emerald-100 hover:ring-emerald-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
-                >
-                  {COPY.home.heroSubscribe}
-                  {/* The arrow sits in its own disc, which is what makes this
-                      read as a button rather than a link that happens to carry a
-                      glyph. A drawn arrow, not the `↓` character: that glyph's
-                      weight and height change with the font, so it never quite
-                      matched the label beside it. */}
-                  <span
-                    aria-hidden
-                    className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-600 text-white shadow-sm transition-transform group-hover:translate-y-0.5 motion-reduce:transition-none"
+                {anyOffersVisible && (
+                  <Link
+                    href="/special-offers"
+                    className="inline-flex min-h-[3.25rem] w-full items-center justify-center whitespace-nowrap rounded-xl bg-white px-6 py-3 text-base font-semibold sm:min-h-14 sm:w-64 sm:flex-none sm:px-6 sm:text-lg text-slate-900 ring-1 ring-slate-200 transition-colors hover:text-emerald-700 hover:ring-emerald-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
                   >
-                    <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M10 4.5v11M5.5 11l4.5 4.5 4.5-4.5" />
-                    </svg>
-                  </span>
-                </a>
-              )}
+                    {COPY.home.heroOffersCta}
+                  </Link>
+                )}
+              </div>
             </div>
 
-            {/* What "verified" covers, on its own card — the three checks the
-                sentence above names. Wording only: a count or a score here would
-                be a measurement nobody took.
+            {/* The check card: what "verified" covers, as the listing rule
+                every casino on this site passed — so "3/3" is a property of the
+                list, not a score measured for any one casino. Three chips side
+                by side below `lg`; on a phone each stacks its tick over its label
+                so three fit in one row. At `lg` the card spans the hero, wide
+                enough for three one-line chips. From `xl` it shares the row with
+                the pitch and is too narrow for that, so they become a list of
+                full-width rows instead — every label still on ONE line, and the
+                card grows to match the headline beside it. */}
+            <div className="rounded-2xl bg-white p-4 shadow-[0_24px_50px_-28px_rgba(15,23,42,0.30)] ring-1 ring-slate-200/70 sm:rounded-3xl sm:p-6 lg:p-8 xl:p-10">
+              <div className="flex items-center gap-3 sm:gap-3.5 lg:gap-4">
+                <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-xl sm:h-11 sm:w-11 lg:h-14 lg:w-14 lg:rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-400 text-white shadow-md shadow-emerald-500/25">
+                  <svg viewBox="0 0 24 24" className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 3l7 3v5.5c0 4.3-2.9 7.2-7 8.5-4.1-1.3-7-4.2-7-8.5V6l7-3z" />
+                    <path d="M9 12l2.2 2.2L15.5 10" />
+                  </svg>
+                </span>
+                <p className="min-w-0 flex-1 font-display text-lg font-semibold text-slate-900 sm:text-2xl lg:text-3xl">{COPY.home.heroCard.title}</p>
+                <span className="shrink-0 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold sm:px-3 sm:py-1 sm:text-sm lg:px-3.5 lg:py-1.5 lg:text-base text-emerald-800 tabular-nums ring-1 ring-emerald-100">
+                  <span className="sr-only">{COPY.home.heroCard.badgeLabel} </span>
+                  {COPY.home.heroChecks.length}/{COPY.home.heroChecks.length}
+                </span>
+              </div>
 
-                The card is what stops this reading as three loose captions under
-                the buttons. It stacks on a phone (no dividers, nothing to
-                squeeze) and becomes one row with hairline dividers from `sm`.
-
-                On a PHONE the card is mint rather than white: against the pale
-                hero a white panel reads as another empty surface, while the
-                site's verified-green says what the three lines are about before
-                any of them is read. From `sm` it goes back to white — there it
-                is one wide strip under the buttons, and tinting the full width
-                would weigh more than the words on it.
-
-                The phone layout is a single-column GRID of `max-content`, not a
-                flex column: that makes every row as wide as the WIDEST label, so
-                the three ticks share one left edge while the block stays centred
-                in the card. Centring each row on its own left three ragged
-                starts. */}
-            <ul className="mx-auto mt-8 grid w-full max-w-3xl grid-cols-[max-content] justify-center gap-3 rounded-2xl bg-emerald-50 px-5 py-4 text-base font-medium text-emerald-950 shadow-[0_10px_30px_-18px_rgba(6,78,59,0.35)] ring-1 ring-emerald-200/80 backdrop-blur sm:mt-12 sm:flex sm:bg-white/90 sm:text-slate-700 sm:shadow-[0_10px_30px_-18px_rgba(15,23,42,0.45)] sm:ring-slate-200/70 sm:w-auto sm:flex-row sm:items-center sm:gap-0 sm:px-2" role="list">
-              {COPY.home.heroChecks.map((check, i) => (
-                <li
-                  key={check}
-                  className={`flex items-center gap-2.5 sm:px-5 ${i > 0 ? 'sm:border-l sm:border-slate-200' : ''}`}
-                >
-                  <span aria-hidden className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-emerald-600 text-white">
-                    <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M5 10.5l3.5 3.5L15 6.5" />
-                    </svg>
-                  </span>
-                  {check}
-                </li>
-              ))}
-            </ul>
+              <ul className="mt-3 grid grid-cols-3 gap-2 sm:mt-5 sm:gap-2.5 lg:mt-7 lg:gap-3 xl:grid-cols-1" role="list">
+                {COPY.home.heroChecks.map((check) => (
+                  <li key={check} className="flex flex-col items-center gap-1.5 rounded-xl bg-slate-50 px-2 py-2.5 text-center text-[13px] font-medium leading-tight text-slate-800 sm:flex-row sm:gap-3 sm:rounded-2xl sm:px-4 sm:py-3.5 sm:text-left sm:text-base sm:leading-snug lg:gap-4 lg:whitespace-nowrap lg:px-5 lg:py-4 xl:px-6 xl:py-5 xl:text-xl">
+                    <span aria-hidden className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-emerald-600 text-white sm:h-6 sm:w-6 lg:h-8 lg:w-8">
+                      <svg viewBox="0 0 20 20" className="h-3 w-3 sm:h-3.5 sm:w-3.5 lg:h-4 lg:w-4" fill="none" stroke="currentColor" strokeWidth="2.75" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M5 10.5l3.5 3.5L15 6.5" />
+                      </svg>
+                    </span>
+                    {check}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </section>
 
-        {/* Bonus types — the first thing under the hero.
-
-            Placed here rather than above the hero on purpose: the h1 has to
-            stay the top of the document for a reader and for a crawler alike,
-            and a row of filters above the page's own name reads as a second
-            site header. Directly beneath it, this is the first thing a visitor
-            can act on.
-
-            It renders nothing when the site publishes no Bonus area or every
-            type is empty, so the band collapses rather than leaving a gap. */}
-        {bonusSections.length > 0 && (
-          <section className="px-4 pb-12 sm:px-6 lg:px-8 lg:pb-16">
-            <div className="mx-auto max-w-[90rem]">
-              {/*
-                * The chips sit on their own tinted panel rather than on the bare
-                * page.
-                *
-                * On the plain ground the row read as six loose buttons left over
-                * from the hero; a panel makes it one control surface, which is
-                * what it is. The tint is the site's own emerald→teal, kept to a
-                * 50-weight wash so the WHITE chips stay the brightest thing in
-                * the band — a saturated panel would turn them grey by contrast.
-                *
-                * The two blurred discs are the hero's radial wash, scaled down
-                * and pushed into opposite corners, so this band reads as part of
-                * the same surface rather than a card dropped onto it.
-                */}
-              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-50 via-white to-teal-50 px-4 py-6 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.45)] ring-1 ring-emerald-100/80 sm:px-8 sm:py-8">
-                {/* Decoration only. No -z-10: the panel paints its own
-                    background, and a layer sent behind it would never be seen. */}
-                <div aria-hidden className="pointer-events-none absolute inset-0">
-                  <div className="absolute -left-24 -top-28 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(16,185,129,0.20),transparent_70%)] blur-2xl" />
-                  <div className="absolute -right-20 -bottom-28 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(20,184,166,0.18),transparent_70%)] blur-2xl" />
-                </div>
-
-                <div className="relative">
-                  <BonusCategoryNav sections={bonusSections} />
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
-
         {/* Casinos by category */}
-        <section className="px-4 pb-20 sm:px-6 lg:px-8" aria-labelledby="top-casinos-heading">
+        <section id="verified-casinos" className="scroll-mt-24 px-4 pb-10 pt-6 sm:px-6 sm:pb-20 sm:pt-0 lg:px-8" aria-labelledby="top-casinos-heading">
           {/* The same 90rem measure as Bonus, News and FAQ below, so the four
               strips share their edges; the rows themselves grow with `large`. */}
           <div className="mx-auto max-w-[90rem]">
-            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="mb-4 flex items-end justify-between gap-4 sm:mb-6">
               <div>
-                <h2 id="top-casinos-heading" className="font-display text-3xl font-semibold text-slate-900 sm:text-4xl">{COPY.home.topCasinosTitle}</h2>
-                <p className="mt-1 text-slate-500">{COPY.home.topCasinosSubtitle}</p>
+                <h2 id="top-casinos-heading" className="font-display text-2xl font-semibold text-slate-900 sm:text-4xl">{COPY.home.topCasinosTitle}</h2>
+                <p className="mt-1 text-sm text-slate-500 sm:text-base">{COPY.home.topCasinosSubtitle}</p>
               </div>
               {selected && (
                 <Link href={`/categories/${selected}`} className="inline-block -mx-1 px-1 py-3 -my-3 text-sm font-semibold text-emerald-600 hover:text-emerald-700 whitespace-nowrap">{COPY.home.viewAll} →</Link>
@@ -416,13 +341,13 @@ export default async function HomePage({ searchParams }: Props) {
                 even if the chosen country leaves no categories to show, or a
                 visitor could narrow into a dead end with no way back. */}
             {countries.length > 0 && (
-              <div className="mb-4">
+              <div className="mb-3 sm:mb-4">
                 <CountryNav continents={continents} selected={country} />
               </div>
             )}
 
             {categories.length > 0 && selected && (
-              <div className="mb-8">
+              <div className="mb-5 sm:mb-8">
                 <CategoryNav categories={categories} selected={selected} country={country} />
               </div>
             )}
@@ -458,6 +383,47 @@ export default async function HomePage({ searchParams }: Props) {
             <Pagination basePath={casinosBasePath} current={casinoPage} last={casinoLastPage} />
           </div>
         </section>
+
+        {/* Bonus types — directly under the casino list.
+
+            The casinos are what visitors came for, so they come first under
+            the hero; the bonus-type chips follow as the next way in, just
+            above the Bonus sections they lead to.
+
+            It renders nothing when the site publishes no Bonus area or every
+            type is empty, so the band collapses rather than leaving a gap. */}
+        {bonusSections.length > 0 && (
+          <section className="px-4 pb-12 sm:px-6 lg:px-8 lg:pb-16">
+            <div className="mx-auto max-w-[90rem]">
+              {/*
+                * The chips sit on their own tinted panel rather than on the bare
+                * page.
+                *
+                * On the plain ground the row read as six loose buttons left over
+                * from the hero; a panel makes it one control surface, which is
+                * what it is. The tint is the site's own emerald→teal, kept to a
+                * 50-weight wash so the WHITE chips stay the brightest thing in
+                * the band — a saturated panel would turn them grey by contrast.
+                *
+                * The two blurred discs are the hero's radial wash, scaled down
+                * and pushed into opposite corners, so this band reads as part of
+                * the same surface rather than a card dropped onto it.
+                */}
+              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-50 via-white to-teal-50 px-4 py-6 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.45)] ring-1 ring-emerald-100/80 sm:px-8 sm:py-8">
+                {/* Decoration only. No -z-10: the panel paints its own
+                    background, and a layer sent behind it would never be seen. */}
+                <div aria-hidden className="pointer-events-none absolute inset-0">
+                  <div className="absolute -left-24 -top-28 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(16,185,129,0.20),transparent_70%)] blur-2xl" />
+                  <div className="absolute -right-20 -bottom-28 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(20,184,166,0.18),transparent_70%)] blur-2xl" />
+                </div>
+
+                <div className="relative">
+                  <BonusCategoryNav sections={bonusSections} />
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Bonus — one heading, then a section per category.
         
