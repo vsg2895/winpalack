@@ -10,6 +10,8 @@ import { SITE_URL } from '@/lib/config'
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
 
+type Props = { searchParams: Promise<{ page?: string }> }
+
 export async function generateMetadata(): Promise<Metadata> {
   // A site with the feature off must not advertise the page in search results
   // either, so the metadata is generated only when the data exists.
@@ -33,13 +35,25 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default async function CountriesPage() {
+export default async function CountriesPage({ searchParams }: Props) {
   const res = await getCountries()
 
   // Null means this site has the countries filter switched off. A 404 is the
   // honest answer — the page genuinely does not exist here — and it matches what
   // the API itself returns.
   if (res === null) notFound()
+
+  /*
+   * THE COUNTRIES HUB HAS ONE PAGE, so `?page=2` is a page past the end.
+   *
+   * It is not paginated, yet `?page=2` and every other number a crawler guessed
+   * answered 200 with the whole page and an `index` robots tag: a duplicate of
+   * /countries at a URL of its own. A 404 says it is not a page at all, the rule
+   * every paginated listing here applies past its last page. `?page=1` and the
+   * other spellings of page one never reach this: proxy.ts 301s them to /countries.
+   */
+  const page = Math.max(1, Number((await searchParams).page) || 1)
+  if (page > 1) notFound()
 
   const continents = res.data
 

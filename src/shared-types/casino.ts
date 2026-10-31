@@ -1,3 +1,4 @@
+import type { Byline } from './author'
 import type { Category } from './category'
 import type { CasinoDetail } from './casinoDetail'
 import type { ResolvedSeo } from './seo'
@@ -40,6 +41,8 @@ export interface Casino {
   reviewed_at?: string | null
   meta_title: string | null
   meta_description: string | null
+  /** Keep out of search results: noindex on the page, absent from the sitemap. */
+  noindex?: boolean
   active: boolean
   category_ids?: number[]
   categories?: Category[]
@@ -94,6 +97,11 @@ export interface CasinoWithAttachment {
   reviewed_at?: string | null
   /** Server-resolved SEO. Additive — meta_title/meta_description are unchanged. */
   seo?: ResolvedSeo
+  /**
+   * This site's byline. Detail endpoint only (absent from listings); null when
+   * no visible author or reviewer is set for this site.
+   */
+  byline?: Byline | null
   updated_at: string
   attachment: CasinoSiteAttachment
 }

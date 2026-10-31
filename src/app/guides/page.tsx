@@ -24,6 +24,8 @@ const MIN_ARTICLES = 3
 
 export const revalidate = 3600
 
+type Props = { searchParams: Promise<{ page?: string }> }
+
 export async function generateMetadata(): Promise<Metadata> {
   return {
     title: COPY.guides.pageTitle,
@@ -39,9 +41,23 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default async function GuidesPage() {
+export default async function GuidesPage({ searchParams }: Props) {
   const { guides_enabled: enabled } = await getSiteFeatures()
   if (!enabled) notFound()
+
+  /*
+   * THE GUIDES INDEX HAS ONE PAGE, so `?page=2` is a page past the end.
+   *
+   * It is not paginated — every guide is on this one page — yet `?page=2`,
+   * `?page=7` and every other number a crawler guessed answered 200 with the
+   * whole list and an `index` robots tag: a duplicate of /guides at a URL of
+   * its own. The canonical named /guides, but that only asks Google to fold the
+   * copy in after crawling it. A 404 says it is not a page at all, the same rule
+   * every paginated listing here applies past its last page. `?page=1` and the
+   * other spellings of page one never reach this: proxy.ts 301s them to /guides.
+   */
+  const page = Math.max(1, Number((await searchParams).page) || 1)
+  if (page > 1) notFound()
 
   const articles = await getArticles()
   if (articles.length < MIN_ARTICLES) notFound()

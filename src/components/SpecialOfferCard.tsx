@@ -3,6 +3,7 @@ import Link from 'next/link'
 import OfferBanner from '@/components/OfferBanner'
 import { resolveImageUrl } from '@/lib/images'
 import type { SpecialOffer } from '@shared/types/specialOffer'
+import { offerClaimHref } from '@/lib/affiliate'
 
 /**
  * The bonus type whose offers carry a "Claim" call to action.
@@ -122,7 +123,7 @@ export default function SpecialOfferCard({ offer, compact = false }: { offer: Sp
           {claimable && (
             offer.affiliate_url ? (
               <a
-                href={offer.affiliate_url}
+                href={offerClaimHref(offer) ?? undefined}
                 target="_blank"
                 rel="nofollow sponsored noopener"
                 className="flex min-h-11 flex-1 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 px-3 py-2 text-center text-sm font-semibold text-white shadow-md shadow-emerald-500/30 transition-transform hover:scale-[1.03]"

@@ -1,3 +1,5 @@
+import type { Byline } from './author'
+
 // Fields match CmsPagePublicResource.php (the public, published-only payload).
 export interface CmsPage {
   slug: string
@@ -16,6 +18,8 @@ export interface CmsPage {
    */
   noindex: boolean
   updated_at: string
+  /** Null when no visible author or reviewer is named. */
+  byline: Byline | null
 }
 
 export type CmsPageStatus = 'draft' | 'published'
@@ -33,6 +37,19 @@ export interface CmsPageAdmin {
   status: CmsPageStatus
   /** See CmsPage.noindex — the same flag, editable on this screen. */
   noindex: boolean
+  author_id: number | null
+  reviewed_by_id: number | null
+  last_reviewed_at: string | null
+  /**
+   * A pending revision. The live columns above stay public until it is
+   * published with POST /admin/pages/{id}/publish-draft.
+   */
+  draft_title: string | null
+  draft_content: string | null
+  draft_meta_title: string | null
+  draft_meta_description: string | null
+  /** Non-null exactly when a draft is pending. */
+  draft_updated_at: string | null
   created_at: string
   updated_at: string
 }

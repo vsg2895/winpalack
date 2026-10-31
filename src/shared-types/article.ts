@@ -1,3 +1,5 @@
+import type { Byline } from './author'
+
 // Fields match ArticleResource.php — one editorial guide.
 //
 // The ONLY content type in this application that is not shared between the six
@@ -63,6 +65,11 @@ export interface Article {
    * it must not be published as it stands. Absent from every other response.
    */
   awaiting_rewrite?: boolean
+  author_id?: number | null
+  reviewed_by_id?: number | null
+  last_reviewed_at?: string | null
+  /** Detail endpoints only; null when nobody visible is named. */
+  byline?: Byline | null
   updated_at: string | null
 }
 
@@ -82,4 +89,8 @@ export interface UpsertArticlePayload {
   meta_description?: string | null
   canonical_url?: string | null
   noindex?: boolean
+  /** Authors of the article's own site only. */
+  author_id?: number | null
+  reviewed_by_id?: number | null
+  last_reviewed_at?: string | null
 }

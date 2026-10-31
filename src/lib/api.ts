@@ -8,7 +8,8 @@ import type { SpecialOffer } from '@shared/types/specialOffer'
 import type { SocialLink } from '@shared/types/socialLink'
 import type { SiteNavigation } from '@shared/types/navItem'
 import type { Facet } from '@shared/types/facet'
-import type { SiteEditorial } from '@shared/types/editorial'
+import type { SiteEditorial, SiteLegalIdentity } from '@shared/types/editorial'
+import type { AuthorPage } from '@shared/types/author'
 import type { Article } from '@shared/types/article'
 import type {
   ForumArticleResponse,
@@ -34,6 +35,23 @@ if (!API) {
   throw new Error('API_URL is required')
 }
 
+/**
+ * A non-2xx answer from the public API, with its status kept.
+ *
+ * Still an Error with the same message as before, so every existing `catch`
+ * behaves exactly as it did; the status is for callers that must tell "this
+ * does not exist" (404) apart from "the API is down".
+ */
+export class ApiError extends Error {
+  constructor(
+    path: string,
+    public readonly status: number,
+  ) {
+    super(`API ${path} failed: ${status}`)
+    this.name = 'ApiError'
+  }
+}
+
 async function publicFetch<T>(path: string, tags: string[] = []): Promise<T> {
   const res = await fetch(`${API}/sites/${SITE}${path}`, {
     headers: {
@@ -44,7 +62,7 @@ async function publicFetch<T>(path: string, tags: string[] = []): Promise<T> {
   })
 
   if (!res.ok) {
-    throw new Error(`API ${path} failed: ${res.status}`)
+    throw new ApiError(path, res.status)
   }
 
   return res.json() as Promise<T>
@@ -56,6 +74,37 @@ export const getCasinos = (): Promise<ApiResponse<CasinoWithAttachment[]>> =>
 
 export const getCasino = (slug: string): Promise<ApiResponse<CasinoWithAttachment>> =>
   publicFetch(`/casinos/${slug}`, [`casino:${slug}`])
+
+// ── Sitemap ──────────────────────────────────────────────────────────────────
+/** One indexable detail URL: its slug and when its content last changed. */
+export interface SitemapEntry {
+  slug: string
+  updated_at: string | null
+}
+
+export interface SitemapArticleEntry extends SitemapEntry {
+  type: 'guide' | 'news'
+}
+
+export interface SitemapEntries {
+  casinos: SitemapEntry[]
+  categories: SitemapEntry[]
+  offers: SitemapEntry[]
+  articles: SitemapArticleEntry[]
+  /** Visible authors of this site — /authors/{slug}. */
+  authors: SitemapEntry[]
+}
+
+/**
+ * Every indexable detail URL of this site, already filtered server-side by the
+ * rules the pages apply (visibility, attachment, `noindex`, section switches).
+ * Whatever the environment's database holds: nothing is listed by hand.
+ *
+ * Tagged `sitemap`: the backend adds that tag to every revalidation it sends,
+ * so an admin change reaches the sitemap without waiting out the hour.
+ */
+export const getSitemapEntries = (): Promise<ApiResponse<SitemapEntries>> =>
+  publicFetch('/sitemap', ['sitemap'])
 
 // ── Categories ───────────────────────────────────────────────────────────────
 /**
@@ -482,7 +531,38 @@ export const getEditorial = async (): Promise<SiteEditorial> => {
     const res = await publicFetch<ApiResponse<SiteEditorial>>('/editorial', ['editorial'])
     return res.data
   } catch {
-    return { author: null, methodology_page_slug: null }
+    return { author: null, methodology_page_slug: null, legal: EMPTY_LEGAL }
+  }
+}
+
+/** No identity known: every line that needs one is hidden, nothing is guessed. */
+const EMPTY_LEGAL: SiteLegalIdentity = {
+  legal_entity_name: null,
+  registered_address: null,
+  company_number: null,
+  governing_law: null,
+  contact_email: null,
+  support_email: null,
+  privacy_email: null,
+}
+
+// ── Authors ──────────────────────────────────────────────────────────────────
+
+/**
+ * A visible author's profile and the work they signed, or null when there is
+ * no such author on this site (hidden, unknown, or another site's) — the page
+ * then 404s.
+ */
+export const getAuthor = async (slug: string): Promise<AuthorPage | null> => {
+  try {
+    const res = await publicFetch<ApiResponse<AuthorPage>>(`/authors/${encodeURIComponent(slug)}`, [
+      'authors',
+      `author:${slug}`,
+    ])
+    return res.data
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) return null
+    throw e
   }
 }
 
@@ -741,7 +821,7 @@ export const getForumIndex = (): Promise<{ data: ForumIndexResponse }> =>
 export const getForumCategory = (
   slug: string,
   page = 1,
-): Promise<{ data: ForumCategoryResponse; meta: { current_page: number; last_page: number; total: number } }> =>
+): Promise<{ data: ForumCategoryResponse; meta: { current_page: number; last_page: number; per_page: number; total: number } }> =>
   publicFetch(`/forum/${slug}${page > 1 ? `?page=${page}` : ''}`, ['forum', `forum:${slug}`])
 
 /**

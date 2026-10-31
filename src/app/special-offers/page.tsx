@@ -8,10 +8,17 @@ import { SITE_URL } from '@/lib/config'
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
 
 export async function generateMetadata(): Promise<Metadata> {
+  // The same cached call the page body makes, so this costs no extra round trip.
+  // With no offers the page renders only its "nothing here" line, and a page
+  // like that asking to be indexed is what Google files as a soft 404; the
+  // sitemap leaves it out on the same condition.
+  const isEmpty = (await getSpecialOffers().catch(() => null))?.data.length === 0
+
   return {
     title: COPY.specialOffers.pageTitle,
     description: COPY.specialOffers.pageDescription,
     alternates: { canonical: `/special-offers` },
+    ...(isEmpty ? { robots: { index: false, follow: true } } : {}),
     openGraph: { type: 'website', url: `/special-offers`, siteName: SITE_NAME, title: COPY.specialOffers.pageTitle, description: COPY.specialOffers.pageDescription },
   }
 }

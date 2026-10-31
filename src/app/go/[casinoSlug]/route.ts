@@ -1,5 +1,5 @@
 import { after, NextResponse, type NextRequest } from 'next/server'
-import { getCasino } from '@/lib/api'
+import { ApiError, getCasino } from '@/lib/api'
 import { API_URL } from '@/lib/config'
 
 /**
@@ -19,6 +19,19 @@ import { API_URL } from '@/lib/config'
  */
 
 export const dynamic = 'force-dynamic'
+
+/**
+ * On EVERY response, the 404 included. robots.txt already keeps crawlers out of
+ * /go/, but a URL blocked there can still be indexed bare from a link found
+ * elsewhere; this header is what an engine that does fetch it obeys.
+ */
+const NO_INDEX = { 'X-Robots-Tag': 'noindex, nofollow' }
+
+function redirect(to: string | URL): NextResponse {
+  const response = NextResponse.redirect(to, 302)
+  response.headers.set('X-Robots-Tag', NO_INDEX['X-Robots-Tag'])
+  return response
+}
 
 type Params = { params: Promise<{ casinoSlug: string }> }
 
@@ -40,15 +53,22 @@ export async function GET(request: NextRequest, { params }: Params) {
     // `attachment.affiliate_url` is the PER-SITE destination, which is the
     // whole point — the same casino can pay through different links per domain.
     destination ??= casino.attachment.affiliate_url ?? null
-  } catch {
+  } catch (error) {
+    // An UNKNOWN casino is a 404: the slug names nothing on this site, and a
+    // redirect would turn every guessed /go/<anything> into a soft 404.
+    if (error instanceof ApiError && error.status === 404) {
+      return new NextResponse('Not found', { status: 404, headers: NO_INDEX })
+    }
+    // Anything else is the API failing, not the casino missing; the visitor
+    // still gets somewhere useful below.
     destination = null
   }
 
-  // No destination means the casino is unknown here or has no link configured.
-  // Send the visitor somewhere useful rather than showing them an error for a
+  // A known casino with no link configured, or an API that could not answer:
+  // send the visitor somewhere useful rather than showing them an error for a
   // decision that is ours, not theirs.
   if (!destination) {
-    return NextResponse.redirect(new URL('/casinos', request.nextUrl.origin), 302)
+    return redirect(new URL('/casinos', request.nextUrl.origin))
   }
 
   // `after()`, not a bare `void promise`. A fire-and-forget promise in a route
@@ -64,7 +84,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   // 302, never 301. A permanent redirect would be cached by the browser, so a
   // destination changed in the admin would keep sending returning visitors to
   // the old operator URL — defeating the reason this route exists.
-  return NextResponse.redirect(destination, 302)
+  return redirect(destination)
 }
 
 async function recordClick(casinoSlug: string, offerSlug: string | null): Promise<void> {

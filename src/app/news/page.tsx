@@ -78,8 +78,13 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   // canonicalises to /news rather than competing with it in the index. A deeper
   // PAGE is different: it holds other stories, so it gets its own canonical and
   // its own title, or the two would be reported as duplicates of each other.
+  //
+  // A filtered view canonicalises to /news on EVERY page, not to /news?page=N:
+  // page 2 of one topic and page 2 of the whole feed list different stories, so
+  // naming the second as the first's canonical pointed Google at a page that
+  // does not hold its content.
   const title = page > 1 ? `${COPY.news.pageTitle} — Page ${page}` : COPY.news.pageTitle
-  const canonical = canonicalPath('/news', page)
+  const canonical = sp.category ? '/news' : canonicalPath('/news', page)
 
   return {
     title,
@@ -151,16 +156,26 @@ export default async function NewsPage({ searchParams }: Props) {
    */
   const newsBasePath = category ? `/news?category=${encodeURIComponent(category)}` : '/news'
 
+  /*
+   * The structured data describes THIS page, so it carries the same URL as the
+   * canonical tag. It used to say /news on every page, while page 2's canonical
+   * said /news?page=2 — two different answers on one document to "what URL is
+   * this?". Positions continue across pages: page 1 holds `first_page_size`
+   * posts (the two leads plus a full grid), every page after it `per_page`.
+   */
+  const pageUrl = `${SITE_URL}${category ? '/news' : canonicalPath('/news', page)}`
+  const offset = meta && page > 1 ? meta.first_page_size + (page - 2) * meta.per_page : 0
+
   const graph = [
     buildWebPageSchema({
       name: COPY.news.pageTitle,
-      url: `${SITE_URL}/news`,
+      url: pageUrl,
       description: COPY.news.pageDescription,
     }),
     buildItemListSchema(
       COPY.news.pageTitle,
-      `${SITE_URL}/news`,
-      posts.map((p, i) => ({ position: i + 1, name: p.title, url: `${SITE_URL}/news/${p.slug}` })),
+      pageUrl,
+      posts.map((p, i) => ({ position: offset + i + 1, name: p.title, url: `${SITE_URL}/news/${p.slug}` })),
     ),
   ]
 

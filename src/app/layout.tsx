@@ -18,7 +18,7 @@ import Logo from '@/components/Logo'
 import SearchOverlay from '@/components/SearchOverlay'
 import MobileNav from '@/components/MobileNav'
 import HeaderAccount from '@/components/forum/HeaderAccount'
-import { getSocialLinks, hasSpecialOffers, getSiteFeatures, getNavigation, getArticles, getNews, getBonusArea, getCategories } from '@/lib/api'
+import { getSocialLinks, hasSpecialOffers, getSiteFeatures, getNavigation, getArticles, getNews, getBonusArea, getCategories, getEditorial, getPage } from '@/lib/api'
 import { buildOrganizationSchema, buildWebSiteSchema, jsonLdScript } from '@/lib/seo'
 import { NEWSLETTER_ANCHOR, SITE_URL, SUBSCRIBE_ENABLED } from '@/lib/config'
 import { COPY } from '@/constants/copy'
@@ -263,7 +263,25 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   // Two nodes, cross-referenced by @id: the publisher (Organization) and the
   // site (WebSite). socialLinks is already fetched above for the footer, so
   // `sameAs` costs no extra request.
-  const siteGraph = [buildOrganizationSchema(socialLinks), buildWebSiteSchema()]
+  // Who legally operates the site, from the admin's site settings. Every empty
+  // field is null and its line is simply not rendered — in the footer below
+  // and in the Organization node alike.
+  const { legal } = await getEditorial()
+  const footerIdentity = [
+    legal.legal_entity_name,
+    legal.company_number ? `Company no. ${legal.company_number}` : null,
+    legal.registered_address,
+  ].filter((part): part is string => part !== null)
+
+  // How We Rate is not one of the seeded pages: linked only once it exists and
+  // is published, so the footer never points at a 404 while it is a draft.
+  const howWeRate = await getPage('how-we-rate').catch(() => null)
+  const legalLinks = [
+    ...LEGAL_PAGES.map(({ slug, label }) => ({ slug, label })),
+    ...(howWeRate ? [{ slug: 'how-we-rate', label: 'How We Rate' }] : []),
+  ]
+
+  const siteGraph = [buildOrganizationSchema(socialLinks, legal), buildWebSiteSchema()]
 
   return (
     <html lang="en" className={`${inter.variable} ${fraunces.variable} ${geistMono.variable} h-full antialiased motion-safe:scroll-smooth`}>
@@ -505,7 +523,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                 shared edges; wrapped as a paragraph, no two rows lined up. */}
             <nav aria-label="Legal" className="mt-10 border-t border-slate-200/70 pt-6">
               <ul className="grid grid-cols-2 gap-x-5 gap-y-3 sm:flex sm:flex-wrap sm:gap-y-2">
-                {LEGAL_PAGES.map(({ slug, label }) => (
+                {legalLinks.map(({ slug, label }) => (
                   <li key={slug}>
                     <Link href={`/${slug}`} className="inline-block -mx-1 px-1 py-3 -my-3 text-xs text-slate-400 transition-colors hover:text-emerald-700 lg:text-sm">{label}</Link>
                   </li>
@@ -519,12 +537,16 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             <div className="mt-6 flex flex-col items-center justify-between gap-3 border-t border-slate-200/70 pt-6 sm:flex-row">
               <div className="text-center sm:text-left">
                 <p className="text-xs text-slate-400">© {new Date().getFullYear()} {SITE_NAME}. All rights reserved.</p>
-                {/* Postal address on its own line under the copyright: it stays
-                    legible on a phone, where the two would otherwise wrap into
-                    one another. `address` is the correct element semantically;
-                    `not-italic` is load-bearing, because Preflight does not
-                    reset it and the browser default for the tag is italic. */}
-                <address className="mt-1 text-xs not-italic text-slate-400">{COPY.footer.postalAddress}</address>
+                {/* The operator's legal identity, from the admin's site settings
+                    (Sites → Edit → Legal identity). It used to be a hardcoded
+                    address here; now each part renders only when it is set, and
+                    the line disappears entirely while none is — no placeholder
+                    is ever printed. On its own line so it stays legible on a
+                    phone. `not-italic` is load-bearing: Preflight does not reset
+                    the browser's italic default for `address`. */}
+                {footerIdentity.length > 0 && (
+                  <address className="mt-1 text-xs not-italic text-slate-400">{footerIdentity.join(' · ')}</address>
+                )}
               </div>
               {/* The circled 18+ reads as a mark rather than as another line of
                   grey type, with "Gamble responsibly" beside it — the same pair

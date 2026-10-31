@@ -72,10 +72,21 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   const description = `Casinos accepting players from ${country.name} — ${COPY.countries.countryMetaSuffix}`
   const canonical = canonicalPathFor(slug, page)
 
+  /*
+   * A country with NO casinos is `noindex, follow`. The sitemap already leaves
+   * it out as thin content (`casinos_count > 0` in sitemap.ts), but the hub
+   * lists every country, so the page is reachable; asking for it to be indexed
+   * while it says "no casinos" is what Google files as a soft 404. Driven by the
+   * data: attaching a casino makes it indexable on the next regeneration.
+   * Past-the-end pages never get here: they 404.
+   */
+  const isEmpty = res.data.casinos.length === 0
+
   return {
     title,
     description,
     alternates: { canonical },
+    ...(isEmpty ? { robots: { index: false, follow: true } } : {}),
     openGraph: { type: 'website', url: canonical, siteName: SITE_NAME, title, description },
   }
 }

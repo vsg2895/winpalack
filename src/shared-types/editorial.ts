@@ -21,4 +21,18 @@ export interface SiteEditorial {
    * methodology that does not exist is the failure this feature risks.
    */
   methodology_page_slug: string | null
+  /** Who legally operates the site. Every empty field is null — hide that line. */
+  legal: SiteLegalIdentity
+}
+
+export interface SiteLegalIdentity {
+  legal_entity_name: string | null
+  registered_address: string | null
+  company_number: string | null
+  governing_law: string | null
+  contact_email: string | null
+  /** Falls back to contact_email server-side. */
+  support_email: string | null
+  /** Falls back to contact_email server-side. */
+  privacy_email: string | null
 }

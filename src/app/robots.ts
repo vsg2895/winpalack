@@ -1,8 +1,15 @@
 import type { MetadataRoute } from 'next'
 import { SITE_URL } from '@/lib/config'
+import { isIndexingAllowed } from '@/lib/seo/indexing'
 
 
 export default function robots(): MetadataRoute.Robots {
+  // Local, staging and preview builds shut every crawler out, and say nothing
+  // about a sitemap — see lib/seo/indexing.ts for how the deployment is told.
+  if (!isIndexingAllowed()) {
+    return { rules: { userAgent: '*', disallow: '/' } }
+  }
+
   return {
     rules: {
       userAgent: '*',
@@ -26,7 +33,21 @@ export default function robots(): MetadataRoute.Robots {
        * longer recrawl to confirm the 404. It is here so that the same URLs are
        * never crawled as content if Cloudflare is put back in front.
        */
-      disallow: ['/api/', '/go/', '/cdn-cgi/'],
+      /*
+       * Account and token pages: nothing on them is content, and the token
+       * pages carry a secret in the path. /register covers /register/verify.
+       * There is no search-results URL to block: search runs through /api/search.
+       */
+      disallow: [
+        '/api/',
+        '/go/',
+        '/cdn-cgi/',
+        '/login',
+        '/register',
+        '/forum/account',
+        '/verify/',
+        '/unsubscribe/',
+      ],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,
   }

@@ -15,6 +15,7 @@ import { relativeTime } from '@/lib/relativeTime'
 import Breadcrumbs from '@/components/forum/Breadcrumbs'
 import Pagination from '@/components/Pagination'
 import { canonicalPath } from '@/lib/seo/canonical'
+import { fitDescription, fitTitle } from '@/lib/seo/meta'
 
 /**
  * One board, listing its discussions.
@@ -54,14 +55,25 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   const board = res.data.category
   const title = page > 1 ? `${board.name} — Page ${page}` : board.name
 
+  /*
+   * An EMPTY board is `noindex, follow`. The sitemap already leaves it out as
+   * thin content (`articles_count > 0` in sitemap.ts); a page saying "nothing
+   * here yet" that still asked to be indexed is the contradiction Google files
+   * as a soft 404. Driven by the data, so the first discussion makes the board
+   * indexable on the next regeneration with no deploy. Past-the-end pages never
+   * get here: they 404.
+   */
+  const isEmpty = res.data.articles.length === 0
+
   return {
-    title,
-    description: board.description ?? COPY.communityForum.metaDescription,
+    title: fitTitle(title),
+    description: fitDescription(board.description ?? COPY.communityForum.metaDescription),
     // Page 2+ keeps its OWN canonical rather than collapsing onto page 1: the
     // pages hold different discussions, so pointing them all at page 1 would ask
     // Google to drop real content. The differing <title> is what keeps them from
     // reading as duplicates.
     alternates: { canonical: canonicalPath(`/forum/${category}`, page) },
+    ...(isEmpty ? { robots: { index: false, follow: true } } : {}),
     openGraph: {
       type: 'website',
       url: canonicalPath(`/forum/${category}`, page),
@@ -99,7 +111,9 @@ export default async function ForumCategoryPage({ params, searchParams }: Props)
   if (page > 1 && page > meta.last_page) notFound()
   const now = Date.now()
 
-  const pageUrl = `${SITE_URL}/forum/${category}`
+  // The same URL the canonical names: page N is its own document, so its graph
+  // must not describe itself as page 1.
+  const pageUrl = `${SITE_URL}${canonicalPath(`/forum/${category}`, page)}`
 
   const crumbs = [
     { name: 'Home', href: '/' },
@@ -122,7 +136,8 @@ export default async function ForumCategoryPage({ params, searchParams }: Props)
       board.name,
       pageUrl,
       articles.map((a, i) => ({
-        position: (page - 1) * 20 + i + 1,
+        // From the API's own page size, so a change to it cannot skew the ranks.
+        position: (meta.current_page - 1) * meta.per_page + i + 1,
         name: a.title,
         url: `${SITE_URL}/forum/${category}/${a.slug}`,
       })),

@@ -437,11 +437,6 @@ export const COPY = {
     // the correct behaviour there.
     tagline:
       'An independent guide to casinos that treat players fairly — 18+.',
-    // Registered postal address, shown beside the copyright line. A physical
-    // address in the footer is what mailbox providers and the gambling
-    // affiliate compliance checks both look for, and it must match the address
-    // used in the email templates.
-    postalAddress: '25 Regent Street, London SW1Y 4PH, United Kingdom',
     disclaimer:
       'Gambling should stay entertainment, never a way to make money. Strictly 18+. Set a limit before you play and walk away when you reach it.',
   },

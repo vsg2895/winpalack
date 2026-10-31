@@ -24,7 +24,10 @@ const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
 /** Minimum live offers before this page is worth having. */
 const MIN_OFFERS = 2
 
-type Props = { params: Promise<{ slug: string }> }
+type Props = {
+  params: Promise<{ slug: string }>
+  searchParams: Promise<{ page?: string }>
+}
 
 function qualifies(offers: unknown[], intro: string | null | undefined): boolean {
   return offers.length >= MIN_OFFERS && (intro ?? '').trim() !== ''
@@ -75,8 +78,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function CasinoBonusesPage({ params }: Props) {
+export default async function CasinoBonusesPage({ params, searchParams }: Props) {
   const { slug } = await params
+
+  /*
+   * THIS PAGE HAS ONE PAGE, so `?page=2` is a page past the end.
+   *
+   * Every offer is listed here at once, so any page number answered 200 with
+   * the whole list and an `index` robots tag: a duplicate at a URL of its own.
+   * A 404 says it is not a page at all, the rule every paginated listing here
+   * applies past its last page. `?page=1` never reaches this: proxy.ts 301s it.
+   */
+  const page = Math.max(1, Number((await searchParams).page) || 1)
+  if (page > 1) notFound()
 
   let casino
   try {

@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next'
-import { getPage, getArticles, getBonusArea, getNews, getCasinos, getCategories, getCountries, getForumIndex, getReviewFeed, getSiteFeatures, getSpecialOffers } from '@/lib/api'
+import { getPage, getArticles, getBonusArea, getNews, getPopularNews, getCasinos, getCountries, getForumIndex, getReviewFeed, getSitemapEntries, getSiteFeatures, getSpecialOffers } from '@/lib/api'
 import { SITE_URL } from '@/lib/config'
 import { TRUST_PAGE_SLUGS } from '@/constants/legalPages'
 
@@ -10,10 +10,29 @@ function safeDate(value: string | null | undefined): Date {
   return Number.isNaN(d.getTime()) ? new Date() : d
 }
 
+/*
+ * DATA-DRIVEN, END TO END. Every detail URL below comes from the API of the
+ * environment this runs in — the local database's test casinos locally, the
+ * real ones in production. Nothing is listed by hand, seeded or baked into the
+ * build: the route renders on request and caches on the `sitemap` tag.
+ *
+ * FAILURE IS PARTIAL, NEVER FATAL. Each source is settled on its own, so an API
+ * outage drops the URLs that source would have contributed and leaves the
+ * static pages; the sitemap itself never answers 500.
+ *
+ * NO generateSitemaps: one file holds 50,000 URLs, and this site publishes a few
+ * hundred. News is the only type that grows, and the rolling window
+ * (news:scrape prunes the oldest day) keeps it bounded far below that.
+ */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [casinosRes, categoriesRes, offersRes, countriesRes, articlesRes, newsRes, forumRes, communityRes, featuresRes, bonusRes] = await Promise.allSettled([
+  const [entriesRes, casinosRes, offersRes, countriesRes, articlesRes, newsRes, forumRes, communityRes, featuresRes, bonusRes, popularRes] = await Promise.allSettled([
+    // The detail URLs: casinos, categories, offers, guides and news posts, each
+    // already filtered by the rules its page applies (see SitemapController).
+    getSitemapEntries(),
+    // Still needed for the per-casino bonus pages below, whose gate (two offers
+    // and a written intro) only the full casino payload carries.
     getCasinos(),
-    getCategories(),
+    // Only to tell an EMPTY offers listing apart, which makes /special-offers noindex.
     getSpecialOffers(),
     getCountries(),
     getArticles(),
@@ -30,17 +49,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // holding at least one visible offer come back, so the sitemap can never
     // list a page that renders empty.
     getBonusArea(),
+    // The same cached call /news/most-popular renders from, so the sitemap
+    // and that page agree on whether the list is empty.
+    getPopularNews(),
   ])
 
-  const casinoUrls: MetadataRoute.Sitemap =
-    casinosRes.status === 'fulfilled'
-      ? casinosRes.value.data.map((c) => ({
-          url: `${SITE_URL}/casinos/${c.slug}`,
-          lastModified: safeDate(c.updated_at),
-          changeFrequency: 'weekly',
-          priority: 0.8,
-        }))
-      : []
+  const entries = entriesRes.status === 'fulfilled' ? entriesRes.value.data : null
+
+  // Attached to and active on this site, active globally, not noindex.
+  const casinoUrls: MetadataRoute.Sitemap = (entries?.casinos ?? []).map((c) => ({
+    url: `${SITE_URL}/casinos/${c.slug}`,
+    lastModified: safeDate(c.updated_at),
+    changeFrequency: 'weekly',
+    priority: 0.8,
+  }))
 
   /*
    * The per-casino bonus pages — /casinos/<slug>/bonuses.
@@ -75,43 +97,40 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           }))
       : []
 
-  const categoryUrls: MetadataRoute.Sitemap =
-    categoriesRes.status === 'fulfilled'
-      ? categoriesRes.value.data.map((c) => ({
-          url: `${SITE_URL}/categories/${c.slug}`,
-          lastModified: safeDate(c.updated_at),
-          changeFrequency: 'weekly',
-          priority: 0.6,
-        }))
-      : []
+  // Holding at least one visible casino, not noindex. An empty category is
+  // noindex on its page, so it is never submitted.
+  const categoryUrls: MetadataRoute.Sitemap = (entries?.categories ?? []).map((c) => ({
+    url: `${SITE_URL}/categories/${c.slug}`,
+    lastModified: safeDate(c.updated_at),
+    changeFrequency: 'weekly',
+    priority: 0.6,
+  }))
 
   /*
    * A SITEMAP MUST NOT CONTRADICT A PAGE HEADER.
    *
-   * This mapped every offer the endpoint returned. An offer carrying
-   * `seo.noindex` was therefore submitted as "index this" while the page itself
-   * said "do not" — the exact conflict Search Console reports, and the sitemap
-   * loses that argument every time. Same for an inactive offer, whose page
-   * serves the stricter `index: false, follow: false`.
-   *
-   * Both flags are checked here rather than trusted to the endpoint: the list
-   * is built for the public site, not for this file, and a sitemap is the one
-   * place where being wrong is a signal rather than a glitch.
+   * Active, claimable, casino active and attached, not noindex — the public
+   * offers listing plus the flag. An inactive offer's page serves
+   * `index: false, follow: false`, an expired or noindexed one
+   * `index: false, follow: true`; none of them reaches this list.
    */
-  const offerUrls: MetadataRoute.Sitemap =
-    offersRes.status === 'fulfilled'
-      ? offersRes.value.data
-          // `is_indexable` and not `seo.noindex`: the server-side rule already
-          // folds the admin flag in, and the page's robots tag reads the same
-          // flag. One definition, so the sitemap and the header cannot disagree.
-          .filter((o) => o.active !== false && o.is_indexable !== false)
-          .map((o) => ({
-            url: `${SITE_URL}/special-offers/${o.slug}`,
-            lastModified: safeDate(o.updated_at),
-            changeFrequency: 'weekly' as const,
-            priority: 0.7,
-          }))
-      : []
+  const offerUrls: MetadataRoute.Sitemap = (entries?.offers ?? []).map((o) => ({
+    url: `${SITE_URL}/special-offers/${o.slug}`,
+    lastModified: safeDate(o.updated_at),
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
+  }))
+
+  const articleEntries = entries?.articles ?? []
+
+  // Visible authors only — the endpoint applies the same rule as the page,
+  // which 404s for a hidden one.
+  const authorUrls: MetadataRoute.Sitemap = (entries?.authors ?? []).map((a) => ({
+    url: `${SITE_URL}/authors/${a.slug}`,
+    lastModified: safeDate(a.updated_at),
+    changeFrequency: 'monthly' as const,
+    priority: 0.4,
+  }))
 
   // Countries resolve to null when the SITE has the feature switched off, in
   // which case /countries and every country page 404 — so neither the index nor
@@ -135,13 +154,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           changeFrequency: 'weekly' as const,
           priority: 0.6,
         },
-        // Same rule as the news posts below: a guide an editor has flagged
-        // `noindex` must not be submitted as "index this".
-        ...articles
-          .filter((a) => a.noindex !== true)
+        // Indexable guides only; the endpoint lists them only while the
+        // section is open, by the same threshold.
+        ...articleEntries
+          .filter((a) => a.type === 'guide')
           .map((a) => ({
             url: `${SITE_URL}/guides/${a.slug}`,
-            lastModified: safeDate(a.updated_at ?? a.published_at),
+            lastModified: safeDate(a.updated_at),
             changeFrequency: 'monthly' as const,
             priority: 0.5,
           })),
@@ -153,6 +172,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // there is none on the route or in the nav either, and all three must agree or
   // the sitemap advertises a URL that 404s.
   const news = newsRes.status === 'fulfilled' ? newsRes.value : []
+  // The popular list is hand-picked (`to_be_most_popular`), so it can be empty
+  // while the feed is full. The page is then `noindex`, and a sitemap must not
+  // submit a URL its own page header refuses.
+  const hasPopular = popularRes.status === 'fulfilled' && (popularRes.value?.posts.length ?? 0) > 0
   const newsUrls: MetadataRoute.Sitemap = news.length > 0
     ? [
         {
@@ -162,13 +185,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           priority: 0.7,
         },
         // The Most Popular listing — its own indexable page, and the rail on
-        // /news is the only thing linking to it.
-        {
-          url: `${SITE_URL}/news/most-popular`,
-          lastModified: safeDate(news[0]?.published_at ?? null),
-          changeFrequency: 'daily' as const,
-          priority: 0.6,
-        },
+        // /news is the only thing linking to it. Only while it lists something.
+        ...(hasPopular
+          ? [
+              {
+                url: `${SITE_URL}/news/most-popular`,
+                lastModified: safeDate(news[0]?.published_at ?? null),
+                changeFrequency: 'daily' as const,
+                priority: 0.6,
+              },
+            ]
+          : []),
         /*
          * NOINDEX POSTS ARE NOT SUBMITTED.
          *
@@ -182,11 +209,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
          * The /news listing above stays: it is indexable in its own right, and
          * the posts remain reachable through it.
          */
-        ...news
-          .filter((post) => post.noindex !== true)
+        ...articleEntries
+          .filter((post) => post.type === 'news')
           .map((post) => ({
             url: `${SITE_URL}/news/${post.slug}`,
-            lastModified: safeDate(post.updated_at ?? post.published_at),
+            lastModified: safeDate(post.updated_at),
             changeFrequency: 'weekly' as const,
             priority: 0.5,
           })),
@@ -207,11 +234,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // The reviews feed is submitted only once it holds a published review. Null
   // means the site has reviews switched off and /reviews 404s; zero threads means the
   // page renders nothing but its empty state, which is thin content. Same rule
-  // the countries hub and the guides index follow.
+  // the countries hub and the guides index follow. The editor's "hide from
+  // search engines" switch keeps it out too: the page is `noindex` then, and a
+  // sitemap must not submit a URL its own page header refuses.
   const forumHasThreads =
     forumRes.status === 'fulfilled' &&
     forumRes.value !== null &&
-    forumRes.value.data.threads.length > 0
+    forumRes.value.data.threads.length > 0 &&
+    !forumRes.value.data.settings.noindex
 
   // The COMMUNITY forum switch — distinct from `forum_enabled`, which is the
   // reviews feed. Read here because both the /register entry below and the
@@ -219,16 +249,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const communityEnabled =
     featuresRes.status === 'fulfilled' && featuresRes.value.community_forum_enabled === true
 
-  // Accounts are their own switch: /register is a real, indexable page on a
-  // site that takes sign-ups before its board opens. The board URLs below still
-  // follow `communityEnabled`, because those genuinely do not exist without it.
-  const accountsEnabled =
-    featuresRes.status === 'fulfilled' && featuresRes.value.accounts_enabled === true
-
   const staticUrls: MetadataRoute.Sitemap = [
     { url: SITE_URL, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
     { url: `${SITE_URL}/casinos`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
-    { url: `${SITE_URL}/special-offers`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
+    // Left out only when the listing is known to be EMPTY: that page is
+    // `noindex` then (special-offers/page.tsx). A failed fetch keeps it, as the
+    // page itself does.
+    ...(offersRes.status === 'fulfilled' && offersRes.value.data.length === 0
+      ? []
+      : [{ url: `${SITE_URL}/special-offers`, lastModified: new Date(), changeFrequency: 'daily' as const, priority: 0.9 }]),
     { url: `${SITE_URL}/categories`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
     // Only when the feature is on — see countryUrls above.
     // The hub itself is only worth submitting once at least one country has
@@ -243,18 +272,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           },
         ] satisfies MetadataRoute.Sitemap)
       : []),
-    // The join page — only while accounts are switched on, since the page 404s
-    // otherwise. /login is noindex and deliberately absent.
-    ...(accountsEnabled
-      ? ([
-          {
-            url: `${SITE_URL}/register`,
-            lastModified: new Date(),
-            changeFrequency: 'monthly',
-            priority: 0.4,
-          },
-        ] satisfies MetadataRoute.Sitemap)
-      : []),
+    // No /register and no /login: robots.txt keeps crawlers out of the account
+    // pages, and a sitemap must not submit what robots.txt blocks.
     ...(forumHasThreads
       ? ([
           {
@@ -357,5 +376,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         }))
       : []
 
-  return [...staticUrls, ...casinoUrls, ...bonusPageUrls, ...categoryUrls, ...countryUrls, ...offerUrls, ...bonusUrls, ...articleUrls, ...newsUrls, ...communityUrls, ...legalUrls]
+  return [...staticUrls, ...casinoUrls, ...bonusPageUrls, ...categoryUrls, ...countryUrls, ...offerUrls, ...bonusUrls, ...articleUrls, ...newsUrls, ...communityUrls, ...legalUrls, ...authorUrls]
 }

@@ -14,6 +14,8 @@ import { relativeTime, absoluteDate } from '@/lib/relativeTime'
 import Breadcrumbs from '@/components/forum/Breadcrumbs'
 import ReplyForm from '@/components/forum/ReplyForm'
 import { getForumMember } from '@/lib/forumSession'
+import { isThinThread, withUgcRel } from '@/lib/forum/thin'
+import { fitDescription, fitTitle } from '@/lib/seo/meta'
 import type { ForumPost } from '@shared/types/community-forum'
 
 /**
@@ -51,8 +53,8 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   const path = `/forum/${category}/${article}`
 
   return {
-    title: doc.title,
-    description: doc.excerpt ?? undefined,
+    title: fitTitle(doc.title),
+    description: fitDescription(doc.excerpt),
     /*
      * Every cursor page canonicalises to the UNPAGINATED url.
      *
@@ -64,8 +66,11 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
      */
     alternates: { canonical: path },
     // A cursor page is reachable and crawlable but not worth indexing on its
-    // own; `follow` keeps the links out of it counting.
-    ...(after ? { robots: { index: false, follow: true } } : {}),
+    // own; `follow` keeps the links out of it counting. A THIN thread (no
+    // replies and a short opening post, see lib/forum/thin.ts) is held back the
+    // same way until the discussion gives it something to index. Threads are
+    // never in the sitemap, so there is nothing to exclude there.
+    ...(after || isThinThread(doc) ? { robots: { index: false, follow: true } } : {}),
     openGraph: { type: 'article', url: path, title: doc.title, description: doc.excerpt ?? undefined },
   }
 }
@@ -144,6 +149,17 @@ export default async function ForumArticlePage({ params, searchParams }: Props) 
   const doc = res.data.article
   const posts = res.data.posts
   const meta = res.meta
+
+  /*
+   * A CURSOR PAST THE END IS NOT A PAGE.
+   *
+   * `?after=999999999` rendered the opening post over an empty reply list with
+   * HTTP 200: noindex, but still a URL any guessed number could mint. Only a
+   * cursor can get here empty: a real "Next" link is emitted only while more
+   * replies exist, and the thread's own first page may legitimately have none.
+   * A cursor the API would ignore never reaches this; proxy.ts strips it.
+   */
+  if (after !== null && posts.length === 0) notFound()
   const now = Date.now()
 
   const pageUrl = `${SITE_URL}/forum/${category}/${article}`
@@ -246,7 +262,7 @@ export default async function ForumArticlePage({ params, searchParams }: Props) 
             {doc.body && (
               <div
                 className="prose prose-slate mt-4 max-w-none prose-a:text-emerald-700"
-                dangerouslySetInnerHTML={{ __html: doc.body }}
+                dangerouslySetInnerHTML={{ __html: withUgcRel(doc.body) }}
               />
             )}
           </article>

@@ -13,6 +13,8 @@ export interface Category {
   logo_path: string | null
   sort_order?: number
   casinos_count?: number
+  /** Keep out of search results: noindex on the category page, absent from the sitemap. */
+  noindex?: boolean
   created_at: string
   updated_at: string
 }

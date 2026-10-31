@@ -37,4 +37,7 @@ export const TRUST_PAGE_SLUGS = [
   'responsible-gambling',
   'affiliate-disclosure',
   'editorial-policy',
+  // Not in LEGAL_PAGES: it is not seeded on every site, so it is linked only
+  // once it is published (see the footer in app/layout.tsx).
+  'how-we-rate',
 ] as const

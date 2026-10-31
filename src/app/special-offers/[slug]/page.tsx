@@ -9,6 +9,9 @@ import BonusTerms from '@/components/BonusTerms'
 import { CLAIMABLE_BONUS_CATEGORY } from '@/components/SpecialOfferCard'
 import { COPY } from '@/constants/copy'
 import { SITE_URL } from '@/lib/config'
+import { offerClaimHref } from '@/lib/affiliate'
+import AffiliateNote from '@/components/AffiliateNote'
+import { fitDescription, fitTitle, withoutBrandSuffix } from '@/lib/seo/meta'
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
 
@@ -35,39 +38,6 @@ type Props = { params: Promise<{ slug: string }> }
  */
 
 /**
- * An admin-authored SEO title, with a brand suffix it already carries removed.
- *
- * The root layout sets `title.template = '%s | <brand>'`. That is right for a
- * composed default, but an SEO title written in the admin is a finished string,
- * and operators naturally end one with the brand — so every offer page with a
- * pattern applied rendered "… — Terms Stated Up Front | Winpalack | Winpalack":
- * the brand twice, and the words that matter pushed past the ~60 characters
- * Google renders.
- *
- * Stripping the suffix rather than switching to `title: { absolute }` is
- * deliberate. `absolute` bypasses the template entirely, which also means a
- * perfectly good admin title that does NOT mention the brand loses it — the
- * duplication would be gone and the branding with it. This way the template
- * stays in charge of appending the brand exactly once, whichever way the title
- * was written.
- *
- * Only an exact ` | <brand>` / ` - <brand>` / ` — <brand>` tail is removed, and
- * only from the end: a title that mentions the brand mid-sentence is left alone.
- */
-function withoutBrandSuffix(title: string): string {
-  if (SITE_NAME === '') return title
-
-  const stripped = title.replace(
-    new RegExp(`\\s*[|\\-—–]\\s*${SITE_NAME.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`, 'i'),
-    '',
-  )
-
-  // Never return an empty title — a record whose SEO title is nothing but the
-  // brand keeps it, and the template's duplicate is the lesser problem.
-  return stripped.trim() === '' ? title : stripped
-}
-
-/**
  * The offer's own prose, as plain text — the only field on an offer that is
  * written per offer AND per nothing else.
  *
@@ -86,11 +56,6 @@ function plainDescription(html: string | null | undefined): string {
     .trim()
 }
 
-/** Trimmed at a word boundary to the ~155 characters Google renders. */
-function metaLength(text: string): string {
-  return text.length <= 155 ? text : `${text.slice(0, 155).replace(/\s+\S*$/, '')}…`
-}
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   try {
@@ -104,7 +69,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
      */
     const prose = plainDescription(offer.description)
     const description = prose !== ''
-      ? metaLength(prose)
+      ? fitDescription(prose)
       : offer.bonuses
         ? `${offer.bonuses} — ${COPY.specialOffers.offerMetaSuffix}`
         : `${offer.title} — ${COPY.specialOffers.offerMetaSuffix}`
@@ -135,8 +100,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         : (seo?.description ?? description)
 
     return {
-      title: finalTitle,
-      description: finalDescription,
+      // Fitted to what a results page shows (lib/seo/meta.ts).
+      title: fitTitle(finalTitle),
+      description: fitDescription(finalDescription),
       alternates: { canonical: seo?.canonical_url ?? `/special-offers/${slug}` },
       openGraph: {
         type: 'article',
@@ -165,10 +131,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
        * category links are still worth following.
        *
        * The same flag filters the sitemap, so the two can never disagree.
+       *
+       * An EXPIRED offer joins the editorial gate. It is already gone from
+       * every listing and from the sitemap (`claimable()` on the server), and
+       * its page says so in a banner; left `index`, it stayed in search as a
+       * bonus nobody can claim. `follow` stays: the casino is still worth a link.
        */
       ...(!offer.active
         ? { robots: { index: false, follow: false } }
-        : offer.is_indexable === false
+        : offer.is_indexable === false || offer.terms?.expired === true
           ? { robots: { index: false, follow: true } }
           : {}),
     }
@@ -323,12 +294,13 @@ export default async function SpecialOfferDetailPage({ params }: Props) {
             // this page would lead nowhere. The operator link in the rail is
             // the route onward when the offer carries no URL of its own.
             claimable && offer.affiliate_url && (
-              <a href={offer.affiliate_url} target="_blank" rel="nofollow sponsored noopener" className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-xl bg-emerald-600 px-8 py-3.5 font-semibold text-white hover:bg-emerald-700 transition-colors">
+              <a href={offerClaimHref(offer) ?? undefined} target="_blank" rel="nofollow sponsored noopener" className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-xl bg-emerald-600 px-8 py-3.5 font-semibold text-white hover:bg-emerald-700 transition-colors">
                 {COPY.specialOffers.claim}
               </a>
             )
           )}
           </div>
+          <AffiliateNote className="mt-3 lg:text-right" />
           </header>
 
           <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-10 xl:grid-cols-[minmax(0,1fr)_26rem]">

@@ -115,7 +115,12 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     // Editor-controlled: "hide from search engines" keeps the page for visitors
     // while withholding it from indexing. `follow` stays on so the links out to
     // the casino pages still carry weight.
-    ...(settings?.noindex ? { robots: { index: false, follow: true } } : {}),
+    //
+    // An EMPTY feed is held back the same way. Page 1 renders its empty state
+    // rather than 404ing, but a page saying "no reviews yet" that asks to be
+    // indexed is what Google files as a soft 404, and the sitemap already
+    // leaves it out (`forumHasThreads` in sitemap.ts).
+    ...(settings?.noindex || res?.data.threads.length === 0 ? { robots: { index: false, follow: true } } : {}),
     openGraph: {
       type: 'website',
       url: path,
@@ -165,21 +170,25 @@ export default async function ForumPage({ searchParams }: Props) {
     { name: settings.title, url: PAGE_URL },
   ]
 
+  // The URL the canonical names. Page N is its own document, so its graph must
+  // not describe itself as page 1.
+  const pageUrl = `${SITE_URL}${canonicalPath('/reviews', page)}`
+
   const graph = [
     buildWebPageSchema({
       name: settings.meta_title,
-      url: PAGE_URL,
+      url: pageUrl,
       description: settings.meta_description,
-      breadcrumbId: breadcrumbIdFor(PAGE_URL),
+      breadcrumbId: breadcrumbIdFor(pageUrl),
     }),
-    buildBreadcrumbSchema(crumbs, PAGE_URL),
+    buildBreadcrumbSchema(crumbs, pageUrl),
     // The threads on THIS page, addressed by the casino pages they lead to.
     // No Review or AggregateRating markup: those reviews belong to the casino
     // pages that host them, and repeating them here would be the same ratings
     // claimed twice.
     buildItemListSchema(
       settings.title,
-      PAGE_URL,
+      pageUrl,
       threads.map((t, i) => ({
         position: (page - 1) * meta.per_page + i + 1,
         name: t.casino.name,

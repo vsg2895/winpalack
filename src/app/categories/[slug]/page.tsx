@@ -5,10 +5,12 @@ import { getCategory, getCountries } from '@/lib/api'
 import { buildItemListSchema, buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript } from '@/lib/seo'
 import { COPY } from '@/constants/copy'
 import CasinoCard from '@/components/CasinoCard'
+import AffiliateNote from '@/components/AffiliateNote'
 import CountryNav from '@/components/CountryNav'
 import Pagination from '@/components/Pagination'
 import { SITE_URL } from '@/lib/config'
 import { canonicalPath } from '@/lib/seo/canonical'
+import type { Continent, Country } from '@shared/types/country'
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
 
@@ -29,6 +31,26 @@ type Props = {
  */
 function canonicalPathFor(slug: string, page: number): string {
   return canonicalPath(`/categories/${slug}`, page)
+}
+
+/**
+ * Countries the filter offers inside this category: only those with casinos in it.
+ *
+ * Counts scoped to THIS category — see getCountries. Without the scope the
+ * dropdown offered "Austria 3" inside Free Spins and then showed two casinos,
+ * or none at all, which is the same broken promise the chips used to make.
+ */
+function filterCountries(continents: Continent[]): Country[] {
+  return continents.flatMap((c) => c.countries ?? []).filter((c) => (c.casinos_count ?? 0) > 0)
+}
+
+/**
+ * The country actually applied. An unknown or empty one falls back to the
+ * unfiltered category, so metadata and page must agree on it: the canonical
+ * depends on whether a filter is in force.
+ */
+function appliedCountry(countries: Country[], raw: string | undefined): string | undefined {
+  return raw && countries.some((c) => c.slug === raw) ? raw : undefined
 }
 
 /*
@@ -58,27 +80,43 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   const page = Math.max(1, Number(sp.page) || 1)
   // Country is the only filter this listing offers, so it is the only thing
   // that can make this a filtered view.
+  const country = appliedCountry(filterCountries((await getCountries(slug))?.data ?? []), sp.country)
   try {
-    const { data } = await getCategory(slug, page, sp.country)
+    const { data } = await getCategory(slug, page, country)
     // Distinct title per page so paginated views are never reported as duplicates.
     const title = page > 1 ? `${data.category.name} Casinos — Page ${page}` : `${data.category.name} Casinos`
     // Was `Best <name> casinos reviewed by <brand>.` — only ~50 characters and
     // formulaic. Composing the category name with this site's own line gives a
     // description long enough for a real snippet, and distinct per domain.
     const description = `${data.category.name} casinos — ${COPY.categories.categoryMetaSuffix}`
-    const canonical = canonicalPathFor(slug, page)
+    const canonical = canonicalPathFor(slug, country ? 1 : page)
+
+    /*
+     * An EMPTY category is `noindex, follow`, and the sitemap leaves it out
+     * (`casinos_count > 0` in sitemap.ts). A page saying "no casinos" that still
+     * asked to be indexed is what Google files as a soft 404. Driven by the
+     * data: attaching a casino makes it indexable on the next regeneration.
+     * Past-the-end pages never get here: they 404.
+     */
+    const isEmpty = data.casinos.length === 0
+    // The editor's "keep out of search results" switch; the sitemap endpoint
+    // drops the category on the same flag.
+    const isHidden = data.category.noindex === true
 
     return {
       title,
-      // A country-filtered view gets NO `noindex`. The self-referencing
-      // canonical above already names the unfiltered category page as the one
-      // true copy, and that is the signal Google consolidates on; a noindex
-      // stacked on top of it suppresses the page instead of folding it in, and
-      // over time a noindexed page stops passing on the links it carries.
+      // A country-filtered view gets NO `noindex`. Its canonical names the
+      // unfiltered category's FIRST page on every page of the filter — page N
+      // of "Germany" holds different casinos from page N of the category, so
+      // pointing it there would name a page that is not its copy. That is the
+      // signal Google consolidates on; a noindex stacked on top of it
+      // suppresses the page instead of folding it in, and over time a
+      // noindexed page stops passing on the links it carries.
       description,
       // Self-referencing canonical: this route is now the canonical home of a
       // category, and /casinos?category=<slug> 301s here (see next.config).
       alternates: { canonical },
+      ...(isEmpty || isHidden ? { robots: { index: false, follow: true } } : {}),
       openGraph: { type: 'website', url: canonical, siteName: SITE_NAME, title, description },
     }
   } catch {
@@ -108,12 +146,9 @@ export default async function CategoryDetailPage({ params, searchParams }: Props
    * An unknown or empty country falls back to the unfiltered category rather
    * than an empty list, so a stale link degrades instead of breaking.
    */
-  // Counts scoped to THIS category — see getCountries. Without the scope the
-  // dropdown offered "Austria 3" inside Free Spins and then showed two casinos,
-  // or none at all, which is the same broken promise the chips used to make.
   const continents = (await getCountries(slug))?.data ?? []
-  const countries = continents.flatMap((c) => c.countries ?? []).filter((c) => (c.casinos_count ?? 0) > 0)
-  const country = sp.country && countries.some((c) => c.slug === sp.country) ? sp.country : undefined
+  const countries = filterCountries(continents)
+  const country = appliedCountry(countries, sp.country)
 
   let payload
   try {
@@ -145,12 +180,14 @@ export default async function CategoryDetailPage({ params, searchParams }: Props
   // Position continues across pages so the ItemList reflects the real ranking
   // rather than restarting at 1 on every page.
   const offset = ((meta?.current_page ?? page) - 1) * (meta?.per_page ?? casinos.length)
+  // The same URL the canonical names, so the graph never describes a page the
+  // <head> disowns.
+  const pageUrl = `${SITE_URL}${canonicalPathFor(slug, country ? 1 : page)}`
   const listSchema = buildItemListSchema(
     `${category.name} Casinos`,
-    `${SITE_URL}${canonicalPathFor(slug, page)}`,
+    pageUrl,
     casinos.map((c, i) => ({ position: offset + i + 1, name: c.name, url: `${SITE_URL}/casinos/${c.slug}` })),
   )
-  const pageUrl = `${SITE_URL}${canonicalPathFor(slug, page)}`
   const breadcrumb = buildBreadcrumbSchema(
     [
       { name: 'Home', url: SITE_URL },
@@ -205,9 +242,12 @@ export default async function CategoryDetailPage({ params, searchParams }: Props
             /* The same blocks as the home page and /casinos: two compact cards
                per row from `md` up, one below it. A category page is the same
                kind of list, so it should not be a different kind of card. */
-            <ol className="mt-5 sm:mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-5">
+            <>
+            <AffiliateNote className="mt-5 sm:mt-8" />
+            <ol className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-5">
               {casinos.map((casino, i) => <CasinoCard key={casino.id} casino={casino} rank={offset + i + 1} compact />)}
             </ol>
+            </>
           )}
           {/* Paginates under the filter too, because the filter is now part of
               the same paginated request. The country rides along in basePath so

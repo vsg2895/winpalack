@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { resolveImageUrl } from '@/lib/images'
@@ -7,7 +8,9 @@ import { buildItemListSchema, buildWebPageSchema, jsonLdScript, buildFaqSchema }
 import { COPY } from '@/constants/copy'
 import { FAQ_ITEMS } from '@/constants/faq'
 import CasinoCard from '@/components/CasinoCard'
+import AffiliateNote from '@/components/AffiliateNote'
 import Pagination from '@/components/Pagination'
+import { canonicalPath } from '@/lib/seo/canonical'
 import BonusCategoryNav from '@/components/BonusCategoryNav'
 import CategoryNav from '@/components/CategoryNav'
 import CountryNav from '@/components/CountryNav'
@@ -108,14 +111,30 @@ async function resolveFilters(searchParams: Props['searchParams']) {
   return { categories: categories as Category[], selected, continents, countries, country, page }
 }
 
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const title = `${COPY.home.homeTitle} ${YEAR} | ${SITE_NAME}`
   const description = COPY.home.metaDescription
+  const page = Math.max(1, Number((await searchParams).page) || 1)
+
+  /*
+   * PAGE 2+ OF THE HOME PAGE IS `noindex, follow`.
+   *
+   * The paginator under the casino section links /?page=2, /?page=3, … and
+   * each answered `index` with the home page's own title and a canonical of
+   * `/` — asking Google to index a page while naming another as the original.
+   * What those pages add is the next ten casinos, which /casinos already lists
+   * as real, self-canonical pages. So the deeper home pages stay crawlable
+   * (`follow`, every casino link still counts) but out of the index, and the
+   * canonical names the page itself so the two signals agree.
+   */
+  const canonical = page > 1 ? canonicalPath('/', page) : '/'
+
   return {
     title,
     description,
-    alternates: { canonical: '/' },
-    openGraph: { type: 'website', url: '/', siteName: SITE_NAME, title, description },
+    alternates: { canonical },
+    ...(page > 1 ? { robots: { index: false, follow: true } } : {}),
+    openGraph: { type: 'website', url: canonical, siteName: SITE_NAME, title, description },
     twitter: { card: 'summary_large_image', title, description },
   }
 }
@@ -151,6 +170,11 @@ export default async function HomePage({ searchParams }: Props) {
   const casinoPerPage = catData?.meta?.per_page ?? HOME_CASINOS_PER_PAGE
   // Ranks continue across pages: the first card on page 2 is #21, not #1.
   const rankOffset = (casinoPage - 1) * casinoPerPage
+
+  // A page number past the end is not a page: /?page=999 rendered the home page
+  // with an empty casino section, 200 and `index` — a soft 404. `page > 1` keeps
+  // page 1 rendering whatever the section holds.
+  if (page > 1 && page > casinoLastPage) notFound()
 
   /**
    * Base URL for the paginator, carrying the country filter.
@@ -365,11 +389,14 @@ export default async function HomePage({ searchParams }: Props) {
             {casinos.length === 0 ? (
               <p className="text-slate-500">{COPY.casinos.noResults}</p>
             ) : (
+              <>
+              <AffiliateNote className="mb-4" />
               <ol className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-5">
                 {casinos.map((casino, i) => (
                   <CasinoCard key={casino.id} casino={casino} rank={rankOffset + i + 1} compact />
                 ))}
               </ol>
+              </>
             )}
 
             {/* One paginator, counting the same tens on every screen — so a

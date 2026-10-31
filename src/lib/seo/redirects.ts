@@ -48,6 +48,21 @@ const CANONICAL = new URL(SITE_URL)
  */
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
+/**
+ * Pages rendered whole, so a `page` parameter can only make a copy: two listings,
+ * and every single offer, casino review, guide, news article and forum thread.
+ * The item pattern is ONE segment deep on purpose: `/casinos` itself is
+ * paginated, and winpalack's `/casinos/<slug>/bonuses` handles its own `page`
+ * (it 404s past page one). `/news/most-popular` is a paginated listing, not an
+ * article. A thread pages by `?after=` (rule 2d), never by `page`.
+ */
+const UNPAGINATED = new Set(['/categories', '/special-offers'])
+const UNPAGINATED_ITEM =
+  /^\/(?:(?:special-offers|casinos|guides)\/[^/]+|news\/(?!most-popular$)[^/]+|forum\/[^/]+\/[^/]+)$/
+
+/** A forum thread, `/forum/<board>/<thread>` — the one route keyset-paginated by `?after=`. */
+const FORUM_THREAD = /^\/forum\/[^/]+\/[^/]+$/
+
 export function canonicalRedirect(request: NextRequest): string | null {
   const url = request.nextUrl.clone()
   let changed = false
@@ -129,6 +144,56 @@ export function canonicalRedirect(request: NextRequest): string | null {
   if (page !== null && Math.max(1, Number(page) || 1) === 1) {
     url.searchParams.delete(PAGE_PARAM)
     changed = true
+  }
+
+  // ── 2b. any other spelling of page N → `?page=N` ───────────────────────────
+  // The same clamp lets `?page=02`, `?page=2.0` and `?page=2.5` reach a page,
+  // and each rendered a 200 at its own URL: `02` a copy of page 2, `2.5` a page
+  // titled "Page 2.5", and on a listing that floors the number (the forum
+  // boards), `?page=1.5` a copy of page 1. Every one of them asks to be indexed.
+  // Truncating here gives each one the single address the paginator links.
+  // Non-finite values are left alone: no page renders them, they 404.
+  else if (page !== null) {
+    const whole = Math.trunc(Number(page))
+    if (Number.isFinite(whole) && String(whole) !== page) {
+      if (whole <= 1) url.searchParams.delete(PAGE_PARAM)
+      else url.searchParams.set(PAGE_PARAM, String(whole))
+      changed = true
+    }
+  }
+
+  // ── 2c. a page number on a page that has no pages → that page ─────────────
+  // `/categories` and `/special-offers` list everything on one page, and an
+  // offer, a casino review, a guide, a news article or a forum thread is one
+  // page, but the clamp above let `?page=2` (or `?page=999`) render each again
+  // at its own URL: HTTP 200, the same content, an index robots tag. The
+  // canonical already named the bare path, so this is the redirect that
+  // canonical was asking for. Done here rather than with a 404 in
+  // the page because on most sites the two hubs are prerendered, and reading
+  // `searchParams` there would make them render on every request.
+  if (
+    (UNPAGINATED.has(url.pathname) || UNPAGINATED_ITEM.test(url.pathname)) &&
+    url.searchParams.has(PAGE_PARAM)
+  ) {
+    url.searchParams.delete(PAGE_PARAM)
+    changed = true
+  }
+
+  // ── 2d. a forum cursor the API would ignore → no cursor ────────────────────
+  // The API reads `?after=` only as a positive integer and treats anything
+  // else as no cursor at all (ForumController::cursor), so `?after=`,
+  // `?after=abc` and `?after=-5` each rendered the thread's FIRST page at a URL
+  // of its own; the empty one even as `index`. A cursor that only spells a
+  // real one differently (`?after=042`) goes to its single spelling.
+  const after = url.searchParams.get('after')
+  if (after !== null && FORUM_THREAD.test(url.pathname)) {
+    if (!/^\d+$/.test(after) || Number(after) === 0) {
+      url.searchParams.delete('after')
+      changed = true
+    } else if (String(Number(after)) !== after) {
+      url.searchParams.set('after', String(Number(after)))
+      changed = true
+    }
   }
 
   // ── 3. /?category=<slug> → /categories/<slug> ──────────────────────────────

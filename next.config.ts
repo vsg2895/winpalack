@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { API_IMAGE } from "./src/lib/config";
 
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
@@ -74,18 +75,37 @@ const nextConfig: NextConfig = {
   // at .next/standalone/sites/idevaffiliation/server.js (breaking the Docker
   // `node server.js` path) and emit the "inferred workspace root" warning.
   outputFileTracingRoot: projectRoot,
-  images: {
-    // The casino/offer images are served by the Laravel storage backend. In
-    // local dev that is http://localhost:8000 — a private IP, which Next 16
-    // refuses to optimize by default (SSRF protection). Opt in for dev/private
-    // networks. In production these are served from a public domain/CDN.
-    dangerouslyAllowLocalIP: true,
-    remotePatterns: [
-      // Allow logos/banners from the storage backend or a CDN.
-      { protocol: "https", hostname: "**" },
-      { protocol: "http", hostname: "**" },
-    ],
-  },
+  /*
+   * ONE image origin: the API's public storage, the same base resolveImageUrl()
+   * builds every image URL from (lib/images.ts). Was `**` over http and https,
+   * which let the optimizer fetch and re-serve an image from any host on the
+   * internet. Measured on winpalack.com before narrowing: every optimised and
+   * every plain <img> came from api.idevaffiliation.com/storage/.
+   *
+   * A stored ABSOLUTE URL on another host now fails optimisation. That is the
+   * trade-off; resolveImageUrl() passes such URLs through, so an external image
+   * has to be uploaded rather than linked.
+   *
+   * In local dev the storage backend is http://localhost:8000 — a private IP,
+   * which Next 16 refuses to optimize by default (SSRF protection). The opt-in
+   * follows the origin, so a production build never carries it.
+   */
+  images: (() => {
+    const origin = new URL(API_IMAGE);
+    const isLocal = ["localhost", "127.0.0.1", "[::1]"].includes(origin.hostname);
+
+    return {
+      dangerouslyAllowLocalIP: isLocal,
+      remotePatterns: [
+        {
+          protocol: origin.protocol === "http:" ? ("http" as const) : ("https" as const),
+          hostname: origin.hostname,
+          port: origin.port,
+          pathname: "/storage/**",
+        },
+      ],
+    };
+  })(),
 };
 
 export default nextConfig;

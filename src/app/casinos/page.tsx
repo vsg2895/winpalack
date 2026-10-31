@@ -5,6 +5,7 @@ import { buildItemListSchema, buildWebPageSchema, jsonLdScript } from '@/lib/seo
 import { canonicalPath } from '@/lib/seo/canonical'
 import { COPY } from '@/constants/copy'
 import CasinoCard from '@/components/CasinoCard'
+import AffiliateNote from '@/components/AffiliateNote'
 import CategoryNav from '@/components/CategoryNav'
 import CountryNav from '@/components/CountryNav'
 import Pagination from '@/components/Pagination'
@@ -212,11 +213,14 @@ export default async function CasinosPage({ searchParams }: Props) {
             /* The home page's blocks: two compact cards per row from `md` up,
                one below it. `compact` is what makes a half-width card stay the
                height of a full-width one — see CasinoCard. */
+            <>
+            <AffiliateNote className="mb-4" />
             <ol className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-5">
               {casinos.map((casino, i) => (
                 <CasinoCard key={casino.id} casino={casino} rank={(meta.current_page - 1) * meta.per_page + i + 1} compact />
               ))}
             </ol>
+            </>
           )}
 
           <Pagination basePath={basePath} current={meta.current_page} last={meta.last_page} />

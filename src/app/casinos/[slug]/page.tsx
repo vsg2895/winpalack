@@ -3,6 +3,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { notFound, permanentRedirect } from 'next/navigation'
 import { getCasino, getCasinos, getEditorial, getSiteFeatures } from '@/lib/api'
+import AffiliateNote from '@/components/AffiliateNote'
+import Byline from '@/components/Byline'
 import { buildCasinoReviewSchema, buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript } from '@/lib/seo'
 import { resolveImageUrl } from '@/lib/images'
 import BonusTerms from '@/components/BonusTerms'
@@ -12,6 +14,7 @@ import CasinoReviews from '@/components/CasinoReviews'
 import CountryStrip from '@/components/CountryStrip'
 import { COPY } from '@/constants/copy'
 import { SITE_URL } from '@/lib/config'
+import { fitDescription, fitTitle, withoutBrandSuffix } from '@/lib/seo/meta'
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
 
@@ -38,39 +41,6 @@ type Props = { params: Promise<{ slug: string }> }
  * to no-store and send every request to the API, where this leaves the
  * existing per-fetch cache and its tags exactly as they were.
  */
-
-/**
- * An admin-authored SEO title, with a brand suffix it already carries removed.
- *
- * The root layout sets `title.template = '%s | <brand>'`. That is right for a
- * composed default, but an SEO title written in the admin is a finished string,
- * and operators naturally end one with the brand — so every offer page with a
- * pattern applied rendered "… — Terms Stated Up Front | Winpalack | Winpalack":
- * the brand twice, and the words that matter pushed past the ~60 characters
- * Google renders.
- *
- * Stripping the suffix rather than switching to `title: { absolute }` is
- * deliberate. `absolute` bypasses the template entirely, which also means a
- * perfectly good admin title that does NOT mention the brand loses it — the
- * duplication would be gone and the branding with it. This way the template
- * stays in charge of appending the brand exactly once, whichever way the title
- * was written.
- *
- * Only an exact ` | <brand>` / ` - <brand>` / ` — <brand>` tail is removed, and
- * only from the end: a title that mentions the brand mid-sentence is left alone.
- */
-function withoutBrandSuffix(title: string): string {
-  if (SITE_NAME === '') return title
-
-  const stripped = title.replace(
-    new RegExp(`\\s*[|\\-—–]\\s*${SITE_NAME.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`, 'i'),
-    '',
-  )
-
-  // Never return an empty title — a record whose SEO title is nothing but the
-  // brand keeps it, and the template's duplicate is the lesser problem.
-  return stripped.trim() === '' ? title : stripped
-}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
@@ -103,8 +73,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const finalDescription = seo?.description ?? description
 
     return {
-      title: finalTitle,
-      description: finalDescription,
+      // Fitted to what a results page shows (lib/seo/meta.ts): admin titles
+      // and patterns run long, and the brand is the first thing to give way.
+      title: fitTitle(finalTitle),
+      description: fitDescription(finalDescription),
       // A canonical override is how duplicate content between our six domains
       // gets resolved deliberately instead of Google picking a winner.
       alternates: { canonical: seo?.canonical_url ?? `/casinos/${slug}` },
@@ -303,6 +275,8 @@ export default async function CasinoDetailPage({ params }: Props) {
             {COPY.casinos.visitCasino}
           </a>
           </div>
+          <AffiliateNote className="mt-3 lg:text-right" />
+          <Byline byline={casino.byline} methodologySlug={methodologySlug} className="mt-3" />
           </header>
 
           <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-10 xl:grid-cols-[minmax(0,1fr)_26rem]">
@@ -392,7 +366,7 @@ export default async function CasinoDetailPage({ params }: Props) {
               )}
             </dl>
 
-            {author && reviewedOn && (
+            {!casino.byline && author && reviewedOn && (
               <div className="px-6 pb-5">
             {/* The byline. Rendered ONLY when the site has named a real person
                 AND someone recorded a review date for this casino — either

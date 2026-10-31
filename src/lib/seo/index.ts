@@ -5,7 +5,10 @@ import type {
   ItemList,
   WebPage,
   WebSite,
+  Person,
   WithContext, FAQPage } from 'schema-dts'
+import type { Author, BylinePerson } from '@shared/types/author'
+import type { SiteLegalIdentity } from '@shared/types/editorial'
 import type { CasinoWithAttachment } from '@shared/types/casino'
 import type { SocialLink } from '@shared/types/socialLink'
 import { SITE_URL } from '../config'
@@ -37,7 +40,15 @@ export const WEBSITE_ID = `${SITE_URL}/#website`
  * fail Rich Results validation rather than help. It goes in with the raster
  * icon set.
  */
-export function buildOrganizationSchema(socialLinks: SocialLink[] = []): WithContext<Organization> {
+export function buildOrganizationSchema(
+  socialLinks: SocialLink[] = [],
+  /**
+   * Who legally operates the site, from the admin's site settings. Each field
+   * is emitted only when set: markup naming an entity or address the site
+   * does not publish would be a claim nobody can verify.
+   */
+  legal: SiteLegalIdentity | null = null,
+): WithContext<Organization> {
   const profiles = socialLinks
     .map((link) => link.url)
     .filter((url): url is string => typeof url === 'string' && url.trim() !== '')
@@ -49,7 +60,46 @@ export function buildOrganizationSchema(socialLinks: SocialLink[] = []): WithCon
     name: SITE_NAME,
     url: SITE_URL,
     description: SITE_DESCRIPTION,
+    ...(legal?.legal_entity_name ? { legalName: legal.legal_entity_name } : {}),
+    ...(legal?.registered_address ? { address: legal.registered_address } : {}),
+    ...(legal?.contact_email ? { email: legal.contact_email } : {}),
+    ...(legal?.company_number ? { identifier: legal.company_number } : {}),
     ...(profiles.length > 0 ? { sameAs: profiles } : {}),
+  }
+}
+
+/** Stable @id of an author's Person node — the same on bylines and on the author page. */
+export function personIdFor(slug: string): string {
+  return `${SITE_URL}/authors/${slug}#person`
+}
+
+/** A byline's person as a compact Person reference, linked to their page. */
+export function bylinePersonSchema(person: BylinePerson): Person {
+  return {
+    '@type': 'Person',
+    '@id': personIdFor(person.slug),
+    name: person.name,
+    url: `${SITE_URL}/authors/${person.slug}`,
+    ...(person.role ? { jobTitle: person.role } : {}),
+  }
+}
+
+/** The full Person node for /authors/{slug}. */
+export function buildPersonSchema(author: Author, imageUrl: string | null): WithContext<Person> {
+  const sameAs = author.profile_links.map((l) => l.url).filter((u) => u.trim() !== '')
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    '@id': personIdFor(author.slug),
+    name: author.name,
+    url: `${SITE_URL}/authors/${author.slug}`,
+    ...(author.role ? { jobTitle: author.role } : {}),
+    ...(author.short_bio ? { description: author.short_bio } : {}),
+    ...(imageUrl ? { image: imageUrl } : {}),
+    ...(author.expertise.length > 0 ? { knowsAbout: author.expertise } : {}),
+    ...(sameAs.length > 0 ? { sameAs } : {}),
+    worksFor: { '@id': ORGANIZATION_ID },
   }
 }
 
@@ -112,18 +162,36 @@ export function buildCasinoReviewSchema(
    */
   author?: { name: string } | null,
 ): WithContext<Review> {
+  /*
+   * A rating ONLY when the editor set one. `rating` is an integer with 0 as its
+   * default, so 0 means "not scored yet" — and markup claiming a 0/5 verdict
+   * for every unscored casino is the fabricated data Google's review-snippet
+   * policy names. Without it the Review stays valid; it just earns no stars.
+   */
+  const hasRating = casino.rating > 0
+
+  // This site's own byline wins: it names a person with a page of their own.
+  // The site-wide editorial author is the fallback for casinos without one.
+  const person = casino.byline?.author ?? casino.byline?.reviewer ?? null
+  const reviewDate = casino.byline?.last_reviewed_at ?? casino.reviewed_at ?? null
+
   return {
     '@context': 'https://schema.org',
     '@type': 'Review',
     name: `${casino.name} Review`,
     // Only emitted alongside a real review date, matching the visible byline —
     // the markup and the page must make the same claim.
-    ...(author && casino.reviewed_at
+    ...(person
       ? {
-          author: { '@type': 'Person' as const, name: author.name },
-          datePublished: casino.reviewed_at,
+          author: bylinePersonSchema(person),
+          ...(reviewDate ? { datePublished: reviewDate } : {}),
         }
-      : {}),
+      : author && casino.reviewed_at
+        ? {
+            author: { '@type': 'Person' as const, name: author.name },
+            datePublished: casino.reviewed_at,
+          }
+        : {}),
     // When the editorial verdict was last revised. Answer engines weight recency
     // heavily when choosing which source to quote.
     ...(casino.updated_at ? { dateModified: casino.updated_at } : {}),
@@ -135,20 +203,28 @@ export function buildCasinoReviewSchema(
       // ratingCount is 1 because this IS one editorial score — the same value the
       // Review carries. Inflating it to imply crowd-sourced ratings we do not have
       // would be structured-data spam and risks a manual action.
-      aggregateRating: {
-        '@type': 'AggregateRating',
-        ratingValue: casino.rating,
-        bestRating: 5,
-        worstRating: 0,
-        ratingCount: 1,
-      },
+      ...(hasRating
+        ? {
+            aggregateRating: {
+              '@type': 'AggregateRating' as const,
+              ratingValue: casino.rating,
+              bestRating: 5,
+              worstRating: 0,
+              ratingCount: 1,
+            },
+          }
+        : {}),
     },
-    reviewRating: {
-      '@type': 'Rating',
-      ratingValue: casino.rating,
-      bestRating: 5,
-      worstRating: 0,
-    },
+    ...(hasRating
+      ? {
+          reviewRating: {
+            '@type': 'Rating' as const,
+            ratingValue: casino.rating,
+            bestRating: 5,
+            worstRating: 0,
+          },
+        }
+      : {}),
     // The site as author, used ONLY when no named reviewer is configured.
     // Declared after the spread above, so without this guard it silently
     // overwrote the Person node and the markup credited the brand while the

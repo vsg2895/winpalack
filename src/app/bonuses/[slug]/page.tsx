@@ -57,7 +57,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     return { title: COPY.errors.notFound }
   }
 
-  const { category } = payload
+  const { category, offers } = payload
   // Distinct title per page, so paginated views are never reported as
   // duplicates of each other.
   const title = page > 1 ? `${category.name} — Page ${page}` : category.name
@@ -71,6 +71,14 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     title,
     description,
     alternates: { canonical },
+    /*
+     * An EMPTY bonus type is `noindex, follow`. The page renders its empty state
+     * rather than 404ing, because the nav and the sitemap list every published
+     * type; but an indexable page saying "no offers" is what Google files as a
+     * soft 404. Driven by the data: the first offer makes it indexable on the
+     * next regeneration. Past-the-end pages never get here: they 404.
+     */
+    ...(offers.length === 0 ? { robots: { index: false, follow: true } } : {}),
     openGraph: { type: 'website', url: canonical, siteName: SITE_NAME, title, description },
   }
 }
@@ -90,6 +98,19 @@ export default async function BonusCategoryPage({ params, searchParams }: Props)
   }
 
   const { category, offers, meta } = payload
+
+  /*
+   * A PAGE NUMBER PAST THE END IS NOT A PAGE.
+   *
+   * Without this, /bonuses/<type>?page=999 rendered an empty list with HTTP 200,
+   * an `index` robots tag and a self-referencing canonical, so every number a
+   * crawler guessed became its own indexable URL claiming to be a real page of
+   * the type. Google calls that a soft 404 and reports it as an error.
+   *
+   * `page > 1` is part of the test on purpose: an empty type still has a
+   * legitimate page 1, and it must render its empty state rather than 404.
+   */
+  if (page > 1 && page > meta.last_page) notFound()
   const pageUrl = `${SITE_URL}${canonicalPathFor(slug, page)}`
   const description = category.description ?? `${category.name} — ${COPY.bonusCategory.metaSuffix}`
 

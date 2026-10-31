@@ -3,10 +3,12 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { getArticles, getArticle, getEditorial, getSiteFeatures } from '@/lib/api'
-import { buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript } from '@/lib/seo'
+import Byline from '@/components/Byline'
+import { buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript, bylinePersonSchema } from '@/lib/seo'
 import { resolveImageUrl } from '@/lib/images'
 import { COPY } from '@/constants/copy'
 import { SITE_URL } from '@/lib/config'
+import { fitDescription, fitTitle } from '@/lib/seo/meta'
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
 
@@ -43,8 +45,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = article.meta_description ?? article.excerpt ?? COPY.guides.pageDescription
 
   return {
-    title,
-    description,
+    // Fitted to what a results page shows (lib/seo/meta.ts). Rewritten news
+    // headlines in particular run past 60 characters with the brand appended.
+    title: fitTitle(title),
+    description: fitDescription(description),
     alternates: { canonical: article.canonical_url ?? `/guides/${slug}` },
     ...(article.noindex ? { robots: { index: false, follow: true } } : {}),
     openGraph: {
@@ -69,7 +73,11 @@ export default async function GuidePage({ params }: Props) {
 
   // Reused from 3.10 — the same person named on the casino reviews. Null unless
   // the site configured a byline, and then no author is claimed anywhere.
-  const { author } = await getEditorial()
+  const editorial = await getEditorial()
+  // A named author of THIS article (with a page of their own) wins over the
+  // site-wide editorial name, which stays the fallback.
+  const bylinePerson = article.byline?.author ?? article.byline?.reviewer ?? null
+  const author = bylinePerson ? null : editorial.author
 
   const hero = resolveImageUrl(article.hero_image_path)
   const pageUrl = `${SITE_URL}/guides/${slug}`
@@ -105,7 +113,11 @@ export default async function GuidePage({ params }: Props) {
     ...(hero ? { image: hero } : {}),
     ...(article.published_at ? { datePublished: article.published_at } : {}),
     ...(article.updated_at ? { dateModified: article.updated_at } : {}),
-    ...(author ? { author: { '@type': 'Person', name: author.name } } : {}),
+    ...(bylinePerson
+      ? { author: bylinePersonSchema(bylinePerson) }
+      : author
+        ? { author: { '@type': 'Person', name: author.name } }
+        : {}),
     publisher: { '@type': 'Organization', name: SITE_NAME },
     mainEntityOfPage: pageUrl,
   }
@@ -155,6 +167,7 @@ export default async function GuidePage({ params }: Props) {
               </time>
             )}
           </p>
+          <Byline byline={article.byline} className="mt-2" />
 
           {article.excerpt && <p className="mt-6 text-lg text-slate-600">{article.excerpt}</p>}
 

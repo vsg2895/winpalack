@@ -2,9 +2,11 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getPage } from '@/lib/api'
+import Byline from '@/components/Byline'
 import { LEGAL_PAGES } from '@/constants/legalPages'
 import { buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript } from '@/lib/seo'
 import { SITE_URL } from '@/lib/config'
+import { fitDescription, fitTitle, TITLE_MAX, withoutBrandSuffix } from '@/lib/seo/meta'
 
 // The known legal slugs are pre-rendered; any OTHER published CMS page renders
 // on demand (and unknown/unpublished slugs 404 via notFound()). Static segments
@@ -13,7 +15,10 @@ export const dynamicParams = true
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
 
-type Props = { params: Promise<{ slug: string }> }
+type Props = {
+  params: Promise<{ slug: string }>
+  searchParams: Promise<{ page?: string }>
+}
 
 export function generateStaticParams(): Array<{ slug: string }> {
   return LEGAL_PAGES.map((p) => ({ slug: p.slug }))
@@ -32,12 +37,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // So compose the final value here and mark it `absolute` to opt out of the
   // template — appending the brand only when the authored title genuinely lacks
   // it, so an admin can write the title either way and still get exactly one.
+  //
+  // Only when that runs past 60 characters does fitTitle take over: the brand
+  // tail is dropped first, then the words are cut (lib/seo/meta.ts).
   const headline = page.meta_title ?? page.title
-  const title = headline.includes(SITE_NAME) ? headline : `${headline} | ${SITE_NAME}`
+  const namesBrand = SITE_NAME !== '' && headline.includes(SITE_NAME)
+  const composed = namesBrand ? headline : `${headline} | ${SITE_NAME}`
+  const ownWords = withoutBrandSuffix(headline)
 
   return {
-    title: { absolute: title },
-    description: page.meta_description ?? undefined,
+    title:
+      composed.length <= TITLE_MAX
+        ? { absolute: composed }
+        : fitTitle(ownWords, { brand: !ownWords.includes(SITE_NAME) }),
+    description: fitDescription(page.meta_description),
     alternates: { canonical: `/${slug}` },
     openGraph: { type: 'article', url: `/${slug}`, siteName: SITE_NAME, title: headline, description: page.meta_description ?? undefined },
     /*
@@ -70,8 +83,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function LegalPage({ params }: Props) {
+export default async function LegalPage({ params, searchParams }: Props) {
   const { slug } = await params
+
+  /*
+   * A CMS PAGE HAS ONE PAGE, so `?page=2` is a page past the end.
+   *
+   * `/about?page=2` answered 200 with the whole page and an `index` robots tag:
+   * a duplicate at a URL of its own. The edge redirect (lib/seo/redirects.ts,
+   * rule 2c) cannot catch this route, because a CMS slug is created in the admin
+   * and a one-segment rule would also swallow `/casinos?page=2`, which IS paginated.
+   * Same 404 as /guides and /countries. `?page=1` never reaches this: proxy.ts
+   * 301s it.
+   */
+  const pageNumber = Math.max(1, Number((await searchParams).page) || 1)
+  if (pageNumber > 1) notFound()
+
   const page = await getPage(slug)
   if (!page) notFound()
 
@@ -106,6 +133,7 @@ export default async function LegalPage({ params }: Props) {
           </nav>
 
           <h1 className="text-3xl font-bold text-zinc-900">{page.title}</h1>
+          <Byline byline={page.byline} className="mt-3" />
 
           <article
             className="prose prose-zinc mt-8 max-w-none prose-headings:font-bold prose-a:text-emerald-600"
