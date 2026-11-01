@@ -137,8 +137,12 @@ export default function MobileNav({
       {!open || !mounted
         ? null
         : createPortal(
-            <div className="fixed inset-0 z-50 lg:hidden" role="presentation">
-              <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" aria-hidden />
+            // The layer lets taps through to the header above it, and the
+            // dimmed backdrop starts under the header like the panel does:
+            // spanning the whole screen, it blurred the close button the panel
+            // comment below promises stays where the burger was.
+            <div className="pointer-events-none fixed inset-0 z-50 lg:hidden [&>*]:pointer-events-auto" role="presentation">
+              <div className="absolute inset-x-0 bottom-0 top-16 bg-slate-900/40 backdrop-blur-sm" aria-hidden />
 
               {/* Below the header, not over it: the close button stays where the
                   burger was, so the control does not move under the thumb. */}
