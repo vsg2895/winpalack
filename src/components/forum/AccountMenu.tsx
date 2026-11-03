@@ -87,7 +87,7 @@ export default function AccountMenu({
         aria-haspopup="menu"
         aria-label={initial ? `Account: ${label}` : 'Sign in or create an account'}
         onClick={() => setOpen((v) => !v)}
-        className={`flex min-h-11 items-center gap-1.5 rounded-full px-2.5 text-sm font-semibold transition-colors ${
+        className={`flex min-h-11 items-center gap-1.5 rounded-full px-2.5 max-[374px]:px-1.5 text-sm font-semibold transition-colors ${
           open ? 'bg-emerald-50 text-emerald-700' : 'text-slate-700 hover:bg-emerald-50 hover:text-emerald-700'
         }`}
       >
@@ -122,10 +122,12 @@ export default function AccountMenu({
 
         {initial && <span className="hidden max-w-24 truncate sm:inline">{label}</span>}
 
+        {/* The chevron is decoration, and below 375px its 22px are what pushed
+            the burger off-screen — the disc alone still reads as the control. */}
         <svg
           viewBox="0 0 20 20"
           aria-hidden
-          className={`h-4 w-4 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          className={`h-4 w-4 max-[374px]:hidden transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
           fill="none" stroke="currentColor" strokeWidth="2.25"
         >
           <path d="M6 8l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />

@@ -302,7 +302,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               content edge below it. A touch taller on desktop to match the
               larger type everywhere else. */}
           <div className="px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto flex h-16 max-w-[90rem] items-center justify-between gap-4 lg:h-20">
+          <div className="mx-auto flex h-16 max-w-[90rem] items-center justify-between gap-4 max-[374px]:gap-2 lg:h-20">
             <Logo />
             {/* Desktop only. Seven items plus the logo and the icon cluster
                 need roughly 810px, so below `lg` (1024px) the bar overflowed
@@ -370,7 +370,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               </ul>
             </nav>
 
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 max-[374px]:gap-0">
               {/* Search trigger + overlay. A client island in an otherwise
                   server-rendered header: it renders only a button until opened,
                   so no result markup is shipped and nothing indexed moves

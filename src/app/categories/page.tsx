@@ -43,10 +43,10 @@ export default async function CategoriesPage() {
         {categories.length === 0 ? (
           <p className="text-zinc-500">{COPY.categories.noResults}</p>
         ) : (
-          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-6">
+          <ul className="grid auto-rows-fr grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-6">
             {categories.map((c) => (
               <li key={c.id}>
-                <Link href={`/categories/${c.slug}`} className="block rounded-2xl border border-zinc-100 bg-white p-4 sm:p-6 text-center font-bold text-zinc-800 shadow-sm lg:p-9 lg:text-lg hover:border-emerald-300 hover:text-emerald-600 transition-colors">
+                <Link href={`/categories/${c.slug}`} className="flex h-full items-center justify-center rounded-2xl border border-zinc-100 bg-white p-4 sm:p-6 text-center font-bold text-zinc-800 shadow-sm lg:p-9 lg:text-lg hover:border-emerald-300 hover:text-emerald-600 transition-colors">
                   {/* Stacked, not inline: these cards are centred and one
                       word wide, so a logo beside the label would push long
                       names onto a second line. */}

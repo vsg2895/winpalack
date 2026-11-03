@@ -21,43 +21,30 @@ export default function CategoryNav({
 }) {
   return (
     /*
-     * CONTENT-SIZED chips in a wrapping row — the same shape all ten sibling
-     * sites use, and what this one had before.
-      *
-     * It briefly ran on `grid-template-columns: repeat(auto-fit, minmax(11.5rem,
-     * 1fr))` so every chip filled an equal track. The intent was that unequal
-     * widths read as unequal importance; the cost was that every chip became as
-     * wide as the widest one could need, so "Most Popular" rendered at ~235px
-     * for a 12-character label and the row read as a stack of slabs rather than
-     * a set of filters.
-      *
-     * The grid also existed to stop one wrapping label ("Online Casinos") making
-     * its row taller than the rest. `whitespace-nowrap` on the chip settles that
-     * at the source: a label that cannot wrap cannot pull a row out of line, so
-     * every chip sits at the same 44px floor without the container equalising
-     * anything — and 44px is what the country filter above matches.
+     * ONE FULL-WIDTH COLUMN ON A PHONE; from 640px up, a grid of EQUAL chips,
+     * every one as wide as the widest label.
      *
-     * ── ONE COLUMN ON A PHONE ───────────────────────────────────────────────
+     * Content-sized chips (the previous rule) gave every tab a different
+     * width, so "Free Spins" beside "Crypto Oriented" read as unequal buttons
+     * rather than one set of filters. The grid is `w-max`, so its `1fr` tracks
+     * resolve to the widest chip's max-content width and every chip shares it
+     * — no measured pixel value to go stale when a category is renamed, and no
+     * chip stretched past what the longest label needs (an earlier
+     * `minmax(11.5rem, 1fr)` grid filled the whole row, which made each chip a
+     * slab). The column count steps up with the breakpoints (2 / 3 / 4 / 5) so
+     * the widest chip still fits the container at each.
      *
-     * Content sizing is right on a desktop, where the chips sit in one row and
-     * their differing widths read as differing words. On a phone the same rule
-     * produced a ragged stack: measured at 390px the chips come out 156–187px
-     * wide, so some rows held two and some held one, no two edges lined up, and
-     * the country filter above was a third width again. A set of filters that
-     * looks like that reads as unrelated buttons rather than one control.
+     * `whitespace-nowrap` on the chip keeps every label on one line, so every
+     * chip sits at the same 44px floor — the height the country filter above
+     * matches.
      *
-     * Two equal columns do not fit: the widest chip needs ~187px and a
-     * half-width track at 390px is ~166px, so `whitespace-nowrap` would push the
-     * label out of its own chip. One full-width column is the honest answer —
-     * every chip identical, nothing clipped, and it matches the bonus-type
-     * block on the home page, which is already a single column at this width.
-     *
-     * `sm:` restores the content-sized row exactly as it was from 640px up, so
-     * the desktop treatment that was asked for is untouched.
+     * On a phone the chips stack in one column: content-sized they came out
+     * 156–187px wide at 390px, so some rows held two and some one, and two
+     * equal columns do not fit (a half-width track is ~166px).
      */
     /* On a phone the one-column stack can be folded away — see MobileCollapse. */
     <MobileCollapse label={COPY.collapse.casinoCategories} count={categories.length}>
-    <nav aria-label="Casino categories" className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:gap-2.5">
+    <nav aria-label="Casino categories" className="grid grid-cols-1 gap-2 sm:w-max sm:grid-cols-[repeat(2,1fr)] md:grid-cols-[repeat(3,1fr)] lg:grid-cols-[repeat(4,1fr)] xl:grid-cols-[repeat(5,1fr)] sm:gap-2.5">
       {categories.map((c) => {
         const active = c.slug === selected
         return (
@@ -98,7 +85,7 @@ export default function CategoryNav({
             // the edge of the selected chip. Sizing it to the border box leaves nothing
             // to repeat. This chip is the only bordered button on the site, which is
             // why no other gradient here shows the same line.
-            className={`flex min-h-11 w-full items-center justify-center whitespace-nowrap rounded-full px-5 py-2.5 text-center text-sm font-bold transition-all sm:inline-flex sm:w-auto ${
+            className={`flex min-h-11 w-full items-center justify-center whitespace-nowrap rounded-full px-5 py-2.5 text-center text-sm font-bold transition-all ${
               active
                 ? 'border border-transparent bg-origin-border bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-lg shadow-emerald-500/30'
                 : 'border border-slate-200 bg-white/70 text-slate-600 backdrop-blur hover:border-emerald-300 hover:text-emerald-700'
