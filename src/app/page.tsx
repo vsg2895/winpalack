@@ -4,11 +4,10 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { resolveImageUrl } from '@/lib/images'
 import { getBestNews, getCategories, getCategory, getCountries, getSpecialOffers , getBonusArea } from '@/lib/api'
-import { buildItemListSchema, buildWebPageSchema, jsonLdScript, buildFaqSchema } from '@/lib/seo'
+import { buildItemListSchema, buildWebPageSchema, jsonLdScript, buildFaqSchema, SHARE_IMAGES } from '@/lib/seo'
 import { COPY } from '@/constants/copy'
 import { FAQ_ITEMS } from '@/constants/faq'
 import CasinoCard from '@/components/CasinoCard'
-import AffiliateNote from '@/components/AffiliateNote'
 import Pagination from '@/components/Pagination'
 import { canonicalPath } from '@/lib/seo/canonical'
 import BonusCategoryNav from '@/components/BonusCategoryNav'
@@ -134,8 +133,8 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     description,
     alternates: { canonical },
     ...(page > 1 ? { robots: { index: false, follow: true } } : {}),
-    openGraph: { type: 'website', url: canonical, siteName: SITE_NAME, title, description },
-    twitter: { card: 'summary_large_image', title, description },
+    openGraph: { type: 'website', url: canonical, siteName: SITE_NAME, title, description, images: SHARE_IMAGES },
+    twitter: { card: 'summary_large_image', title, description, images: SHARE_IMAGES },
   }
 }
 
@@ -390,7 +389,6 @@ export default async function HomePage({ searchParams }: Props) {
               <p className="text-slate-500">{COPY.casinos.noResults}</p>
             ) : (
               <>
-              <AffiliateNote className="mb-4" />
               <ol className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-5">
                 {casinos.map((casino, i) => (
                   <CasinoCard key={casino.id} casino={casino} rank={rankOffset + i + 1} compact />

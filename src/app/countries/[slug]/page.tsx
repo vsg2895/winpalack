@@ -10,6 +10,7 @@ import {
   buildWebPageSchema,
   breadcrumbIdFor,
   jsonLdScript,
+  SHARE_IMAGES,
 } from '@/lib/seo'
 import { COPY } from '@/constants/copy'
 import CasinoCard from '@/components/CasinoCard'
@@ -87,7 +88,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     description,
     alternates: { canonical },
     ...(isEmpty ? { robots: { index: false, follow: true } } : {}),
-    openGraph: { type: 'website', url: canonical, siteName: SITE_NAME, title, description },
+    openGraph: { type: 'website', url: canonical, siteName: SITE_NAME, title, description, images: SHARE_IMAGES },
   }
 }
 

@@ -29,7 +29,9 @@ function getCookie(name: string): string | null {
 
 function setCookie(name: string, value: string, maxAgeSeconds: number): void {
   if (typeof document === 'undefined') return
-  document.cookie = `${name}=${encodeURIComponent(value)}; max-age=${maxAgeSeconds}; path=/; SameSite=Lax`
+  // `Secure` on https, as on the consent cookie; left off a plain-http dev server.
+  const secure = location.protocol === 'https:' ? '; Secure' : ''
+  document.cookie = `${name}=${encodeURIComponent(value)}; max-age=${maxAgeSeconds}; path=/; SameSite=Lax${secure}`
 }
 
 function deleteCookie(name: string): void {

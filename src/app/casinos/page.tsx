@@ -1,11 +1,10 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getCategories, getCategory, getCountries } from '@/lib/api'
-import { buildItemListSchema, buildWebPageSchema, jsonLdScript } from '@/lib/seo'
+import { buildItemListSchema, buildWebPageSchema, jsonLdScript, SHARE_IMAGES } from '@/lib/seo'
 import { canonicalPath } from '@/lib/seo/canonical'
 import { COPY } from '@/constants/copy'
 import CasinoCard from '@/components/CasinoCard'
-import AffiliateNote from '@/components/AffiliateNote'
 import CategoryNav from '@/components/CategoryNav'
 import CountryNav from '@/components/CountryNav'
 import Pagination from '@/components/Pagination'
@@ -100,7 +99,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     // page without consolidating anything, and a noindexed page passes on
     // nothing it links to in the long run.
     alternates: { canonical },
-    openGraph: { type: 'website', url: canonical, siteName: SITE_NAME, title, description: COPY.casinos.pageDescription },
+    openGraph: { type: 'website', url: canonical, siteName: SITE_NAME, title, description: COPY.casinos.pageDescription, images: SHARE_IMAGES },
   }
 }
 
@@ -214,7 +213,6 @@ export default async function CasinosPage({ searchParams }: Props) {
                one below it. `compact` is what makes a half-width card stay the
                height of a full-width one — see CasinoCard. */
             <>
-            <AffiliateNote className="mb-4" />
             <ol className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-5">
               {casinos.map((casino, i) => (
                 <CasinoCard key={casino.id} casino={casino} rank={(meta.current_page - 1) * meta.per_page + i + 1} compact />

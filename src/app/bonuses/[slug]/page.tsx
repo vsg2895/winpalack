@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getBonusCategory } from '@/lib/api'
-import { buildBreadcrumbSchema, buildItemListSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript } from '@/lib/seo'
+import { buildBreadcrumbSchema, buildItemListSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript, SHARE_IMAGES } from '@/lib/seo'
 import { COPY } from '@/constants/copy'
 import SpecialOfferCard from '@/components/SpecialOfferCard'
 import Pagination from '@/components/Pagination'
@@ -79,7 +79,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
      * next regeneration. Past-the-end pages never get here: they 404.
      */
     ...(offers.length === 0 ? { robots: { index: false, follow: true } } : {}),
-    openGraph: { type: 'website', url: canonical, siteName: SITE_NAME, title, description },
+    openGraph: { type: 'website', url: canonical, siteName: SITE_NAME, title, description, images: SHARE_IMAGES },
   }
 }
 

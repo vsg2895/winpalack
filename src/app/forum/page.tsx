@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getForumIndex, getSiteFeatures } from '@/lib/api'
-import { buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript } from '@/lib/seo'
+import { buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript, SHARE_IMAGES } from '@/lib/seo'
 import { SITE_URL } from '@/lib/config'
 import { COPY } from '@/constants/copy'
 import { relativeTime } from '@/lib/relativeTime'
@@ -46,6 +46,7 @@ export async function generateMetadata(): Promise<Metadata> {
       url: '/forum',
       title: COPY.communityForum.metaTitle,
       description: COPY.communityForum.metaDescription,
+      images: SHARE_IMAGES,
     },
   }
 }

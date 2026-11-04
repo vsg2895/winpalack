@@ -437,6 +437,10 @@ export const COPY = {
     // the correct behaviour there.
     tagline:
       'An independent guide to casinos that treat players fairly — 18+.',
+    // Registered postal address, shown under the copyright line as on the
+    // sibling sites. The admin's Legal identity address wins when it is set
+    // (layout.tsx); this is what shows until then. Keep the two identical.
+    postalAddress: '25 Regent Street, London SW1Y 4PH, United Kingdom',
     disclaimer:
       'Gambling should stay entertainment, never a way to make money. Strictly 18+. Set a limit before you play and walk away when you reach it.',
   },

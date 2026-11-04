@@ -4,7 +4,7 @@ import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { getArticles, getArticle, getEditorial, getSiteFeatures } from '@/lib/api'
 import Byline from '@/components/Byline'
-import { buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript, bylinePersonSchema } from '@/lib/seo'
+import { buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript, bylinePersonSchema, SHARE_IMAGES } from '@/lib/seo'
 import { resolveImageUrl } from '@/lib/images'
 import { COPY } from '@/constants/copy'
 import { SITE_URL } from '@/lib/config'
@@ -58,6 +58,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       ...(article.published_at ? { publishedTime: article.published_at } : {}),
+      images: SHARE_IMAGES,
     },
   }
 }

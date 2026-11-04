@@ -50,6 +50,9 @@ export default function CountryNav({
   const [query, setQuery] = useState('')
   const wrapper = useRef<HTMLDivElement>(null)
   const search = useRef<HTMLInputElement>(null)
+  // Width of one category chip, so the trigger is the same size as the chips
+  // under it — see the effect below. null = no chip row, or a phone.
+  const [chipWidth, setChipWidth] = useState<number | null>(null)
 
   // Only countries this site actually publishes casinos in, and only continents
   // left with something to show.
@@ -118,6 +121,32 @@ export default function CountryNav({
     }
   }, [open])
 
+  /*
+   * The trigger at the width of a category chip, from 640px up.
+   *
+   * The chips are a grid whose tracks are all as wide as the WIDEST label, a
+   * width only the browser knows — it changes with every category name. So it
+   * is read from the first chip and followed with a ResizeObserver, not
+   * restated as a number that goes stale. A MINIMUM width: a selected country
+   * with a long name still grows the trigger rather than clipping it. On a
+   * phone both are full width already, so nothing is set there.
+   */
+  useEffect(() => {
+    const chip = document.querySelector<HTMLElement>('nav[aria-label="Casino categories"] a')
+    if (!chip) return
+
+    const wide = window.matchMedia('(min-width: 640px)')
+    const measure = () => setChipWidth(wide.matches ? chip.getBoundingClientRect().width : null)
+    const observer = new ResizeObserver(measure)
+
+    observer.observe(chip)
+    wide.addEventListener('change', measure)
+    return () => {
+      observer.disconnect()
+      wide.removeEventListener('change', measure)
+    }
+  }, [])
+
   if (all.length === 0) return null
 
   // Selecting a country resets the category: one chosen under "all countries"
@@ -183,12 +212,14 @@ export default function CountryNav({
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label={`Filter casinos by ${label.toLowerCase()}`}
+        style={chipWidth ? { minWidth: chipWidth } : undefined}
         /* Full width on a phone, so this sits at exactly the size of the
            category chips below it — they are one column there, and a
            filter row whose first control is a different width reads as
-           a different kind of control. Content-sized again from 640px,
-           where the chips go back to a wrapping row. */
-        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-slate-200 bg-white/80 px-5 py-2.5 text-sm font-bold text-slate-700 backdrop-blur transition-colors hover:border-emerald-300 hover:text-emerald-700 sm:inline-flex sm:w-auto sm:justify-start"
+           a different kind of control. From 640px it is at least one
+           chip wide (`chipWidth`), with its contents centred as a
+           chip's are. */
+        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-slate-200 bg-white/80 px-5 py-2.5 text-sm font-bold text-slate-700 backdrop-blur transition-colors hover:border-emerald-300 hover:text-emerald-700 sm:inline-flex sm:w-auto"
       >
         {current ? (
           <>

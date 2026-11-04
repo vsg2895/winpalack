@@ -23,12 +23,21 @@ function subscribe(onChange: () => void): () => void {
   return () => listeners.delete(onChange)
 }
 
+// Global Privacy Control: the browser-level "do not sell or share" signal. The
+// Privacy Policy says it is honoured as an opt-out, and nothing read it — so a
+// visitor who had already said no was still asked, with Accept All on offer.
+// It stands in for a "necessary only" answer until the visitor gives one
+// themselves; reopening the banner from the footer still lets them choose.
+function gpcOptOut(): boolean {
+  return (navigator as Navigator & { globalPrivacyControl?: boolean }).globalPrivacyControl === true
+}
+
 // true ⇒ show the banner (first visit, consent version changed, or reopened).
 function shouldShow(): boolean {
   if (forced) return true
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return true
+    if (!raw) return !gpcOptOut()
     const parsed = JSON.parse(raw) as { v?: number }
     return parsed?.v !== CONSENT_VERSION
   } catch {
@@ -45,7 +54,11 @@ function recordConsent(choice: Choice): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ choice, v: CONSENT_VERSION, ts: Date.now() }))
     // Mirror the choice into a first-party cookie so the server/analytics can read it.
-    document.cookie = `cookie_consent=${choice}; path=/; max-age=31536000; SameSite=Lax`
+    // `Secure` on https — every live domain — so the record of a visitor's
+    // choice never travels over plain http; omitted on a plain-http dev server,
+    // where some browsers refuse to set a Secure cookie at all.
+    const secure = location.protocol === 'https:' ? '; Secure' : ''
+    document.cookie = `cookie_consent=${choice}; path=/; max-age=31536000; SameSite=Lax${secure}`
   } catch {
     /* storage unavailable — still dismiss for this session */
   }

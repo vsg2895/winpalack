@@ -3,7 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getSpecialOffer } from '@/lib/api'
-import { buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript } from '@/lib/seo'
+import { buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript, SHARE_IMAGES } from '@/lib/seo'
 import { resolveImageUrl } from '@/lib/images'
 import BonusTerms from '@/components/BonusTerms'
 import { CLAIMABLE_BONUS_CATEGORY } from '@/components/SpecialOfferCard'
@@ -110,6 +110,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         siteName: SITE_NAME,
         title: finalTitle,
         description: finalDescription,
+        images: SHARE_IMAGES,
       },
       // Two independent reasons to stay out of the index, and INACTIVE WINS.
       // A hidden offer stays reachable by direct link so it can be reviewed,

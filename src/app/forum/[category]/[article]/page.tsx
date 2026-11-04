@@ -7,6 +7,7 @@ import {
   buildWebPageSchema,
   breadcrumbIdFor,
   jsonLdScript,
+  SHARE_IMAGES,
 } from '@/lib/seo'
 import { SITE_URL } from '@/lib/config'
 import { COPY } from '@/constants/copy'
@@ -71,7 +72,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     // same way until the discussion gives it something to index. Threads are
     // never in the sitemap, so there is nothing to exclude there.
     ...(after || isThinThread(doc) ? { robots: { index: false, follow: true } } : {}),
-    openGraph: { type: 'article', url: path, title: doc.title, description: doc.excerpt ?? undefined },
+    openGraph: { type: 'article', url: path, title: doc.title, description: doc.excerpt ?? undefined, images: SHARE_IMAGES },
   }
 }
 

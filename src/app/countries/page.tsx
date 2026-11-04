@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getCountries } from '@/lib/api'
 import { resolveImageUrl } from '@/lib/images'
-import { buildWebPageSchema, jsonLdScript } from '@/lib/seo'
+import { buildWebPageSchema, jsonLdScript, SHARE_IMAGES } from '@/lib/seo'
 import { COPY } from '@/constants/copy'
 import { SITE_URL } from '@/lib/config'
 
@@ -31,6 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
       siteName: SITE_NAME,
       title: COPY.countries.pageTitle,
       description: COPY.countries.pageDescription,
+      images: SHARE_IMAGES,
     },
   }
 }

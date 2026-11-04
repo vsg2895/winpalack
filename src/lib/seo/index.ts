@@ -137,10 +137,16 @@ export function buildWebPageSchema(params: {
   breadcrumbId?: string
   /** ISO-8601. Freshness is a strong citation signal for answer engines. */
   dateModified?: string
+  /**
+   * A WebPage subtype, when the page IS one. AboutPage and ContactPage are the
+   * types schema.org defines for a site's who-we-are and how-to-reach-us pages —
+   * the trust pages a reader (and a quality rater) looks for on an affiliate.
+   */
+  type?: 'WebPage' | 'AboutPage' | 'ContactPage'
 }): WithContext<WebPage> {
   return {
     '@context': 'https://schema.org',
-    '@type': 'WebPage',
+    '@type': params.type ?? 'WebPage',
     '@id': `${params.url}#webpage`,
     name: params.name,
     url: params.url,
@@ -335,3 +341,18 @@ export function buildFaqSchema(
     })),
   }
 }
+
+/**
+ * The site's share card — app/opengraph-image.tsx — as `openGraph.images`.
+ *
+ * Next merges metadata SHALLOWLY: a page that sets `openGraph` replaces the
+ * layout's whole object, and the generated card went with it. Only the home
+ * page (the card's own segment) was shared with an image; every other page
+ * went out as a large-image card with nothing in it. So every `openGraph`
+ * restates this, unless the page has a truthful image of its own.
+ *
+ * The alt lives here, not in opengraph-image.tsx, which imports it: importing
+ * that file instead would pull next/og into every page's metadata.
+ */
+export const SHARE_IMAGE_ALT = 'Winpalack — Responsible Casino Guide'
+export const SHARE_IMAGES = [{ url: '/opengraph-image', width: 1200, height: 630, alt: SHARE_IMAGE_ALT }]

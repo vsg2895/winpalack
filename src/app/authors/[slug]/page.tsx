@@ -3,7 +3,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { getAuthor } from '@/lib/api'
-import { buildBreadcrumbSchema, buildPersonSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript } from '@/lib/seo'
+import { buildBreadcrumbSchema, buildPersonSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript, SHARE_IMAGES } from '@/lib/seo'
 import { resolveImageUrl } from '@/lib/images'
 import { SITE_URL } from '@/lib/config'
 import { fitDescription, fitTitle } from '@/lib/seo/meta'
@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: fitTitle(title),
     description: fitDescription(description),
     alternates: { canonical: `/authors/${slug}` },
-    openGraph: { type: 'profile', url: `/authors/${slug}`, siteName: SITE_NAME, title, description },
+    openGraph: { type: 'profile', url: `/authors/${slug}`, siteName: SITE_NAME, title, description, images: SHARE_IMAGES },
   }
 }
 

@@ -2,10 +2,9 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getCategory, getCountries } from '@/lib/api'
-import { buildItemListSchema, buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript } from '@/lib/seo'
+import { buildItemListSchema, buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript, SHARE_IMAGES } from '@/lib/seo'
 import { COPY } from '@/constants/copy'
 import CasinoCard from '@/components/CasinoCard'
-import AffiliateNote from '@/components/AffiliateNote'
 import CountryNav from '@/components/CountryNav'
 import Pagination from '@/components/Pagination'
 import { SITE_URL } from '@/lib/config'
@@ -117,7 +116,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
       // category, and /casinos?category=<slug> 301s here (see next.config).
       alternates: { canonical },
       ...(isEmpty || isHidden ? { robots: { index: false, follow: true } } : {}),
-      openGraph: { type: 'website', url: canonical, siteName: SITE_NAME, title, description },
+      openGraph: { type: 'website', url: canonical, siteName: SITE_NAME, title, description, images: SHARE_IMAGES },
     }
   } catch {
     return { title: COPY.errors.notFound }
@@ -243,8 +242,7 @@ export default async function CategoryDetailPage({ params, searchParams }: Props
                per row from `md` up, one below it. A category page is the same
                kind of list, so it should not be a different kind of card. */
             <>
-            <AffiliateNote className="mt-5 sm:mt-8" />
-            <ol className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-5">
+            <ol className="mt-5 sm:mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-5">
               {casinos.map((casino, i) => <CasinoCard key={casino.id} casino={casino} rank={offset + i + 1} compact />)}
             </ol>
             </>

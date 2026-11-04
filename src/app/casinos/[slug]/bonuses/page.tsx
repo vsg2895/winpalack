@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getCasino } from '@/lib/api'
-import { buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript } from '@/lib/seo'
+import { buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript, SHARE_IMAGES } from '@/lib/seo'
 import BonusTerms from '@/components/BonusTerms'
 import { COPY } from '@/constants/copy'
 import { SITE_URL } from '@/lib/config'
@@ -71,7 +71,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       alternates: { canonical: `/casinos/${slug}/bonuses` },
-      openGraph: { type: 'article', url: `/casinos/${slug}/bonuses`, siteName: SITE_NAME, title, description },
+      openGraph: { type: 'article', url: `/casinos/${slug}/bonuses`, siteName: SITE_NAME, title, description, images: SHARE_IMAGES },
     }
   } catch {
     return { title: COPY.errors.notFound }

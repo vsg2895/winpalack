@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og'
+import { SHARE_IMAGE_ALT } from '@/lib/seo'
 
 /**
  * Dynamic Open Graph / Twitter card image.
@@ -9,11 +10,12 @@ import { ImageResponse } from 'next/og'
  * means it can never drift out of sync with the site name, and needs no binary
  * asset committed to the repo.
  *
- * Next.js picks this file up automatically for every route that does not
- * override it, and injects the absolute og:image/twitter:image URLs plus the
- * width/height and alt text that crawlers expect.
+ * Next.js links this file automatically on the home page only. Every other
+ * page sets its own `openGraph`, which REPLACES the layout's (metadata
+ * merges shallowly) and drops this card — so those pages restate it via
+ * `SHARE_IMAGES` in lib/seo, which also holds the alt text below.
  */
-export const alt = 'Winpalack — Responsible Casino Guide'
+export const alt = SHARE_IMAGE_ALT
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 

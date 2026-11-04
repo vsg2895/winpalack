@@ -3,7 +3,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { getPopularNews, getSiteFeatures } from '@/lib/api'
-import { buildBreadcrumbSchema, buildItemListSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript } from '@/lib/seo'
+import { buildBreadcrumbSchema, buildItemListSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript, SHARE_IMAGES } from '@/lib/seo'
 import { resolveImageUrl } from '@/lib/images'
 import { relativeTime } from '@/lib/relativeTime'
 import { COPY } from '@/constants/copy'
@@ -71,6 +71,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
       siteName: SITE_NAME,
       title,
       description: COPY.news.popularDescription,
+      images: SHARE_IMAGES,
     },
   }
 }

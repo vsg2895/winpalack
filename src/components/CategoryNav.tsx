@@ -4,6 +4,9 @@ import { COPY } from '@/constants/copy'
 import MobileCollapse from '@/components/MobileCollapse'
 import type { Category } from '@shared/types/category'
 
+/** The most chips the 1440px one-row layout holds — see `oneRow` below. */
+const MAX_ONE_ROW = 7
+
 /**
  * Idev Affiliation category selector — elegant glass pills with an emerald→teal
  * active state. Mounted on the home page and on the casinos listing; both link
@@ -19,6 +22,16 @@ export default function CategoryNav({
   /** Carried through every chip link, so choosing a category keeps the country. */
   country?: string
 }) {
+  /*
+   * ONE ROW from a 1440px screen: every chip in a single line, each still as
+   * wide as the widest label (the tracks stay `1fr` of a `w-max` grid, so no
+   * chip changes size — only the row stops wrapping). Seven chips at the
+   * widest label measured today (186px) need 1362px of the 1376px row; an
+   * eighth would not fit, so past MAX_ONE_ROW the grid keeps wrapping at five
+   * per row rather than run off the side of the page.
+   */
+  const oneRow = categories.length <= MAX_ONE_ROW
+
   return (
     /*
      * ONE FULL-WIDTH COLUMN ON A PHONE; from 640px up, a grid of EQUAL chips,
@@ -44,7 +57,12 @@ export default function CategoryNav({
      */
     /* On a phone the one-column stack can be folded away — see MobileCollapse. */
     <MobileCollapse label={COPY.collapse.casinoCategories} count={categories.length}>
-    <nav aria-label="Casino categories" className="grid grid-cols-1 gap-2 sm:w-max sm:grid-cols-[repeat(2,1fr)] md:grid-cols-[repeat(3,1fr)] lg:grid-cols-[repeat(4,1fr)] xl:grid-cols-[repeat(5,1fr)] sm:gap-2.5">
+    <nav
+      aria-label="Casino categories"
+      className={`grid grid-cols-1 gap-2 sm:w-max sm:grid-cols-[repeat(2,1fr)] md:grid-cols-[repeat(3,1fr)] lg:grid-cols-[repeat(4,1fr)] xl:grid-cols-[repeat(5,1fr)] sm:gap-2.5 ${
+        oneRow ? 'min-[90rem]:grid-flow-col min-[90rem]:grid-cols-none min-[90rem]:auto-cols-fr' : ''
+      }`}
+    >
       {categories.map((c) => {
         const active = c.slug === selected
         return (

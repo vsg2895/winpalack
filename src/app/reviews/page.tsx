@@ -12,6 +12,7 @@ import {
   buildWebPageSchema,
   breadcrumbIdFor,
   jsonLdScript,
+  SHARE_IMAGES,
 } from '@/lib/seo'
 import Pagination from '@/components/Pagination'
 import type { ReviewThread } from '@shared/types/casinoReview'
@@ -127,8 +128,9 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
       siteName: SITE_NAME,
       title,
       description,
+      images: SHARE_IMAGES,
     },
-    twitter: { card: 'summary_large_image', title, description },
+    twitter: { card: 'summary_large_image', title, description, images: SHARE_IMAGES },
   }
 }
 

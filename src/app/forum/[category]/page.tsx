@@ -8,6 +8,7 @@ import {
   buildWebPageSchema,
   breadcrumbIdFor,
   jsonLdScript,
+  SHARE_IMAGES,
 } from '@/lib/seo'
 import { SITE_URL } from '@/lib/config'
 import { COPY } from '@/constants/copy'
@@ -79,6 +80,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
       url: canonicalPath(`/forum/${category}`, page),
       title,
       description: board.description ?? undefined,
+      images: SHARE_IMAGES,
     },
   }
 }

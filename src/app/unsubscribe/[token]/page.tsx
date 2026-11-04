@@ -10,6 +10,11 @@ export const dynamic = 'force-dynamic'
 export const metadata: Metadata = {
   title: 'Unsubscribe',
   robots: { index: false, follow: false },
+  // Cleared, not inherited: the layout's defaults are the HOMEPAGE's canonical,
+  // og:url and share card. A per-subscriber token URL has none of those.
+  alternates: { canonical: null },
+  openGraph: null,
+  twitter: null,
 }
 
 /**

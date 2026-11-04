@@ -3,7 +3,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { getArticles, getSiteFeatures } from '@/lib/api'
-import { buildItemListSchema, buildWebPageSchema, jsonLdScript } from '@/lib/seo'
+import { buildItemListSchema, buildWebPageSchema, jsonLdScript, SHARE_IMAGES } from '@/lib/seo'
 import { resolveImageUrl } from '@/lib/images'
 import { COPY } from '@/constants/copy'
 import { SITE_URL } from '@/lib/config'
@@ -37,6 +37,7 @@ export async function generateMetadata(): Promise<Metadata> {
       siteName: SITE_NAME,
       title: COPY.guides.pageTitle,
       description: COPY.guides.pageDescription,
+      images: SHARE_IMAGES,
     },
   }
 }

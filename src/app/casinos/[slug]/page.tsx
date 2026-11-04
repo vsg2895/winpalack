@@ -5,7 +5,7 @@ import { notFound, permanentRedirect } from 'next/navigation'
 import { getCasino, getCasinos, getEditorial, getSiteFeatures } from '@/lib/api'
 import AffiliateNote from '@/components/AffiliateNote'
 import Byline from '@/components/Byline'
-import { buildCasinoReviewSchema, buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript } from '@/lib/seo'
+import { buildCasinoReviewSchema, buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript, SHARE_IMAGES } from '@/lib/seo'
 import { resolveImageUrl } from '@/lib/images'
 import BonusTerms from '@/components/BonusTerms'
 import CasinoProfile from '@/components/CasinoProfile'
@@ -89,8 +89,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         siteName: SITE_NAME,
         title: shareTitle,
         description: finalDescription,
+        images: SHARE_IMAGES,
       },
-      twitter: { card: 'summary_large_image', title: shareTitle, description: finalDescription },
+      twitter: { card: 'summary_large_image', title: shareTitle, description: finalDescription, images: SHARE_IMAGES },
     }
   } catch {
     return { title: COPY.errors.notFound }

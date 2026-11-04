@@ -19,7 +19,7 @@ import SearchOverlay from '@/components/SearchOverlay'
 import MobileNav from '@/components/MobileNav'
 import HeaderAccount from '@/components/forum/HeaderAccount'
 import { getSocialLinks, hasSpecialOffers, getSiteFeatures, getNavigation, getArticles, getNews, getBonusArea, getCategories, getEditorial, getPage } from '@/lib/api'
-import { buildOrganizationSchema, buildWebSiteSchema, jsonLdScript } from '@/lib/seo'
+import { buildOrganizationSchema, buildWebSiteSchema, jsonLdScript, SHARE_IMAGES } from '@/lib/seo'
 import { NEWSLETTER_ANCHOR, SITE_URL, SUBSCRIBE_ENABLED } from '@/lib/config'
 import { COPY } from '@/constants/copy'
 import { resolveImageUrl } from '@/lib/images'
@@ -86,8 +86,13 @@ export const metadata: Metadata = {
     // Relative on purpose: Next resolves it against metadataBase, so og:url
     // and the canonical can never disagree about the host.
     url: '/',
+    images: SHARE_IMAGES,
   },
-  twitter: { card: 'summary_large_image', title: SITE_TITLE, description: SITE_DESCRIPTION },
+  // The card TYPE only. A title and description here were inherited by every
+  // page that does not set `twitter` itself — nearly all of them — so a shared
+  // /casinos or /about went out on X under the HOME page's title. With these
+  // tags absent, X reads the page's own og:title, og:description and og:image.
+  twitter: { card: 'summary_large_image' },
   robots: { index: true, follow: true },
   manifest: '/manifest.webmanifest',
   authors: [{ name: SITE_NAME, url: SITE_URL }],
@@ -270,7 +275,9 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const footerIdentity = [
     legal.legal_entity_name,
     legal.company_number ? `Company no. ${legal.company_number}` : null,
-    legal.registered_address,
+    // The admin's address first; the one in copy.ts until it is set, so the
+    // footer carries an address like every sibling site does.
+    legal.registered_address ?? (COPY.footer.postalAddress || null),
   ].filter((part): part is string => part !== null)
 
   // How We Rate is not one of the seeded pages: linked only once it exists and
