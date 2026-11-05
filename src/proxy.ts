@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { canonicalRedirect } from '@/lib/seo/redirects'
+import { homeViewPublicPath, homeViewRewrite } from '@/lib/seo/homeView'
 
 /**
  * Applies admin-managed redirects.
@@ -118,14 +119,19 @@ export async function proxy(request: NextRequest) {
   const canonical = canonicalRedirect(request)
   if (canonical) return NextResponse.redirect(canonical, 301)
 
+  // The home page's internal view route is not a URL of its own: send a direct
+  // request for it to the `/?…` it stands for (lib/seo/homeView.ts).
+  const homePublic = homeViewPublicPath(request.nextUrl.pathname)
+  if (homePublic) return NextResponse.redirect(new URL(homePublic, request.nextUrl.origin), 301)
+
   // Missing configuration must not break routing — the site simply does no
   // redirecting until it is configured.
-  if (!API || !SITE || !KEY) return NextResponse.next()
+  if (!API || !SITE || !KEY) return pass(request)
 
   const path = normalise(request.nextUrl.pathname)
   const rule = (await rules()).get(path)
 
-  if (!rule) return NextResponse.next()
+  if (!rule) return pass(request)
 
   // ONE hop, deliberately. The destination is never re-resolved against the
   // rule set, so an A→B→C chain costs the visitor two requests and an A→B→A
@@ -141,6 +147,17 @@ export async function proxy(request: NextRequest) {
   }
 
   return NextResponse.redirect(destination, rule.status_code === 302 ? 302 : 301)
+}
+
+/**
+ * No redirect applies: serve the request, rewriting the home page's `?page=` /
+ * `?country=` views to their cacheable internal route (SEO audit O4). The
+ * address bar keeps the public URL.
+ */
+function pass(request: NextRequest): NextResponse {
+  const internal = homeViewRewrite(request.nextUrl)
+
+  return internal ? NextResponse.rewrite(new URL(internal, request.nextUrl.origin)) : NextResponse.next()
 }
 
 export const config = {

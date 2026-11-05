@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { getPage, getArticles, getBonusArea, getNews, getPopularNews, getCasinos, getCountries, getForumIndex, getReviewFeed, getSitemapEntries, getSiteFeatures, getSpecialOffers } from '@/lib/api'
+import { isCountryIndexable } from '@/lib/countryIndexing'
 import { SITE_URL } from '@/lib/config'
 import { TRUST_PAGE_SLUGS } from '@/constants/legalPages'
 
@@ -201,8 +202,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
          *
          * Every scraped article is written with `noindex = true` — its title
          * and teaser are still the source publisher's words until the rewrite
-         * runs (NewsScrapeService), and NewsRewriteService clears the flag once
-         * the copy is genuinely original. Submitting one meant asking Google to
+         * runs (NewsScrapeService). It stays on after the rewrite until an
+         * editor unticks it, which the admin allows only once the post clears
+         * NewsIndexGate (300+ words, a link into this site). Submitting one meant asking Google to
          * index a page that asks not to be, which is how ~30 of these ended up
          * in the "Excluded by noindex" report.
          *
@@ -219,11 +221,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           })),
       ]
     : []
-  // The hub now lists EVERY country, but a country with no casinos is a thin
-  // page and must not be submitted for indexing — so the sitemap keeps the
-  // stricter rule the hub dropped.
+  // The hub lists EVERY country, but only the pages that ask to be indexed are
+  // submitted — the same rule as the page's own robots tag (lib/countryIndexing).
   const countryUrls: MetadataRoute.Sitemap = countries
-    .filter((c) => (c.casinos_count ?? 0) > 0)
+    .filter((c) => isCountryIndexable(c, c.casinos_count ?? 0))
     .map((c) => ({
       url: `${SITE_URL}/countries/${c.slug}`,
       lastModified: safeDate(c.updated_at),

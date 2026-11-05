@@ -24,9 +24,8 @@ type Props = { searchParams: Promise<{ page?: string }> }
  * readable address.
  *
  * No generateStaticParams and no force-dynamic, for the reason /categories/[slug]
- * documents: the root layout reads the session cookie, so a static render of
- * this route would throw DYNAMIC_SERVER_USAGE. Having no params function at all
- * keeps it dynamic while leaving the per-fetch cache and its tags in place.
+ * documents: it reads `searchParams` (?page), so it renders on demand, while the
+ * per-fetch cache and its tags stay in place.
  */
 
 function canonicalPathFor(page: number): string {

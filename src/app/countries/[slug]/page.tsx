@@ -3,6 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getCountry } from '@/lib/api'
+import { isCountryIndexable } from '@/lib/countryIndexing'
 import { resolveImageUrl } from '@/lib/images'
 import {
   buildItemListSchema,
@@ -37,21 +38,13 @@ function canonicalPathFor(slug: string, page: number): string {
 }
 
 /*
- * NO generateStaticParams, deliberately — this route renders on demand.
+ * NO generateStaticParams, deliberately — this route renders on demand,
+ * because it reads `searchParams` (?page / filters), which a static render may
+ * not touch: an empty params list would build it static and 500 every slug.
+ * The root layout no longer reads the session cookie (SEO audit O1), so the
+ * searchParams read is now the only thing keeping this route dynamic; the
+ * detail routes without one (/casinos/[slug], /news/[slug] …) are ISR.
  *
- * Next classifies a dynamic route from what that function RETURNS: a non-empty
- * list builds `f` (dynamic), an EMPTY list builds a fully static route. A
- * static render then throws DYNAMIC_SERVER_USAGE, because the root layout
- * reads the session cookie for the header's account control and a static
- * render may not touch cookies — taking the whole route down with a 500 for
- * every slug, valid or not.
- *
- * Not hypothetical: that is exactly how /special-offers/[slug] broke on the
- * one site with no visible offers. It was reachable here too, because the
- * params lookup failed CLOSED to an empty list, so one API blip was enough to
- * change the build shape.
- *
- * Removing the function pins the route dynamic whatever the data does.
  * `force-dynamic` is deliberately NOT used: it would also downgrade fetchCache
  * to no-store and send every request to the API, where this leaves the
  * existing per-fetch cache and its tags exactly as they were.
@@ -74,20 +67,21 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   const canonical = canonicalPathFor(slug, page)
 
   /*
-   * A country with NO casinos is `noindex, follow`. The sitemap already leaves
-   * it out as thin content (`casinos_count > 0` in sitemap.ts), but the hub
-   * lists every country, so the page is reachable; asking for it to be indexed
-   * while it says "no casinos" is what Google files as a soft 404. Driven by the
-   * data: attaching a casino makes it indexable on the next regeneration.
+   * `noindex, follow` under COUNTRY_INDEX_MIN_CASINOS, or when this site hides
+   * the country from search in the admin — the sitemap applies the same rule
+   * (lib/countryIndexing). The hub still links every country, so the page stays
+   * reachable; it just does not ask to be indexed. `meta.total` counts every
+   * page of the listing, so page 2 answers as page 1 does. Driven by the data:
+   * attaching casinos makes it indexable on the next regeneration.
    * Past-the-end pages never get here: they 404.
    */
-  const isEmpty = res.data.casinos.length === 0
+  const indexable = isCountryIndexable(country, res.data.meta.total)
 
   return {
     title,
     description,
     alternates: { canonical },
-    ...(isEmpty ? { robots: { index: false, follow: true } } : {}),
+    ...(indexable ? {} : { robots: { index: false, follow: true } }),
     openGraph: { type: 'website', url: canonical, siteName: SITE_NAME, title, description, images: SHARE_IMAGES },
   }
 }

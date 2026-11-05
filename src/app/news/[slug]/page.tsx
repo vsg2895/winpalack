@@ -6,35 +6,32 @@ import { getNewsPost, getNewsFeed, getEditorial, getSiteFeatures } from '@/lib/a
 import Byline from '@/components/Byline'
 import { relativeTime } from '@/lib/relativeTime'
 import { buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript, bylinePersonSchema, SHARE_IMAGES } from '@/lib/seo'
-import { resolveImageUrl } from '@/lib/images'
+import { resolveImageUrl, absoluteImageUrl, PAGE_WIDE_IMAGE_SIZES } from '@/lib/images'
 import { COPY } from '@/constants/copy'
 import { SITE_URL } from '@/lib/config'
 import { fitDescription, fitTitle } from '@/lib/seo/meta'
+import type { Article } from '@shared/types/article'
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
 
 type Props = { params: Promise<{ slug: string }> }
 
 /*
- * NO generateStaticParams, deliberately — this route renders on demand.
+ * Every slug renders on its first request and is then served from the ISR
+ * cache, revalidated by its fetch tags (SEO audit O1). An EMPTY list on
+ * purpose: nothing is built ahead, so the build never depends on the API, and
+ * the route's shape cannot change with the data.
  *
- * Next classifies a dynamic route from what that function RETURNS: a non-empty
- * list builds `f` (dynamic), an EMPTY list builds a fully static route. A
- * static render then throws DYNAMIC_SERVER_USAGE, because the root layout
- * reads the session cookie for the header's account control and a static
- * render may not touch cookies — taking the whole route down with a 500 for
- * every slug, valid or not.
- *
- * Not hypothetical: that is exactly how /special-offers/[slug] broke on the
- * one site with no visible offers. It was reachable here too, because the
- * params lookup failed CLOSED to an empty list, so one API blip was enough to
- * change the build shape.
- *
- * Removing the function pins the route dynamic whatever the data does.
- * `force-dynamic` is deliberately NOT used: it would also downgrade fetchCache
- * to no-store and send every request to the API, where this leaves the
- * existing per-fetch cache and its tags exactly as they were.
+ * This used to be impossible: the root layout read the session cookie for the
+ * header's account control, a static render may not touch cookies, and an
+ * empty list here 500'd every slug (how /special-offers/[slug] once broke).
+ * The account control now asks /api/forum/me from the browser, so nothing in
+ * the layout or this page reads a request-time API. Keep it that way: a
+ * cookies(), headers() or searchParams read in this route brings the 500 back.
  */
+export function generateStaticParams(): Array<{ slug: string }> {
+  return []
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
@@ -44,6 +41,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const title = article.meta_title ?? article.title
   const description = article.meta_description ?? article.excerpt ?? COPY.news.pageDescription
+  const cover = shareableCover(article)
 
   return {
     // Fitted to what a results page shows (lib/seo/meta.ts). Rewritten news
@@ -51,7 +49,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: fitTitle(title),
     description: fitDescription(description),
     alternates: { canonical: article.canonical_url ?? `/news/${slug}` },
-    ...(article.noindex ? { robots: { index: false, follow: true } } : {}),
+    // Indexable posts opt in to large image previews (Discover, Top Stories).
+    // Without it Google may only show a thumbnail. This replaces the layout's
+    // robots, so index/follow are restated.
+    robots: article.noindex
+      ? { index: false, follow: true }
+      : { index: true, follow: true, 'max-image-preview': 'large' },
     openGraph: {
       type: 'article',
       url: `/news/${slug}`,
@@ -59,9 +62,40 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       ...(article.published_at ? { publishedTime: article.published_at } : {}),
-      images: SHARE_IMAGES,
+      // The article's own cover when it is big enough for a large preview;
+      // otherwise the site card, which is 1200×630.
+      images: cover
+        ? [{ url: cover.url, width: cover.width, height: cover.height, alt: article.title }]
+        : SHARE_IMAGES,
     },
   }
+}
+
+/**
+ * The publication a feed-made post credits, or null for a hand-written one.
+ * The URL is used only when it is http(s), so a stored value can never become
+ * a `javascript:` link.
+ */
+function sourceCredit(article: Pick<Article, 'source_name' | 'source_url'>) {
+  const name = article.source_name?.trim()
+  if (!name) return null
+  const url = article.source_url && /^https?:\/\//i.test(article.source_url) ? article.source_url : null
+  return { name, url }
+}
+
+/** Below this width a cover makes a poor large preview, so the site card is used. */
+const SHARE_IMAGE_MIN_WIDTH = 1200
+
+/**
+ * The cover as a share image, or null when it cannot be one: no cover, an SVG
+ * (no share target renders it), or one under 1200px wide. The API only knows
+ * the size of files it stores — see `hero_image_size`.
+ */
+function shareableCover(article: Pick<Article, 'hero_image_path' | 'hero_image_size'>) {
+  const url = absoluteImageUrl(article.hero_image_path)
+  const size = article.hero_image_size
+  if (!url || !size || size.width < SHARE_IMAGE_MIN_WIDTH) return null
+  return { url, width: size.width, height: size.height }
 }
 
 export default async function NewsPostPage({ params }: Props) {
@@ -86,7 +120,13 @@ export default async function NewsPostPage({ params }: Props) {
   const popular = (await getNewsFeed()).popular.filter((post) => post.slug !== slug).slice(0, 5)
 
   const hero = resolveImageUrl(article.hero_image_path)
+  // JSON-LD needs the absolute form; the <Image> below takes the same-origin one.
+  const heroAbsolute = absoluteImageUrl(article.hero_image_path)
   const pageUrl = `${SITE_URL}/news/${slug}`
+  // The text's last change, not the row's: toggling a post onto the home page
+  // is not a modification. Falls back to updated_at on an older API.
+  const modifiedAt = article.content_modified_at ?? article.updated_at
+  const source = sourceCredit(article)
 
   const breadcrumb = buildBreadcrumbSchema(
     [
@@ -106,15 +146,34 @@ export default async function NewsPostPage({ params }: Props) {
     '@type': 'NewsArticle',
     headline: article.title,
     description: article.excerpt ?? undefined,
-    ...(hero ? { image: hero } : {}),
+    // An ImageObject with its size when the API knows it, so the 1200px
+    // requirement for large previews can be checked by the crawler.
+    ...(hero
+      ? {
+          image: article.hero_image_size
+            ? { '@type': 'ImageObject', url: heroAbsolute, width: article.hero_image_size.width, height: article.hero_image_size.height }
+            : heroAbsolute,
+        }
+      : {}),
     ...(article.published_at ? { datePublished: article.published_at } : {}),
-    ...(article.updated_at ? { dateModified: article.updated_at } : {}),
+    ...(modifiedAt ? { dateModified: modifiedAt } : {}),
     ...(bylinePerson
       ? { author: bylinePersonSchema(bylinePerson) }
       : author
         ? { author: { '@type': 'Person', name: author.name } }
         : {}),
     publisher: { '@type': 'Organization', name: SITE_NAME },
+    // The report this post's facts come from, credited the same way on the
+    // page itself.
+    ...(source
+      ? {
+          isBasedOn: {
+            '@type': 'CreativeWork',
+            ...(source.url ? { url: source.url } : {}),
+            publisher: { '@type': 'Organization', name: source.name },
+          },
+        }
+      : {}),
     mainEntityOfPage: pageUrl,
   }
 
@@ -124,7 +183,7 @@ export default async function NewsPostPage({ params }: Props) {
       url: pageUrl,
       description: article.excerpt ?? COPY.news.pageDescription,
       breadcrumbId: breadcrumbIdFor(pageUrl),
-      dateModified: article.updated_at ?? undefined,
+      dateModified: modifiedAt ?? undefined,
     }),
     breadcrumb,
     articleSchema,
@@ -147,7 +206,7 @@ export default async function NewsPostPage({ params }: Props) {
 
           {hero && (
             <div className="relative mb-8 aspect-[16/7] overflow-hidden rounded-2xl bg-zinc-100 lg:mb-10 lg:aspect-[3/1]">
-              <Image src={hero} alt={article.title} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 1440px" priority />
+              <Image src={hero} alt={article.title} fill className="object-cover" sizes={PAGE_WIDE_IMAGE_SIZES} preload fetchPriority="high" />
             </div>
           )}
 
@@ -172,6 +231,25 @@ export default async function NewsPostPage({ params }: Props) {
 
           {article.body && (
             <div className="prose prose-zinc mt-8 max-w-none lg:prose-lg" dangerouslySetInnerHTML={{ __html: article.body }} />
+          )}
+
+          {source && (
+            <p className="mt-8 border-t border-slate-200 pt-4 text-sm text-slate-500">
+              {COPY.news.source}:{' '}
+              {source.url ? (
+                // Credited, not endorsed: nofollow, and no referrer sent.
+                <a
+                  href={source.url}
+                  target="_blank"
+                  rel="nofollow noopener noreferrer"
+                  className="font-semibold text-slate-700 underline underline-offset-4 hover:text-emerald-700"
+                >
+                  {source.name}
+                </a>
+              ) : (
+                <span className="font-semibold text-slate-700">{source.name}</span>
+              )}
+            </p>
           )}
 
           <p className="mt-8 text-sm">

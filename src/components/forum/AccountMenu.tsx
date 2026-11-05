@@ -9,9 +9,8 @@ import { usePathname } from 'next/navigation'
  *
  * A CLIENT component, and only for the open/close — the entries are real
  * <Link>s, so middle-click and "open in new tab" behave normally. Which entries
- * it shows is decided on the SERVER by HeaderAccount, which reads the session
- * cookie; this component never learns who is signed in beyond the props it is
- * handed.
+ * it shows is decided by HeaderAccount from /api/forum/me; this component never
+ * learns who is signed in beyond the props it is handed.
  *
  * Positioned ABSOLUTE inside a relative wrapper, not fixed: the header carries
  * `backdrop-blur-xl`, and a backdrop-filter makes an element a containing block
@@ -74,8 +73,8 @@ export default function AccountMenu({
 
   async function handleSignOut() {
     await fetch('/api/forum/auth/logout', { method: 'POST', credentials: 'same-origin' })
-    // A full reload, not router.refresh(): the header's signed-in state is
-    // decided on the server from the cookie, and the cookie has just changed.
+    // A full reload, not router.refresh(): pages that read the session on the
+    // server (the forum's reply form) must re-render now the cookie is gone.
     window.location.reload()
   }
 

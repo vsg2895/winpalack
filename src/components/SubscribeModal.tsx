@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { COPY } from '@/constants/copy'
 import { useToast } from '@/components/ToastProvider'
 import { isValidEmail } from '@/lib/email'
+import { trackEvent } from '@/lib/ga'
 
 // Browser-level throttling (no login, so we persist in cookies):
 //  - After the modal is shown, we snooze it for 2 hours so a reload / new tab
@@ -117,6 +118,7 @@ export default function SubscribeModal() {
       // actually being mailed.
       const { email_sent: emailSent } = (await res.json().catch(() => ({}))) as { email_sent?: boolean }
 
+      trackEvent('sign_up', { method: 'newsletter', form_location: 'modal' })
       setEmail('')
       setFullName('')
       // They just subscribed here — don't prompt them again in this browser.

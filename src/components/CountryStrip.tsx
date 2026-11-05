@@ -38,6 +38,12 @@ const FLAGS_SHOWN = 10
  * Plain <img>, not next/image: these are SVGs, and the optimizer refuses SVG
  * unless dangerouslyAllowSVG is enabled — which is not worth turning on to
  * resize an image that is already 16 pixels wide.
+ *
+ * `loading="lazy"`: React 19 emits a `<link rel="preload" as="image">` in the
+ * head for every non-lazy <img> it server-renders. A listing of casino cards
+ * preloaded 29 decorative flags that way, each one queued against the page's
+ * real LCP image and each one a row in the RSC payload (SEO audit O9). The
+ * box is sized by its wrapper, so nothing shifts when a flag arrives.
  */
 export default function CountryStrip({
   countries,
@@ -97,7 +103,7 @@ export default function CountryStrip({
         aria-label={COPY.casinos.countriesWorldwideAria}
       >
         {flag ? (
-          <img src={flag} alt="" width={14} height={14} className="h-3.5 w-3.5 rounded-full" aria-hidden />
+          <img src={flag} alt="" width={14} height={14} loading="lazy" className="h-3.5 w-3.5 rounded-full" aria-hidden />
         ) : (
           <span aria-hidden>🌐</span>
         )}
@@ -139,7 +145,7 @@ export default function CountryStrip({
               className="relative inline-flex h-[18px] w-[18px] items-center justify-center overflow-hidden rounded-full bg-slate-100 ring-1 ring-slate-900/10"
             >
               {flag ? (
-                <img src={flag} alt="" className="h-full w-full object-cover" />
+                <img src={flag} alt="" loading="lazy" className="h-full w-full object-cover" />
               ) : (
                 // No uploaded flag: the ISO code is still recognisable, and an
                 // empty circle would read as a loading state.

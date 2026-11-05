@@ -261,6 +261,9 @@ export const COPY = {
     allTopics: 'All',
     emptyTopic: 'No posts in this section yet.',
     empty: 'No news has been published yet.',
+    // The credit under a post built from another publication's report. The
+    // facts are theirs; the wording is ours.
+    source: 'Source',
   },
 
   guides: {

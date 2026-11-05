@@ -6,10 +6,12 @@ import { buildItemListSchema, buildBreadcrumbSchema, buildWebPageSchema, breadcr
 import { COPY } from '@/constants/copy'
 import CasinoCard from '@/components/CasinoCard'
 import CountryNav from '@/components/CountryNav'
+import { countryNavContinents } from '@/lib/countryNav'
 import Pagination from '@/components/Pagination'
 import { SITE_URL } from '@/lib/config'
 import { canonicalPath } from '@/lib/seo/canonical'
 import type { Continent, Country } from '@shared/types/country'
+import { casinosHeading } from '@/lib/categories'
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
 
@@ -53,21 +55,13 @@ function appliedCountry(countries: Country[], raw: string | undefined): string |
 }
 
 /*
- * NO generateStaticParams, deliberately — this route renders on demand.
+ * NO generateStaticParams, deliberately — this route renders on demand,
+ * because it reads `searchParams` (?page / filters), which a static render may
+ * not touch: an empty params list would build it static and 500 every slug.
+ * The root layout no longer reads the session cookie (SEO audit O1), so the
+ * searchParams read is now the only thing keeping this route dynamic; the
+ * detail routes without one (/casinos/[slug], /news/[slug] …) are ISR.
  *
- * Next classifies a dynamic route from what that function RETURNS: a non-empty
- * list builds `f` (dynamic), an EMPTY list builds a fully static route. A
- * static render then throws DYNAMIC_SERVER_USAGE, because the root layout
- * reads the session cookie for the header's account control and a static
- * render may not touch cookies — taking the whole route down with a 500 for
- * every slug, valid or not.
- *
- * Not hypothetical: that is exactly how /special-offers/[slug] broke on the
- * one site with no visible offers. It was reachable here too, because the
- * params lookup failed CLOSED to an empty list, so one API blip was enough to
- * change the build shape.
- *
- * Removing the function pins the route dynamic whatever the data does.
  * `force-dynamic` is deliberately NOT used: it would also downgrade fetchCache
  * to no-store and send every request to the API, where this leaves the
  * existing per-fetch cache and its tags exactly as they were.
@@ -83,11 +77,12 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   try {
     const { data } = await getCategory(slug, page, country)
     // Distinct title per page so paginated views are never reported as duplicates.
-    const title = page > 1 ? `${data.category.name} Casinos — Page ${page}` : `${data.category.name} Casinos`
+    const heading = casinosHeading(data.category.name)
+    const title = page > 1 ? `${heading} — Page ${page}` : heading
     // Was `Best <name> casinos reviewed by <brand>.` — only ~50 characters and
     // formulaic. Composing the category name with this site's own line gives a
     // description long enough for a real snippet, and distinct per domain.
-    const description = `${data.category.name} casinos — ${COPY.categories.categoryMetaSuffix}`
+    const description = `${heading} — ${COPY.categories.categoryMetaSuffix}`
     const canonical = canonicalPathFor(slug, country ? 1 : page)
 
     /*
@@ -182,8 +177,9 @@ export default async function CategoryDetailPage({ params, searchParams }: Props
   // The same URL the canonical names, so the graph never describes a page the
   // <head> disowns.
   const pageUrl = `${SITE_URL}${canonicalPathFor(slug, country ? 1 : page)}`
+  const heading = casinosHeading(category.name)
   const listSchema = buildItemListSchema(
-    `${category.name} Casinos`,
+    heading,
     pageUrl,
     casinos.map((c, i) => ({ position: offset + i + 1, name: c.name, url: `${SITE_URL}/casinos/${c.slug}` })),
   )
@@ -197,13 +193,13 @@ export default async function CategoryDetailPage({ params, searchParams }: Props
   )
   const graph = [
     buildWebPageSchema({
-      name: `${category.name} Casinos`,
+      name: heading,
       url: pageUrl,
       // The same sentence generateMetadata puts in the meta description. The
       // formulaic "Best <name> casinos reviewed by <brand>." that was here
       // survived from the template: it contradicted the description actually
       // served in the <head>, and read identically on every sibling domain.
-      description: `${category.name} casinos — ${COPY.categories.categoryMetaSuffix}`,
+      description: `${heading} — ${COPY.categories.categoryMetaSuffix}`,
       breadcrumbId: breadcrumbIdFor(pageUrl),
     }),
     breadcrumb,
@@ -220,7 +216,7 @@ export default async function CategoryDetailPage({ params, searchParams }: Props
           <nav className="mb-3 text-sm sm:mb-6 text-zinc-400">
             <Link href="/" className="inline-block -mx-1 px-1 py-3 -my-3 hover:text-emerald-600">Home</Link> / <Link href="/categories" className="inline-block -mx-1 px-1 py-3 -my-3 hover:text-emerald-600">Categories</Link> / <span className="text-zinc-600">{category.name}</span>
           </nav>
-          <h1 className="text-2xl font-bold sm:text-3xl text-zinc-900">{category.name} Casinos</h1>
+          <h1 className="text-2xl font-bold sm:text-3xl text-zinc-900">{heading}</h1>
 
           {/* The SAME control as the home page and /casinos — one pill-shaped
               dropdown with flags, grouped by continent and searchable — rather
@@ -231,7 +227,7 @@ export default async function CategoryDetailPage({ params, searchParams }: Props
               whose every option returns the same list is noise. */}
           {countries.length > 0 && (
             <div className="mt-4 mb-5 sm:mt-6 sm:mb-8">
-              <CountryNav continents={continents} selected={country} basePath={`/categories/${slug}`} />
+              <CountryNav continents={countryNavContinents(continents)} selected={country} basePath={`/categories/${slug}`} />
             </div>
           )}
 

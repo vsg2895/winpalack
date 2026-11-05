@@ -155,9 +155,18 @@ export default async function LegalPage({ params, searchParams }: Props) {
           )}
           <Byline byline={page.byline} className="mt-3" />
 
+          {/* `email_off` markers: Cloudflare's Email Obfuscation leaves what
+              sits between them alone. Left on, it rewrote the support and
+              compliance `mailto:` links on /contact and /privacy-policy into
+              /cdn-cgi/l/email-protection with "[email protected]" as the text —
+              no address for a crawler or a visitor without JS, and a hydration
+              mismatch for everyone else (SEO audit O7). The switch is in the
+              Cloudflare dashboard and has been turned back on before; these
+              markers keep the legal pages correct either way. The page content
+              itself is untouched: it is edited only through the admin. */}
           <article
             className="prose prose-zinc mt-8 max-w-none prose-headings:font-bold prose-a:text-emerald-600"
-            dangerouslySetInnerHTML={{ __html: page.content }}
+            dangerouslySetInnerHTML={{ __html: `<!--email_off-->${page.content}<!--/email_off-->` }}
           />
         </div>
       </main>

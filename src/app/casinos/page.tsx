@@ -7,6 +7,7 @@ import { COPY } from '@/constants/copy'
 import CasinoCard from '@/components/CasinoCard'
 import CategoryNav from '@/components/CategoryNav'
 import CountryNav from '@/components/CountryNav'
+import { countryNavContinents } from '@/lib/countryNav'
 import Pagination from '@/components/Pagination'
 import type { Category } from '@shared/types/category'
 import { SITE_URL } from '@/lib/config'
@@ -115,7 +116,7 @@ export default async function CasinosPage({ searchParams }: Props) {
               leaves no categories would be a dead end with no way back. */}
           {countries.length > 0 && (
             <div className="mt-8">
-              <CountryNav continents={continents} selected={country} basePath="/casinos" />
+              <CountryNav continents={countryNavContinents(continents)} selected={country} basePath="/casinos" />
             </div>
           )}
           <p className="mt-4 text-slate-500">{COPY.casinos.noResults}</p>
@@ -196,7 +197,7 @@ export default async function CasinosPage({ searchParams }: Props) {
               leaves no categories to show. */}
           {countries.length > 0 && (
             <div className="mb-4">
-              <CountryNav continents={continents} selected={country} basePath="/casinos" />
+              <CountryNav continents={countryNavContinents(continents)} selected={country} basePath="/casinos" />
             </div>
           )}
           <div className="mb-5 sm:mb-8"><CategoryNav categories={cats} selected={selected} country={country} /></div>

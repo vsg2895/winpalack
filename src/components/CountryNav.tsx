@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { resolveImageUrl } from '@/lib/images'
-import type { Continent } from '@shared/types/country'
+import type { CountryNavContinent } from '@/lib/countryNav'
 
 /**
  * The country filter that the category chips sit inside.
@@ -38,8 +38,11 @@ export default function CountryNav({
   label = 'Country',
   basePath = '/',
 }: {
-  /** Continents with their countries. Countries with no casinos are ignored. */
-  continents: Continent[]
+  /**
+   * Continents with their countries, trimmed by countryNavContinents() — this
+   * is a client component, so every field here lands in the RSC payload.
+   */
+  continents: CountryNavContinent[]
   /** The selected country slug, or undefined for "all countries". */
   selected?: string
   label?: string

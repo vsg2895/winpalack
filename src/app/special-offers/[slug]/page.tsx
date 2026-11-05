@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getSpecialOffer } from '@/lib/api'
 import { buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript, SHARE_IMAGES } from '@/lib/seo'
-import { resolveImageUrl } from '@/lib/images'
+import { resolveImageUrl, PAGE_WIDE_IMAGE_SIZES } from '@/lib/images'
 import BonusTerms from '@/components/BonusTerms'
 import { CLAIMABLE_BONUS_CATEGORY } from '@/components/SpecialOfferCard'
 import { COPY } from '@/constants/copy'
@@ -18,24 +18,21 @@ const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
 type Props = { params: Promise<{ slug: string }> }
 
 /*
- * NO generateStaticParams, deliberately — this route renders on demand.
+ * Every slug renders on its first request and is then served from the ISR
+ * cache, revalidated by its fetch tags (SEO audit O1). An EMPTY list on
+ * purpose: nothing is built ahead, so the build never depends on the API, and
+ * the route's shape cannot change with the data.
  *
- * Next classifies a dynamic route from what that function RETURNS: a non-empty
- * list builds `f` (dynamic), an EMPTY list builds a fully static route. A
- * static render then throws DYNAMIC_SERVER_USAGE, because the root layout
- * reads the session cookie for the header's account control and a static
- * render may not touch cookies — taking the whole route down with a 500 for
- * every slug, valid or not.
- *
- * Not hypothetical: that is exactly how this route broke in production on the
- * one site with no visible offers.
- *
- * `force-dynamic` was tried and is NOT the fix — measured: with the function
- * still present and returning [], the build kept marking the route static.
- * Removing the function is what pins it, and it avoids force-dynamic's side
- * effect of downgrading fetchCache to no-store, which would send every request
- * straight to the API.
+ * This used to be impossible: the root layout read the session cookie for the
+ * header's account control, a static render may not touch cookies, and an
+ * empty list here 500'd every slug (how /special-offers/[slug] once broke).
+ * The account control now asks /api/forum/me from the browser, so nothing in
+ * the layout or this page reads a request-time API. Keep it that way: a
+ * cookies(), headers() or searchParams read in this route brings the 500 back.
  */
+export function generateStaticParams(): Array<{ slug: string }> {
+  return []
+}
 
 /**
  * The offer's own prose, as plain text — the only field on an offer that is
@@ -248,8 +245,9 @@ export default async function SpecialOfferDetailPage({ params }: Props) {
                 src={banner}
                 alt={offer.title}
                 fill
-                sizes="(max-width: 1024px) 100vw, 1440px"
-                priority
+                sizes={PAGE_WIDE_IMAGE_SIZES}
+                preload
+                fetchPriority="high"
                 className="object-contain object-center"
               />
             </div>

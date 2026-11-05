@@ -31,6 +31,11 @@ export interface Country {
   active: boolean
   /** Only when the endpoint counted them; scoped to the site on public responses. */
   casinos_count?: number
+  /**
+   * Public responses only: this site keeps the country's page out of search
+   * engines (admin → Sites → "Countries hidden from search").
+   */
+  noindex?: boolean
   created_at: string | null
   updated_at: string | null
 }

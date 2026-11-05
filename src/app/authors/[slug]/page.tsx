@@ -4,7 +4,7 @@ import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { getAuthor } from '@/lib/api'
 import { buildBreadcrumbSchema, buildPersonSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript, SHARE_IMAGES } from '@/lib/seo'
-import { resolveImageUrl } from '@/lib/images'
+import { resolveImageUrl, absoluteImageUrl } from '@/lib/images'
 import { SITE_URL } from '@/lib/config'
 import { fitDescription, fitTitle } from '@/lib/seo/meta'
 
@@ -13,11 +13,21 @@ const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
 type Props = { params: Promise<{ slug: string }> }
 
 /*
- * NO generateStaticParams, for the same reason as /guides/[slug]: an empty
- * list (a site with no visible authors yet) would build this route static,
- * and the root layout's cookie read would then 500 every author page. The
- * per-fetch cache and its `authors` tag still apply.
+ * Every slug renders on its first request and is then served from the ISR
+ * cache, revalidated by its fetch tags (SEO audit O1). An EMPTY list on
+ * purpose: nothing is built ahead, so the build never depends on the API, and
+ * the route's shape cannot change with the data.
+ *
+ * This used to be impossible: the root layout read the session cookie for the
+ * header's account control, a static render may not touch cookies, and an
+ * empty list here 500'd every slug (how /special-offers/[slug] once broke).
+ * The account control now asks /api/forum/me from the browser, so nothing in
+ * the layout or this page reads a request-time API. Keep it that way: a
+ * cookies(), headers() or searchParams read in this route brings the 500 back.
  */
+export function generateStaticParams(): Array<{ slug: string }> {
+  return []
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
@@ -69,7 +79,7 @@ export default async function AuthorPage({ params }: Props) {
       dateModified: author.updated_at ?? undefined,
     }),
     breadcrumb,
-    buildPersonSchema(author, photo),
+    buildPersonSchema(author, absoluteImageUrl(author.photo_path)),
   ]
 
   return (

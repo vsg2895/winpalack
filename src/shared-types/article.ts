@@ -35,6 +35,12 @@ export interface Article {
   body?: string | null
   hero_image_path: string | null
   /**
+   * Detail responses only. The cover's pixel size, when it is a raster file
+   * stored on the API; null for an SVG, a remote URL or a missing file. The
+   * news page uses it to pick a share image that is at least 1200px wide.
+   */
+  hero_image_size?: { width: number; height: number } | null
+  /**
    * ISO-8601. The only publication control: null is a draft, a past date is
    * live, a future date is scheduled. The public API never returns a draft or a
    * future-dated article at all.
@@ -71,6 +77,12 @@ export interface Article {
   /** Detail endpoints only; null when nobody visible is named. */
   byline?: Byline | null
   updated_at: string | null
+  /**
+   * Detail responses only. When the TEXT last changed (title, excerpt, body or
+   * cover), never later than an admin toggle could make it — and never before
+   * `published_at`. Use it for `dateModified`; `updated_at` moves on any save.
+   */
+  content_modified_at?: string | null
 }
 
 export interface UpsertArticlePayload {

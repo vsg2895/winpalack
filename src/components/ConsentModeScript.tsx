@@ -1,24 +1,25 @@
+import { CONSENT_STORAGE_KEY, CONSENT_VERSION } from '@/lib/consent'
+
 /**
- * Google Consent Mode v2 defaults — every storage type GRANTED.
+ * Google Consent Mode v2 defaults — analytics DENIED until the visitor chooses
+ * "Accept All" in the cookie banner.
  *
- * MODE: CONSENT_NON_BLOCKING. The cookie banner is still rendered and still
- * records the visitor's choice, but analytics no longer waits for it: the tag
- * is granted from the first paint, on every page load, for every visitor.
+ * Replaces the earlier CONSENT_NON_BLOCKING mode, which granted every storage
+ * type from the first paint and wrote `_ga` before any choice, for EEA and UK
+ * visitors too. PECR and the GDPR need consent for analytics cookies, so:
  *
- * This is a deliberate operator decision, not an oversight. It is recorded here
- * because the previous version of this file denied all six categories and the
- * difference is one word per line — anyone reading it later should see that the
- * grant is intentional rather than a mistake.
+ *  - `analytics_storage` is granted only when the stored choice is "all" under
+ *    the current CONSENT_VERSION. A returning visitor who accepted is measured
+ *    in full from the first hit; nobody else gets a cookie.
+ *  - The ad_* types are ALWAYS denied, Accept All included: the site sets no
+ *    advertising cookies and the policies say so.
+ *  - No choice, "Reject Non-Essential", a GPC signal (the banner does not ask,
+ *    so no record is written) or blocked storage all leave it denied.
  *
- * WHAT THIS MEANS IN PRACTICE: `_ga` is written on first load, before any
- * interaction with the banner, including for visitors in the EEA and the UK.
- * The Cookie Policy and Privacy Policy have been updated to describe this
- * accurately — if this file is ever changed back, those two pages have to move
- * with it or the site describes a practice it does not follow.
- *
- * `wait_for_update` is gone. It existed to hold hits for 500ms while a bridge
- * read localStorage and granted; with nothing to wait for, keeping it would
- * only delay the first page_view of every session.
+ * ADVANCED Consent Mode: gtag.js still loads, and while denied it sends
+ * cookieless pings with no client identifier — what GA uses to model the
+ * traffic it cannot measure. The Cookie and Privacy policies describe this.
+ * Mid-session choices go through `updateAnalyticsConsent` (lib/ga.ts).
  *
  * Still a raw inline script rather than `next/script`: consent state must be in
  * the dataLayer BEFORE gtag.js evaluates, and only a synchronous inline script
@@ -30,15 +31,21 @@ const SNIPPET = `
   window.dataLayer = window.dataLayer || [];
   function gtag(){ dataLayer.push(arguments); }
   window.gtag = window.gtag || gtag;
+  var accepted = false;
+  try {
+    var record = JSON.parse(localStorage.getItem(${JSON.stringify(CONSENT_STORAGE_KEY)}) || 'null');
+    accepted = !!record && record.v === ${CONSENT_VERSION} && record.choice === 'all';
+  } catch (e) {}
   gtag('consent', 'default', {
-    ad_storage: 'granted',
-    ad_user_data: 'granted',
-    ad_personalization: 'granted',
-    analytics_storage: 'granted',
+    ad_storage: 'denied',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied',
+    analytics_storage: accepted ? 'granted' : 'denied',
     functionality_storage: 'granted',
-    personalization_storage: 'granted',
+    personalization_storage: 'denied',
     security_storage: 'granted'
   });
+  gtag('set', 'ads_data_redaction', true);
 })();
 `
 

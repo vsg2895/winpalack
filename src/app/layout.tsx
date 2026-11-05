@@ -10,6 +10,7 @@ import BonusMenu from '@/components/BonusMenu'
 import FooterBonusMenu from '@/components/FooterBonusMenu'
 import ConsentModeScript from '@/components/ConsentModeScript'
 import GaPageView from '@/components/GaPageView'
+import GaEvents from '@/components/GaEvents'
 import Script from 'next/script'
 import { Suspense } from 'react'
 import { GA_MEASUREMENT_ID } from '@/lib/ga'
@@ -28,7 +29,16 @@ import type { SocialLink } from '@shared/types/socialLink'
 import './globals.css'
 
 const inter = Inter({ variable: '--font-inter', subsets: ['latin'] })
-const fraunces = Fraunces({ variable: '--font-fraunces', subsets: ['latin'], style: ['normal', 'italic'] })
+/*
+ * `optional`, not the default `swap`, for the display face only. Headings are
+ * measured in `ch` (the home h1 is `max-w-[11ch]`), so the swap rewrapped the
+ * hero headline from three lines to two and pulled everything under it up
+ * ~37px: CLS 0.08 on a mobile home page load (SEO audit O4). With `optional`
+ * a font that misses the first ~100ms is skipped for that view and taken from
+ * cache on the next one. It is still preloaded, so on most connections it
+ * makes the window and nothing changes.
+ */
+const fraunces = Fraunces({ variable: '--font-fraunces', subsets: ['latin'], style: ['normal', 'italic'], display: 'optional' })
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] })
 
 
@@ -294,7 +304,8 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     <html lang="en" className={`${inter.variable} ${fraunces.variable} ${geistMono.variable} h-full antialiased motion-safe:scroll-smooth`}>
       <body className="min-h-full flex flex-col text-slate-900">
         {/* FIRST thing in the body, before anything that could load gtag.js.
-            Grants every Consent Mode storage type — see ConsentModeScript. */}
+            Consent Mode defaults: analytics denied until "Accept All" — see
+            ConsentModeScript. */}
         <ConsentModeScript />
         <ToastProvider>
         <script
@@ -384,11 +395,10 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                   client-side. */}
               <SearchOverlay />
 
-              {/* Account control. A Server Component reading the session cookie,
-                  so the header shows the right state on first paint instead of
-                  flashing "Sign in" at every signed-in member. Gated on the
-                  forum switch: accounts exist for the forum, so a control with
-                  nowhere to go is worse than no control. */}
+              {/* Account control. A client island asking /api/forum/me: reading
+                  the session cookie HERE made every page dynamic (SEO audit O1).
+                  Gated on the forum switch: accounts exist for the forum, so a
+                  control with nowhere to go is worse than no control. */}
               <HeaderAccount enabled={accountsEnabled} />
 
               {/* The same links as the desktop bar, from the same source — an
@@ -574,10 +584,9 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 
         <CookieConsent />
         {SUBSCRIBE_ENABLED && <SubscribeModal />}
-        {/* GA4 — unconditional. No consent gate, no environment gate, no
-            interaction gate: these load on every page for every visitor.
-            `afterInteractive` keeps them off the critical path, so nothing here
-            blocks rendering. */}
+        {/* GA4 loads on every page, but under Consent Mode (ConsentModeScript):
+            without "Accept All" it sets no cookies and sends only cookieless
+            pings. `afterInteractive` keeps it off the critical path. */}
         <Script
           id="ga-loader"
           strategy="afterInteractive"
@@ -598,6 +607,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <Suspense fallback={null}>
           <GaPageView />
         </Suspense>
+        <GaEvents />
         </ToastProvider>
       </body>
     </html>

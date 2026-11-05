@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { COPY } from '@/constants/copy'
 import { useToast } from '@/components/ToastProvider'
 import { isValidEmail } from '@/lib/email'
+import { trackEvent } from '@/lib/ga'
 
 /**
  * `band` is the dark strip under the header: an icon, the title and subtitle on
@@ -57,6 +58,7 @@ export default function NewsletterForm({ variant = 'card' }: { variant?: 'card' 
       // the address at all.
       const { email_sent: emailSent } = (await res.json().catch(() => ({}))) as { email_sent?: boolean }
 
+      trackEvent('sign_up', { method: 'newsletter', form_location: 'footer' })
       // Keep the form in place; confirm via a top-corner toast.
       toast(emailSent === false ? COPY.newsletter.successNoEmail : COPY.newsletter.success, 'success')
       setEmail('')

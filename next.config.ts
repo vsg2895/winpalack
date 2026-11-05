@@ -76,8 +76,13 @@ const nextConfig: NextConfig = {
   // `node server.js` path) and emit the "inferred workspace root" warning.
   outputFileTracingRoot: projectRoot,
   /*
-   * ONE image origin: the API's public storage, the same base resolveImageUrl()
-   * builds every image URL from (lib/images.ts). Was `**` over http and https,
+   * Images are LOCAL now: resolveImageUrl() builds `/media/…`, relayed from the
+   * storage disk by app/media/[...path]/route.ts, so next/image optimises them
+   * as same-origin paths and this remote pattern is no longer what serves them
+   * (SEO audit O8). It stays as the one remote origin still allowed, for a
+   * storage URL that reaches next/image without going through resolveImageUrl().
+   *
+   * History: ONE image origin, the API's public storage. Was `**` over http and https,
    * which let the optimizer fetch and re-serve an image from any host on the
    * internet. Measured on winpalack.com before narrowing: every optimised and
    * every plain <img> came from api.idevaffiliation.com/storage/.

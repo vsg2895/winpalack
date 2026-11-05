@@ -29,21 +29,16 @@ function canonicalPathFor(slug: string, page: number): string {
 }
 
 /*
- * NO generateStaticParams, deliberately — the same reasoning as
- * /categories/[slug], and it is not hypothetical here either.
+ * NO generateStaticParams, deliberately — this route renders on demand,
+ * because it reads `searchParams` (?page / filters), which a static render may
+ * not touch: an empty params list would build it static and 500 every slug.
+ * The root layout no longer reads the session cookie (SEO audit O1), so the
+ * searchParams read is now the only thing keeping this route dynamic; the
+ * detail routes without one (/casinos/[slug], /news/[slug] …) are ISR.
  *
- * Next decides a dynamic route's shape from what that function RETURNS: an
- * EMPTY list builds a fully static route, and a static render throws
- * DYNAMIC_SERVER_USAGE because the root layout reads the session cookie for the
- * header's account control — taking every slug down with a 500. A params lookup
- * that fails closed to `[]` on one API blip is enough to flip the build into
- * that shape, so the function is left out entirely and the route is pinned
- * dynamic whatever the data does.
- *
- * `force-dynamic` is deliberately NOT used: it would downgrade fetchCache to
- * no-store and send every request to the API. This keeps the per-fetch cache
- * and its tags, so an admin edit still invalidates the page through the
- * revalidation webhook.
+ * `force-dynamic` is deliberately NOT used: it would also downgrade fetchCache
+ * to no-store and send every request to the API, where this leaves the
+ * existing per-fetch cache and its tags exactly as they were.
  */
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {

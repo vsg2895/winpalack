@@ -266,7 +266,8 @@ export default async function NewsPage({ searchParams }: Props) {
                                   fill
                                   className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 560px"
-                                  priority={i === 0}
+                                  preload={i === 0}
+                                  fetchPriority={i === 0 ? 'high' : undefined}
                                 />
                               </div>
                             )}

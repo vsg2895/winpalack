@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation'
 import { getArticles, getArticle, getEditorial, getSiteFeatures } from '@/lib/api'
 import Byline from '@/components/Byline'
 import { buildBreadcrumbSchema, buildWebPageSchema, breadcrumbIdFor, jsonLdScript, bylinePersonSchema, SHARE_IMAGES } from '@/lib/seo'
-import { resolveImageUrl } from '@/lib/images'
+import { resolveImageUrl, absoluteImageUrl, ARTICLE_IMAGE_SIZES } from '@/lib/images'
 import { COPY } from '@/constants/copy'
 import { SITE_URL } from '@/lib/config'
 import { fitDescription, fitTitle } from '@/lib/seo/meta'
@@ -15,25 +15,21 @@ const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
 type Props = { params: Promise<{ slug: string }> }
 
 /*
- * NO generateStaticParams, deliberately — this route renders on demand.
+ * Every slug renders on its first request and is then served from the ISR
+ * cache, revalidated by its fetch tags (SEO audit O1). An EMPTY list on
+ * purpose: nothing is built ahead, so the build never depends on the API, and
+ * the route's shape cannot change with the data.
  *
- * Next classifies a dynamic route from what that function RETURNS: a non-empty
- * list builds `f` (dynamic), an EMPTY list builds a fully static route. A
- * static render then throws DYNAMIC_SERVER_USAGE, because the root layout
- * reads the session cookie for the header's account control and a static
- * render may not touch cookies — taking the whole route down with a 500 for
- * every slug, valid or not.
- *
- * Not hypothetical: that is exactly how /special-offers/[slug] broke on the
- * one site with no visible offers. It was reachable here too, because the
- * params lookup failed CLOSED to an empty list, so one API blip was enough to
- * change the build shape.
- *
- * Removing the function pins the route dynamic whatever the data does.
- * `force-dynamic` is deliberately NOT used: it would also downgrade fetchCache
- * to no-store and send every request to the API, where this leaves the
- * existing per-fetch cache and its tags exactly as they were.
+ * This used to be impossible: the root layout read the session cookie for the
+ * header's account control, a static render may not touch cookies, and an
+ * empty list here 500'd every slug (how /special-offers/[slug] once broke).
+ * The account control now asks /api/forum/me from the browser, so nothing in
+ * the layout or this page reads a request-time API. Keep it that way: a
+ * cookies(), headers() or searchParams read in this route brings the 500 back.
  */
+export function generateStaticParams(): Array<{ slug: string }> {
+  return []
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
@@ -82,6 +78,9 @@ export default async function GuidePage({ params }: Props) {
 
   const hero = resolveImageUrl(article.hero_image_path)
   const pageUrl = `${SITE_URL}/guides/${slug}`
+  // The text's last change, not the row's: toggling a post onto the home page
+  // is not a modification. Falls back to updated_at on an older API.
+  const modifiedAt = article.content_modified_at ?? article.updated_at
 
   /*
    * Up to three other guides, newest first, this one excluded.
@@ -111,9 +110,9 @@ export default async function GuidePage({ params }: Props) {
     '@type': 'NewsArticle',
     headline: article.title,
     description: article.excerpt ?? undefined,
-    ...(hero ? { image: hero } : {}),
+    ...(hero ? { image: absoluteImageUrl(article.hero_image_path) } : {}),
     ...(article.published_at ? { datePublished: article.published_at } : {}),
-    ...(article.updated_at ? { dateModified: article.updated_at } : {}),
+    ...(modifiedAt ? { dateModified: modifiedAt } : {}),
     ...(bylinePerson
       ? { author: bylinePersonSchema(bylinePerson) }
       : author
@@ -129,7 +128,7 @@ export default async function GuidePage({ params }: Props) {
       url: pageUrl,
       description: article.excerpt ?? COPY.guides.pageDescription,
       breadcrumbId: breadcrumbIdFor(pageUrl),
-      dateModified: article.updated_at ?? undefined,
+      dateModified: modifiedAt ?? undefined,
     }),
     breadcrumb,
     articleSchema,
@@ -149,7 +148,7 @@ export default async function GuidePage({ params }: Props) {
 
           {hero && (
             <div className="relative mb-8 aspect-[16/7] overflow-hidden rounded-2xl bg-zinc-100">
-              <Image src={hero} alt={article.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 768px" priority />
+              <Image src={hero} alt={article.title} fill className="object-cover" sizes={ARTICLE_IMAGE_SIZES} preload fetchPriority="high" />
             </div>
           )}
 

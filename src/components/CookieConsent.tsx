@@ -2,11 +2,11 @@
 
 import { useSyncExternalStore } from 'react'
 import Link from 'next/link'
+import { CONSENT_STORAGE_KEY as STORAGE_KEY, CONSENT_VERSION } from '@/lib/consent'
+import { updateAnalyticsConsent } from '@/lib/ga'
 
-// Persisted consent record. Bump CONSENT_VERSION to re-prompt everyone after a
-// material change to the Cookie Policy.
-const STORAGE_KEY = 'cookie-consent'
-const CONSENT_VERSION = 1
+// Persisted consent record: key and version live in lib/consent.ts, because
+// ConsentModeScript reads the same record before gtag.js loads.
 
 type Choice = 'all' | 'necessary'
 
@@ -62,6 +62,8 @@ function recordConsent(choice: Choice): void {
   } catch {
     /* storage unavailable — still dismiss for this session */
   }
+  // Outside the try: a choice made with storage blocked still applies to this page.
+  updateAnalyticsConsent(choice === 'all')
   forced = false
   listeners.forEach((notify) => notify())
 }
@@ -122,9 +124,12 @@ export default function CookieConsent() {
       <div className="mx-auto max-w-3xl rounded-2xl border border-emerald-100 bg-white p-5 shadow-2xl sm:flex sm:items-center sm:gap-6">
         <div className="min-w-0">
           <p id="cookie-consent-title" className="text-sm font-bold text-zinc-900">We value your privacy</p>
+          {/* Says what this site really sets: Google Analytics cookies only after
+              "Accept All" (Consent Mode — see ConsentModeScript). If GA ever loads
+              with storage granted before a choice again, this text must change too. */}
           <p id="cookie-consent-desc" className="mt-1 text-sm leading-relaxed text-zinc-600">
-            We use cookies for essential site functions and, with your consent, for analytics and affiliate
-            attribution. Read our{' '}
+            We use essential cookies. With your consent, Google Analytics also sets cookies to measure how the
+            site is used. We set no advertising cookies. Read our{' '}
             <Link href="/cookie-policy" className="font-semibold text-emerald-600 underline hover:text-emerald-700">
               Cookie Policy
             </Link>

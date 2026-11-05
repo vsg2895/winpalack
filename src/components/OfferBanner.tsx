@@ -58,7 +58,8 @@ export default function OfferBanner({
           alt={alt}
           fill
           sizes={sizes}
-          priority={priority}
+          preload={priority}
+          fetchPriority={priority ? 'high' : undefined}
           className={`object-contain object-center${zoomOnHover ? ' transition-transform duration-300 group-hover:scale-105' : ''}`}
         />
       )}

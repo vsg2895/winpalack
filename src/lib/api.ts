@@ -544,6 +544,7 @@ const EMPTY_LEGAL: SiteLegalIdentity = {
   contact_email: null,
   support_email: null,
   privacy_email: null,
+  analytics_provider: null,
 }
 
 // ── Authors ──────────────────────────────────────────────────────────────────

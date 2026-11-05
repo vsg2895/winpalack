@@ -35,4 +35,6 @@ export interface SiteLegalIdentity {
   support_email: string | null
   /** Falls back to contact_email server-side. */
   privacy_email: string | null
+  /** Analytics service the site runs, by name; null = none. */
+  analytics_provider: string | null
 }
