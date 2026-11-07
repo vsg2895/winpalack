@@ -92,12 +92,7 @@ function Card({ post }: { post: Article }) {
             />
           </div>
         )}
-        {post.news_category && (
-          <span className="inline-flex items-center rounded-md bg-emerald-600 px-2 py-[3px] text-xs font-bold uppercase tracking-[0.06em] text-white">
-            {post.news_category.name}
-          </span>
-        )}
-        <h2 className="mt-2 font-display text-base font-bold leading-snug text-slate-900 transition-colors group-hover:text-emerald-700">
+        <h2 className="font-display text-base font-bold leading-snug text-slate-900 transition-colors group-hover:text-emerald-700">
           {post.title}
         </h2>
         {post.published_at && (
@@ -182,7 +177,7 @@ export default async function MostPopularNewsPage({ searchParams }: Props) {
 
           {posts.length === 0 ? (
             <p className="rounded-2xl border border-slate-200 bg-white p-8 text-slate-500">
-              {COPY.news.emptyTopic}
+              {COPY.news.emptyPage}
             </p>
           ) : (
             <ul className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4" role="list">

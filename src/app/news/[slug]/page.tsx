@@ -127,6 +127,13 @@ export default async function NewsPostPage({ params }: Props) {
   // is not a modification. Falls back to updated_at on an older API.
   const modifiedAt = article.content_modified_at ?? article.updated_at
   const source = sourceCredit(article)
+  // Plain text from the admin; a blank line starts a new paragraph. React
+  // escapes it, so it can never carry markup.
+  const editorNote = (article.editor_note ?? '')
+    .split(/\n\s*\n/)
+    .map((paragraph) => paragraph.trim())
+    .filter((paragraph) => paragraph !== '')
+  const noteSigner = bylinePerson ?? (editorial.author ? { name: editorial.author.name, slug: null } : null)
 
   const breadcrumb = buildBreadcrumbSchema(
     [
@@ -233,6 +240,31 @@ export default async function NewsPostPage({ params }: Props) {
             <div className="prose prose-zinc mt-8 max-w-none lg:prose-lg" dangerouslySetInnerHTML={{ __html: article.body }} />
           )}
 
+          {editorNote.length > 0 && (
+            <aside aria-labelledby="editor-note" className="mt-8 rounded-xl border-l-4 border-emerald-600 bg-emerald-50 p-5 lg:p-6">
+              <h2 id="editor-note" className="text-sm font-bold uppercase tracking-wide text-emerald-800">
+                {COPY.news.editorNote}
+              </h2>
+              {editorNote.map((paragraph, i) => (
+                <p key={i} className="mt-2 whitespace-pre-line text-slate-800 lg:text-lg">
+                  {paragraph}
+                </p>
+              ))}
+              {noteSigner && (
+                <p className="mt-3 text-sm text-slate-600">
+                  —{' '}
+                  {noteSigner.slug ? (
+                    <Link href={`/authors/${noteSigner.slug}`} className="font-semibold text-slate-800 underline-offset-4 hover:text-emerald-700 hover:underline">
+                      {noteSigner.name}
+                    </Link>
+                  ) : (
+                    <span className="font-semibold text-slate-800">{noteSigner.name}</span>
+                  )}
+                </p>
+              )}
+            </aside>
+          )}
+
           {source && (
             <p className="mt-8 border-t border-slate-200 pt-4 text-sm text-slate-500">
               {COPY.news.source}:{' '}
@@ -277,11 +309,6 @@ export default async function NewsPostPage({ params }: Props) {
                           <p className="mt-1.5 flex flex-wrap items-center gap-x-2 text-xs text-slate-400">
                             {post.published_at && (
                               <time dateTime={post.published_at}>{relativeTime(post.published_at)}</time>
-                            )}
-                            {post.news_category && (
-                              <span className="font-semibold uppercase tracking-[0.06em] text-slate-500">
-                                {post.news_category.name}
-                              </span>
                             )}
                           </p>
                         </div>

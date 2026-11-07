@@ -243,6 +243,7 @@ export const COPY = {
     pageDescription:
       'Licensing decisions, operator changes and offer updates — what changed, when, and what it means for players.',
     backToIndex: 'All news',
+    editorNote: "Editor's note",
     latest: 'Latest',
     // The rail beside the feed. It is the editor's PICK, not a measured count —
     // the site has no view tracking, and tabs over picks would be a
@@ -257,9 +258,7 @@ export const COPY = {
     // Built here rather than in the component so the wording lives with the
     // rest of the site's copy, and the plural cannot disagree with the number.
     readTime: (minutes: number) => `${minutes} min read`,
-    topics: 'Topics',
-    allTopics: 'All',
-    emptyTopic: 'No posts in this section yet.',
+    emptyPage: 'No posts on this page.',
     empty: 'No news has been published yet.',
     // The credit under a post built from another publication's report. The
     // facts are theirs; the wording is ours.

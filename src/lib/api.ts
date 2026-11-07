@@ -596,15 +596,7 @@ export const getArticle = async (slug: string): Promise<Article | null> => {
 // the site has news switched off, so an empty array / null is the "this site
 // publishes no news" signal and the routes render nothing rather than erroring.
 
-/** A section label on the news feed — badge on a card, pill above the feed. */
-export interface NewsTopic {
-  id: number
-  name: string
-  slug: string
-  articles_count?: number
-}
-
-/** One request feeds the whole news page: the feed, the rail and the pills. */
+/** One request feeds the whole news page: the feed and the rail. */
 export interface NewsPageMeta {
   current_page: number
   last_page: number
@@ -626,22 +618,17 @@ export interface NewsFeed {
    */
   posts: Article[]
   popular: Article[]
-  categories: NewsTopic[]
   /** Null only for the unpaginated `all` shape below. */
   meta: NewsPageMeta | null
 }
 
-const EMPTY_FEED: NewsFeed = { posts: [], popular: [], categories: [], meta: null }
+const EMPTY_FEED: NewsFeed = { posts: [], popular: [], meta: null }
 
-export const getNewsFeed = async (categorySlug?: string, page = 1): Promise<NewsFeed> => {
+export const getNewsFeed = async (page = 1): Promise<NewsFeed> => {
   try {
-    const params = new URLSearchParams()
-    if (categorySlug) params.set('category', categorySlug)
-    if (page > 1) params.set('page', String(page))
-    const query = params.toString()
-    // The chosen topic and the page are part of the cache key, so a filtered or
-    // deeper view does not evict the one the next reader lands on.
-    const res = await publicFetch<ApiResponse<NewsFeed>>(`/news${query ? `?${query}` : ''}`, ['news'])
+    // The page is part of the cache key, so a deeper page does not evict the
+    // one the next reader lands on.
+    const res = await publicFetch<ApiResponse<NewsFeed>>(`/news${page > 1 ? `?page=${page}` : ''}`, ['news'])
     return res.data ?? EMPTY_FEED
   } catch {
     return EMPTY_FEED

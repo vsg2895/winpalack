@@ -33,6 +33,12 @@ export interface Article {
    * response on the site.
    */
   body?: string | null
+  /**
+   * Detail responses only, like `body`. An editor's own plain-text comment,
+   * shown on the news page as "Editor's note". Never generated; its words
+   * count toward the indexing bar.
+   */
+  editor_note?: string | null
   hero_image_path: string | null
   /**
    * Detail responses only. The cover's pixel size, when it is a raster file
@@ -58,9 +64,6 @@ export interface Article {
    * silently put it in the rail as well.
    */
   to_be_most_popular: boolean
-  /** Editorial section. Null is valid — the post publishes without a badge. */
-  news_category_id: number | null
-  news_category?: { id: number; name: string; slug: string } | null
   meta_title: string | null
   meta_description: string | null
   canonical_url: string | null
@@ -91,12 +94,13 @@ export interface UpsertArticlePayload {
   slug?: string | null
   excerpt?: string | null
   body?: string | null
+  /** Plain text, at most 2000 characters. */
+  editor_note?: string | null
   hero_image_path?: string | null
   published_at?: string | null
   active?: boolean
   featured?: boolean
   to_be_most_popular?: boolean
-  news_category_id?: number | null
   meta_title?: string | null
   meta_description?: string | null
   canonical_url?: string | null
