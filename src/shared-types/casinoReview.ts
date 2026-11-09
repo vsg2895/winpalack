@@ -111,3 +111,9 @@ export interface PublicReviewFeedResponse {
     total: number
   }
 }
+
+/** A casino with at least one review — an option of the admin's casino filter. */
+export interface ReviewCasinoOption {
+  id: number
+  name: string
+}
