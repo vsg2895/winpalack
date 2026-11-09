@@ -131,7 +131,15 @@ export async function proxy(request: NextRequest) {
   const path = normalise(request.nextUrl.pathname)
   const rule = (await rules()).get(path)
 
-  if (!rule) return pass(request)
+  if (!rule) {
+    // A deleted news post: 410 Gone, not the page's 404 — see goneNews(). An
+    // admin redirect for the same URL (above) still wins, so an editor can
+    // send a removed story's links to its replacement instead.
+    const goneSlug = newsSlug(path)
+    if (goneSlug && (await goneNews()).has(goneSlug)) return gone()
+
+    return pass(request)
+  }
 
   // ONE hop, deliberately. The destination is never re-resolved against the
   // rule set, so an A→B→C chain costs the visitor two requests and an A→B→A
@@ -147,6 +155,81 @@ export async function proxy(request: NextRequest) {
   }
 
   return NextResponse.redirect(destination, rule.status_code === 302 ? 302 : 301)
+}
+
+/**
+ * DELETED NEWS POSTS answer 410 Gone.
+ *
+ * A Next page cannot send 410 (notFound() is a 404), so the proxy does it.
+ * Search engines drop a 410 sooner than a 404, which they keep re-crawling in
+ * case it comes back. The slugs come from the API's `news/gone` list (posts
+ * deleted in the last NEWS_GONE_DAYS), held for TTL_MS like the redirect
+ * rules, and fetched only when a `/news/<slug>` URL is requested.
+ *
+ * Fails OPEN like the redirects: with the list unreachable the page renders
+ * and answers its usual 404.
+ */
+let goneCache: { slugs: Set<string>; fetchedAt: number } | null = null
+let goneInFlight: Promise<Set<string>> | null = null
+
+/** The slug of a `/news/<slug>` path, or null. Paths arrive normalised. */
+function newsSlug(path: string): string | null {
+  const match = /^\/news\/([a-z0-9-]+)$/.exec(path)
+  return match && match[1] !== 'most-popular' ? match[1] : null
+}
+
+async function loadGone(): Promise<Set<string>> {
+  const res = await fetch(`${API}/sites/${SITE}/news/gone`, {
+    headers: { 'X-Site-Key': KEY as string, Accept: 'application/json' },
+    cache: 'no-store',
+  })
+
+  if (!res.ok) throw new Error(`news/gone ${res.status}`)
+
+  const body = (await res.json()) as { data: string[] }
+
+  return new Set(body.data.map((slug) => slug.toLowerCase()))
+}
+
+async function goneNews(): Promise<Set<string>> {
+  if (goneCache !== null && Date.now() - goneCache.fetchedAt < TTL_MS) return goneCache.slugs
+
+  if (goneInFlight === null) {
+    goneInFlight = loadGone()
+      .then((loaded) => {
+        goneCache = { slugs: loaded, fetchedAt: Date.now() }
+        return loaded
+      })
+      .catch(() => {
+        goneCache = { slugs: goneCache?.slugs ?? new Set(), fetchedAt: Date.now() }
+        return goneCache.slugs
+      })
+      .finally(() => {
+        goneInFlight = null
+      })
+  }
+
+  return goneInFlight
+}
+
+/** A small self-contained page: the proxy cannot render the app's layout. */
+function gone(): NextResponse {
+  const html = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><title>This article has been removed</title>
+<style>body{margin:0;font-family:system-ui,sans-serif;background:#f8fafc;color:#0f172a;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:16px}main{max-width:32rem;text-align:center}h1{font-size:1.75rem;margin:0 0 .75rem}p{color:#475569;line-height:1.6}a{color:#047857;font-weight:600}</style>
+</head><body><main><h1>This article has been removed</h1>
+<p>The story you are looking for is no longer available.</p>
+<p><a href="/news">Read the latest news</a> &middot; <a href="/">Home</a></p></main></body></html>`
+
+  return new NextResponse(html, {
+    status: 410,
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'X-Robots-Tag': 'noindex',
+      'Cache-Control': 'public, max-age=300',
+    },
+  })
 }
 
 /**

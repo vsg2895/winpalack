@@ -69,6 +69,15 @@ export interface ForumArticle {
   created_at?: string
   category?: { id: number; name: string; slug: string }
   author?: { name: string } | null
+  /** Admin only: the casino this topic is about, null for a general topic. */
+  casino_id?: number | null
+  casino?: { id: number; name: string } | null
+}
+
+/** A casino a topic may be about: one attached to the topic's site. Admin only. */
+export interface ForumCasinoOption {
+  id: number
+  name: string
 }
 
 export interface ForumPostAuthor {
@@ -275,6 +284,8 @@ export interface UpsertForumCategoryPayload {
 
 export interface UpsertForumArticlePayload {
   forum_category_id: number
+  /** A casino attached to the site, or null for a general topic. */
+  casino_id?: number | null
   title: string
   slug?: string | null
   excerpt?: string | null

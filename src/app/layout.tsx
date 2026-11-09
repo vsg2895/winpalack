@@ -8,6 +8,7 @@ import SocialIcons from '@/components/SocialIcons'
 import CookieConsent from '@/components/CookieConsent'
 import BonusMenu from '@/components/BonusMenu'
 import FooterBonusMenu from '@/components/FooterBonusMenu'
+import ScrollToTopOnNavigate from '@/components/ScrollToTopOnNavigate'
 import ConsentModeScript from '@/components/ConsentModeScript'
 import GaPageView from '@/components/GaPageView'
 import GaEvents from '@/components/GaEvents'
@@ -301,8 +302,10 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const siteGraph = [buildOrganizationSchema(socialLinks, legal), buildWebSiteSchema()]
 
   return (
-    <html lang="en" className={`${inter.variable} ${fraunces.variable} ${geistMono.variable} h-full antialiased motion-safe:scroll-smooth`}>
+    <html lang="en" className={`${inter.variable} ${fraunces.variable} ${geistMono.variable} h-full antialiased motion-safe:scroll-smooth`} data-scroll-behavior="smooth">
       <body className="min-h-full flex flex-col text-slate-900">
+        {/* Opens every page at its top — see the component. */}
+        <ScrollToTopOnNavigate />
         {/* FIRST thing in the body, before anything that could load gtag.js.
             Consent Mode defaults: analytics denied until "Accept All" — see
             ConsentModeScript. */}
