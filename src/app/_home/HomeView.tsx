@@ -357,9 +357,6 @@ export default async function HomeView(query: HomeQuery) {
                 <h2 id="top-casinos-heading" className="font-display text-2xl font-semibold text-slate-900 sm:text-4xl">{COPY.home.topCasinosTitle}</h2>
                 <p className="mt-1 text-sm text-slate-500 sm:text-base">{COPY.home.topCasinosSubtitle}</p>
               </div>
-              {selected && (
-                <Link href={`/categories/${selected}`} className="inline-block -mx-1 px-1 py-3 -my-3 text-sm font-semibold text-emerald-600 hover:text-emerald-700 whitespace-nowrap">{COPY.home.viewAll} →</Link>
-              )}
             </div>
 
             {/* Country first, categories nested inside it. The country filter
@@ -405,9 +402,7 @@ export default async function HomeView(query: HomeQuery) {
 
                 Replaces the old "See More" button, whose condition was exactly
                 "there is more than one page" — the paginator owns that, and
-                showing both put two different ways forward under one list. The
-                section heading still carries "View All →" for anyone who wants
-                the full filterable catalog instead. */}
+                showing both put two different ways forward under one list. */}
             <Pagination basePath={casinosBasePath} current={casinoPage} last={casinoLastPage} />
           </div>
         </section>

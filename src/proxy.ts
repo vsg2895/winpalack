@@ -43,9 +43,37 @@ const KEY = process.env.API_SITE_KEY
 /** One minute. Long enough to be cheap, short enough that a fix lands quickly. */
 const TTL_MS = 60_000
 
-let cache: { rules: Map<string, Rule>; fetchedAt: number } | null = null
-/** Shared so concurrent requests during a refresh await one fetch, not N. */
-let inFlight: Promise<Map<string, Rule>> | null = null
+/**
+ * A value held for TTL_MS, re-fetched when stale. Concurrent callers during a
+ * refresh share one fetch, not N. A failed fetch FAILS OPEN: it serves whatever
+ * was last loaded (or `empty()`) and stamps that as fresh, so the next attempt
+ * waits a full TTL instead of hammering an API that just blinked.
+ */
+function ttlCache<T>(load: () => Promise<T>, empty: () => T): () => Promise<T> {
+  let cache: { value: T; fetchedAt: number } | null = null
+  let inFlight: Promise<T> | null = null
+
+  return () => {
+    if (cache !== null && Date.now() - cache.fetchedAt < TTL_MS) return Promise.resolve(cache.value)
+
+    if (inFlight === null) {
+      inFlight = load()
+        .then((loaded) => {
+          cache = { value: loaded, fetchedAt: Date.now() }
+          return loaded
+        })
+        .catch(() => {
+          cache = { value: cache?.value ?? empty(), fetchedAt: Date.now() }
+          return cache.value
+        })
+        .finally(() => {
+          inFlight = null
+        })
+    }
+
+    return inFlight
+  }
+}
 
 /**
  * Canonical path form, matching `Redirect::normalisePath()` on the server.
@@ -75,32 +103,12 @@ async function loadRules(): Promise<Map<string, Rule>> {
   return new Map(body.data.map((rule) => [normalise(rule.source_path), rule]))
 }
 
-async function rules(): Promise<Map<string, Rule>> {
-  const fresh = cache !== null && Date.now() - cache.fetchedAt < TTL_MS
-
-  if (fresh) return cache!.rules
-
-  if (inFlight === null) {
-    inFlight = loadRules()
-      .then((loaded) => {
-        cache = { rules: loaded, fetchedAt: Date.now() }
-        return loaded
-      })
-      .catch(() => {
-        // Fail OPEN. A redirect list we cannot reach must never take the site
-        // down — far better to serve the un-redirected URL than to 500 every
-        // request because the API blinked. Serve whatever we last had, or
-        // nothing, and try again on the next request.
-        cache = { rules: cache?.rules ?? new Map(), fetchedAt: Date.now() }
-        return cache.rules
-      })
-      .finally(() => {
-        inFlight = null
-      })
-  }
-
-  return inFlight
-}
+/**
+ * Fail OPEN: a redirect list we cannot reach must never take the site down —
+ * far better to serve the un-redirected URL than to 500 every request because
+ * the API blinked.
+ */
+const rules = ttlCache(loadRules, () => new Map<string, Rule>())
 
 export async function proxy(request: NextRequest) {
   /*
@@ -169,9 +177,6 @@ export async function proxy(request: NextRequest) {
  * Fails OPEN like the redirects: with the list unreachable the page renders
  * and answers its usual 404.
  */
-let goneCache: { slugs: Set<string>; fetchedAt: number } | null = null
-let goneInFlight: Promise<Set<string>> | null = null
-
 /** The slug of a `/news/<slug>` path, or null. Paths arrive normalised. */
 function newsSlug(path: string): string | null {
   const match = /^\/news\/([a-z0-9-]+)$/.exec(path)
@@ -191,26 +196,7 @@ async function loadGone(): Promise<Set<string>> {
   return new Set(body.data.map((slug) => slug.toLowerCase()))
 }
 
-async function goneNews(): Promise<Set<string>> {
-  if (goneCache !== null && Date.now() - goneCache.fetchedAt < TTL_MS) return goneCache.slugs
-
-  if (goneInFlight === null) {
-    goneInFlight = loadGone()
-      .then((loaded) => {
-        goneCache = { slugs: loaded, fetchedAt: Date.now() }
-        return loaded
-      })
-      .catch(() => {
-        goneCache = { slugs: goneCache?.slugs ?? new Set(), fetchedAt: Date.now() }
-        return goneCache.slugs
-      })
-      .finally(() => {
-        goneInFlight = null
-      })
-  }
-
-  return goneInFlight
-}
+const goneNews = ttlCache(loadGone, () => new Set<string>())
 
 /** A small self-contained page: the proxy cannot render the app's layout. */
 function gone(): NextResponse {
