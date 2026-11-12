@@ -15,7 +15,7 @@ function Stars({ rating }: { rating: number }) {
   )
 }
 
-// Winpalack — minimalist review row: an elegant rank numeral, a prominent brand
+// Winpalack — minimalist review row: a prominent brand
 // logo, then only the three things that matter (name · rating · bonus) and a
 // clear primary CTA. No rank chip, no category clutter.
 //
@@ -24,7 +24,6 @@ function Stars({ rating }: { rating: number }) {
 // pages keep the default so their narrower column does not feel padded out.
 export default function CasinoCard({
   casino,
-  rank,
   large = false,
   compact = false,
   flagsShown,
@@ -80,7 +79,7 @@ export default function CasinoCard({
         } ${large ? 'lg:min-h-44 lg:gap-8 lg:p-7' : ''}`}
       >
       {/*
-        * Stacked compact cards put the rank+logo BESIDE the text, not above
+        * Stacked compact cards put the logo BESIDE the text, not above
         * it. On its own line the logo cost ~100px of height and was most of
         * why a half-width card came out nearly twice as tall as the
         * full-width one it replaced.
@@ -103,20 +102,8 @@ export default function CasinoCard({
             : 'contents'
         }
       >
-      {/* Rank numeral + prominent logo */}
+      {/* Prominent logo */}
       <div className={`flex items-center ${compact ? 'gap-2 sm:gap-2.5' : 'gap-3 sm:gap-4'}`}>
-        {rank != null && (
-          <span
-            className={`shrink-0 bg-gradient-to-br from-emerald-600 to-teal-500 bg-clip-text text-center font-display font-bold leading-none tabular-nums text-transparent ${
-              compact
-                ? 'w-5 text-lg sm:w-6 sm:text-xl'
-                : 'w-6 text-2xl sm:w-8 sm:text-[2rem]'
-            }`}
-            aria-label={`Rank ${rank}`}
-          >
-            {rank}
-          </span>
-        )}
         {/* The logo opens the review, exactly as "Read Safety Review" does.
             It is the first thing a reader aims at on a card, and it led
             nowhere.
