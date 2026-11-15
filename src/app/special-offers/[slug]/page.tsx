@@ -240,7 +240,7 @@ export default async function SpecialOfferDetailPage({ params }: Props) {
               artwork it sits behind. `object-contain` stays: nothing is cropped
               off the edges of a banner meant to be read whole. */}
           {banner && (
-            <div className="relative mb-6 aspect-[16/6] overflow-hidden rounded-2xl bg-zinc-100">
+            <div className="relative mb-6 aspect-[16/6] overflow-hidden rounded-2xl">
               <Image
                 src={banner}
                 alt={offer.title}
