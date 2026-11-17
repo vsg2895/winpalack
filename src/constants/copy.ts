@@ -391,6 +391,9 @@ export const COPY = {
     ratingLabel: 'Rating',
     titleLabel: 'Headline (optional)',
     bodyLabel: 'Your review',
+    namePlaceholder: 'First name or nickname',
+    emailPlaceholder: 'you@example.com',
+    titlePlaceholder: 'One line on how it went',
     bodyPlaceholder: 'What was your experience — payouts, support, verification?',
     submit: 'Submit Review',
     // Two outcomes, because the site can run pre- or post-moderation
@@ -405,7 +408,7 @@ export const COPY = {
   newsletter: {
     title: 'Stay on the safe side',
     subtitle: 'Occasional updates on verified casinos and offers with terms worth reading.',
-    placeholder: 'Your email address',
+    placeholder: 'Email for new casino reviews',
     button: 'Subscribe',
     // Shown while the address is being checked. The subscribe request now
     // waits on a live address-validation call, so the button has to say so

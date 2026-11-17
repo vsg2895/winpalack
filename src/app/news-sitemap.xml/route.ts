@@ -29,6 +29,14 @@ export async function GET(): Promise<Response> {
     now: new Date(),
   })
 
+  // Nothing published in the window: 404 rather than an empty `<urlset>`.
+  // A urlset with no `<url>` is not a valid sitemap, and Search Console
+  // rejects the file over it; 404 also matches /news itself, which is not
+  // there either while the site publishes nothing.
+  if (body === null) {
+    return new Response('Not Found', { status: 404 })
+  }
+
   return new Response(body, {
     headers: { 'Content-Type': 'application/xml; charset=utf-8' },
   })

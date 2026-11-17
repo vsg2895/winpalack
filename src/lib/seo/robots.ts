@@ -101,7 +101,20 @@ const CONTENT_SIGNALS_NOTICE = `# As a condition of accessing this website, you 
  */
 const DISALLOWED = ['/api/', '/go/', '/cdn-cgi/', '/login', '/register', '/forum/account', '/verify/', '/unsubscribe/']
 
-export function buildRobotsTxt({ indexing, siteUrl }: { indexing: boolean; siteUrl: string }): string {
+export function buildRobotsTxt({
+  indexing,
+  siteUrl,
+  hasNews,
+}: {
+  indexing: boolean
+  siteUrl: string
+  /**
+   * Whether /news-sitemap.xml currently has anything in it. When it does not
+   * the route answers 404, and pointing a crawler at a 404 is worse than
+   * saying nothing — so the line is left out until there is news again.
+   */
+  hasNews: boolean
+}): string {
   // Local, staging and preview builds shut every crawler out, and say nothing
   // about a sitemap — see lib/seo/indexing.ts for how the deployment is told.
   if (!indexing) return 'User-agent: *\nDisallow: /\n'
@@ -117,9 +130,10 @@ export function buildRobotsTxt({ indexing, siteUrl }: { indexing: boolean; siteU
     [...BLOCKED_CRAWLERS.map((ua) => `User-agent: ${ua}`), 'Disallow: /'].join('\n'),
     '',
     // The Google News sitemap beside the regular one: recent posts only, with
-    // the news:news fields (app/news-sitemap.xml/route.ts).
+    // the news:news fields (app/news-sitemap.xml/route.ts). Advertised only
+    // while it has entries — see `hasNews`.
     `Sitemap: ${siteUrl}/sitemap.xml`,
-    `Sitemap: ${siteUrl}/news-sitemap.xml`,
+    ...(hasNews ? [`Sitemap: ${siteUrl}/news-sitemap.xml`] : []),
     '',
   ].join('\n')
 }

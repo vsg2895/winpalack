@@ -106,6 +106,7 @@ export default function MyPosts({ posts }: { posts: MyForumPost[] }) {
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 rows={4}
+                placeholder="Your post — edit and save"
                 className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-700 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
               />
               {error && <p className="mt-1 text-sm text-red-600">{error}</p>}

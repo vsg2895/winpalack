@@ -133,7 +133,7 @@ export default function AccountForm({ next, initialMode = 'signin' }: { next?: s
             <label htmlFor="display_name" className="mb-1 block text-xs font-semibold text-slate-700">
               Display name
             </label>
-            <input id="display_name" name="display_name" required minLength={2} maxLength={60} autoComplete="nickname" className={field} />
+            <input id="display_name" name="display_name" required minLength={2} maxLength={60} autoComplete="nickname" placeholder="Shown on your posts" className={field} />
             {errorFor('display_name') && <p className="mt-1 text-xs text-red-600">{errorFor('display_name')}</p>}
           </div>
         )}
@@ -141,7 +141,7 @@ export default function AccountForm({ next, initialMode = 'signin' }: { next?: s
         <div>
           <label htmlFor="email" className="mb-1 block text-xs font-semibold text-slate-700">Email</label>
           <input
-            id="email" name="email" type="email" required autoComplete="email"
+            id="email" name="email" type="email" required autoComplete="email" placeholder="you@example.com"
             aria-invalid={errorFor('email') ? true : undefined} className={field}
           />
           {errorFor('email') && <p className="mt-1 text-xs text-red-600">{errorFor('email')}</p>}
@@ -149,9 +149,12 @@ export default function AccountForm({ next, initialMode = 'signin' }: { next?: s
 
         <div>
           <label htmlFor="password" className="mb-1 block text-xs font-semibold text-slate-700">Password</label>
+          {/* The register hint under this field spells the rule out in full,
+              so the placeholder states the requirement only, not the advice. */}
           <input
             id="password" name="password" type="password" required
             minLength={mode === 'register' ? 6 : undefined}
+            placeholder={mode === 'signin' ? 'Your password' : 'At least 6 characters'}
             autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
             aria-invalid={errorFor('password') ? true : undefined} className={field}
           />

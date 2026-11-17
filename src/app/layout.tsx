@@ -495,7 +495,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                   what makes a vertical list scannable. */}
               <div className="sm:shrink-0">
                 <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-500 lg:text-sm">Explore</p>
-                <ul className="flex flex-col gap-2 lg:gap-3">
+                <ul className="flex flex-col lg:gap-3">
                   {footerLinks.map(({ href, label, external }) =>
                     /* Special Offers is a CHILD of Bonus, so the Bonus group takes
                        the slot it held. Unlike the header's floating dropdown this one
@@ -525,12 +525,12 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                           <a
                             href={href}
                             {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                            className="inline-block -mx-1 px-1 py-3 -my-3 text-sm font-semibold text-slate-600 transition-colors hover:text-emerald-700 lg:text-base"
+                            className="inline-flex min-h-11 min-w-11 items-center text-sm font-semibold text-slate-600 transition-colors hover:text-emerald-700 lg:text-base"
                           >
                             {label}
                           </a>
                         ) : (
-                          <Link href={href} className="inline-block -mx-1 px-1 py-3 -my-3 text-sm font-semibold text-slate-600 transition-colors hover:text-emerald-700 lg:text-base">{label}</Link>
+                          <Link href={href} className="inline-flex min-h-11 min-w-11 items-center text-sm font-semibold text-slate-600 transition-colors hover:text-emerald-700 lg:text-base">{label}</Link>
                         )}
                       </li>
                     ),
@@ -545,7 +545,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               <ul className="grid grid-cols-2 gap-x-5 gap-y-3 sm:flex sm:flex-wrap sm:gap-y-2">
                 {legalLinks.map(({ slug, label }) => (
                   <li key={slug}>
-                    <Link href={`/${slug}`} className="inline-block -mx-1 px-1 py-3 -my-3 text-xs text-slate-400 transition-colors hover:text-emerald-700 lg:text-sm">{label}</Link>
+                    <Link href={`/${slug}`} className="inline-flex min-h-11 min-w-11 items-center text-xs text-slate-400 transition-colors hover:text-emerald-700 lg:text-sm">{label}</Link>
                   </li>
                 ))}
                 <li>

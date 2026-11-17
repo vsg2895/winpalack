@@ -39,18 +39,28 @@ export interface SpecialOffer {
   banner_image: string | null
   bonuses: string | null
   affiliate_url: string | null
+  /** This site's own text where it has one, else the default (SiteContentResolver). */
   description: string | null
+  /**
+   * Finished page meta. On the public API: this site's value, else the
+   * default, else "{title} – {casino}" and a description snippet — never
+   * empty. In the admin: the raw default values the edit form saves.
+   */
+  meta_title: string | null
+  meta_description: string | null
   rating: number
   sort_order: number
   active: boolean
   created_at: string
+  /** The later of the offer's change and this site's override. */
   updated_at: string
-  /** Server-resolved SEO. Offers have no meta columns, so title comes from the site pattern. */
+  /** Server-resolved SEO: stored meta (site's, else default), else the site pattern. */
   seo?: ResolvedSeo
   /**
-   * Whether this offer's page may be indexed: true unless an admin set
-   * `noindex` on the offer (SpecialOffer::isIndexable). The page's robots tag
-   * and the sitemap both read it, so they cannot disagree.
+   * Whether this offer's page may be indexed on THIS site: false when the
+   * offer is noindexed, the site set Noindex, or the site hides pages without
+   * its own text (SiteContentResolver). The page's robots tag and the sitemap
+   * both read it, so they cannot disagree.
    *
    * NOT the same as `active`: an inactive offer is hidden for a different
    * reason and its page serves the stricter `index: false, follow: false`.

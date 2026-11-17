@@ -43,11 +43,26 @@ export function newsSitemapPosts(posts: Article[], now: Date): Article[] {
     .slice(0, NEWS_MAX_URLS)
 }
 
+/**
+ * The sitemap XML, or NULL when nothing qualifies.
+ *
+ * Null rather than an empty `<urlset>`: a urlset with no `<url>` child is not
+ * a valid sitemap, and Search Console rejects the whole file for it
+ * ("Missing XML tag … parent tag: urlset, tag: url"). The caller answers 404
+ * instead, which is the honest reply — there is no news sitemap to serve when
+ * there is no news.
+ */
 export function buildNewsSitemap(
   posts: Article[],
   options: { siteUrl: string; publicationName: string; language: string; now: Date },
-): string {
-  const entries = newsSitemapPosts(posts, options.now)
+): string | null {
+  const recent = newsSitemapPosts(posts, options.now)
+
+  if (recent.length === 0) {
+    return null
+  }
+
+  const entries = recent
     .map(
       (post) => `  <url>
     <loc>${xml(`${options.siteUrl}/news/${post.slug}`)}</loc>

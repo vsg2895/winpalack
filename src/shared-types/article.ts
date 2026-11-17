@@ -74,6 +74,11 @@ export interface Article {
    * it must not be published as it stands. Absent from every other response.
    */
   awaiting_rewrite?: boolean
+  /**
+   * Admin listing only: where a scraped news post stands with `news:rewrite`.
+   * Absent from every other response.
+   */
+  rewrite?: ArticleRewriteStatus
   author_id?: number | null
   reviewed_by_id?: number | null
   last_reviewed_at?: string | null
@@ -109,4 +114,26 @@ export interface UpsertArticlePayload {
   author_id?: number | null
   reviewed_by_id?: number | null
   last_reviewed_at?: string | null
+}
+
+/**
+ * - `rewritten`      — original copy has been written
+ * - `not_attempted`  — no copy yet, and news:rewrite has not tried this post
+ * - `attempt_failed` — no copy yet although news:rewrite tried; see last_error
+ * - `written_here`   — written in the admin, not scraped: nothing to rewrite
+ */
+export type ArticleRewriteState = 'rewritten' | 'not_attempted' | 'attempt_failed' | 'written_here'
+
+/** The admin listing's `rewrite` filter. `not_rewritten` = not_attempted + attempt_failed. */
+export type ArticleRewriteFilter = 'rewritten' | 'not_rewritten' | 'not_attempted' | 'attempt_failed'
+
+export interface ArticleRewriteStatus {
+  state: ArticleRewriteState
+  /** Every non-dry-run attempt, whatever its outcome. */
+  attempts: number
+  last_attempt_at: string | null
+  /** Outcome of the last attempt. */
+  last_result: 'rewritten' | 'rejected' | 'failed' | null
+  /** Why the last attempt produced no copy; null once one succeeds. */
+  last_error: string | null
 }

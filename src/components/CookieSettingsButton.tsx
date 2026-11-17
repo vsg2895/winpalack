@@ -9,7 +9,7 @@ export default function CookieSettingsButton() {
     <button
       type="button"
       onClick={openCookieSettings}
-      className="inline-block -mx-1 px-1 py-3 -my-3 text-xs text-slate-400 transition-colors hover:text-emerald-700 lg:text-sm"
+      className="inline-flex min-h-11 min-w-11 items-center text-xs text-slate-400 transition-colors hover:text-emerald-700 lg:text-sm"
     >
       Cookie Settings
     </button>
