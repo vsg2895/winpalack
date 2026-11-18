@@ -11,7 +11,8 @@ import { buildNewsSitemap } from '@/lib/seo/newsSitemap'
  *    through the admin or news:rewrite refreshes this at once (the backend's
  *    RevalidateNextJsSites sends that tag);
  *  - the two-day window moves with the CLOCK, not with any edit, so a post
- *    must also age out when nothing is published at all — hence the 15 min.
+ *    must also lose its `news:news` block when nothing is published at all —
+ *    hence the 15 min.
  */
 export const dynamic = 'force-static'
 export const revalidate = 900
@@ -29,10 +30,12 @@ export async function GET(): Promise<Response> {
     now: new Date(),
   })
 
-  // Nothing published in the window: 404 rather than an empty `<urlset>`.
+  // No indexable news on the site AT ALL: 404 rather than an empty `<urlset>`.
   // A urlset with no `<url>` is not a valid sitemap, and Search Console
   // rejects the file over it; 404 also matches /news itself, which is not
-  // there either while the site publishes nothing.
+  // there either while the site has nothing to show. A quiet publishing week
+  // no longer reaches this branch — posts past the two-day window stay in the
+  // file as plain entries (see lib/seo/newsSitemap.ts).
   if (body === null) {
     return new Response('Not Found', { status: 404 })
   }
